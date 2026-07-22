@@ -1,5 +1,5 @@
 /**
- * Cindy Web Search · 电子脑 —— Cindy 内置的网页搜索意识(network 槽,C4)。
+ * Cindy Web Search · 电子脑 —— Cindy 内置的网页搜索意识(network 槽)。
  *
  * 工作方式:
  * - 域名白名单代发:cindy.fetch 只能到 ghost.json 声明的 brave / tavily 两域名,

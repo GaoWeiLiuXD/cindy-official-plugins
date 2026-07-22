@@ -38,7 +38,7 @@ function failCall(callId, message) {
 
 /**
  * ── 聊天卡片供片(卡槽③海报模式,v1.9.0)────────────────────────────
- * 样式对齐 docs/design_docs/cc-agent-view.pen「Ghost Card · Cindy Art」:
+ * 聊天卡片视觉规格:
  * 过程态 = 题注 + 灰底占位画布;终版 = 全幅大图 + 「题注」 + 落款
  * (Cindy Art · 模型名)。背景与文字消费主机注入的语义色 token,随
  * light/dark/扩展主题切换;媒体内容本身不改色。
@@ -166,7 +166,7 @@ async function handleEditImage(msg) {
   if (!prompt) return failCall(msg.callId, '缺少 prompt(怎么改)');
 
   // 源图两个来源:images(本意识之前生成的图)+ attachments(主机过户来的
-  // 用户图指纹,C3c-4)。合并去重后统一走主机归属校验。
+  // 用户图指纹。合并去重后统一走主机归属校验。
   const images = msg.args && Array.isArray(msg.args.images) ? msg.args.images : [];
   const granted = msg.args && Array.isArray(msg.args.attachments) ? msg.args.attachments : [];
   const hashes = [];
