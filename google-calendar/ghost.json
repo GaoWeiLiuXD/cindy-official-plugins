@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 2,
+  "id": "google-calendar",
+  "name": "Google Calendar",
+  "description": "独立连接 Google Calendar：查询日程、空闲时间、创建和修改会议。只申请日历所需权限，授权与令牌由主机托管。",
+  "whenToUse": "需要查询 Google 日历、安排会议、修改或取消日程时使用。请先在本插件详情页单独连接 Google Calendar 账号。",
+  "version": "1.1.1",
+  "author": "Cindy",
+  "icon": "assets/icon.png",
+  "entry": "main.js",
+  "settingsHtml": "settings.html",
+  "slots": ["tool", "network", "card"],
+  "command": "google-calendar",
+  "network": {
+    "hosts": [
+      "accounts.google.com",
+      "oauth2.googleapis.com",
+      "www.googleapis.com"
+    ],
+    "secrets": [
+      {
+        "key": "google_calendar_account",
+        "label": "Google Calendar 账号",
+        "source": "oauth",
+        "hint": "只授权 Google Calendar 权限；到本插件详情页点「连接账号」完成授权",
+        "inject": {
+          "header": "Authorization",
+          "format": "Bearer {value}",
+          "hosts": ["www.googleapis.com"]
+        },
+        "oauth": {
+          "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+          "tokenUrl": "https://oauth2.googleapis.com/token",
+          "clientId": "966060737739-d3dfjdsaace1ur4thk03h3aj4hpnjucq.apps.googleusercontent.com",
+          "clientSecret": "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",
+          "scopes": [
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/calendar"
+          ],
+          "pkce": true,
+          "extraAuthorizeParams": {
+            "access_type": "offline",
+            "prompt": "consent"
+          },
+          "identity": {
+            "url": "https://www.googleapis.com/oauth2/v3/userinfo",
+            "labelPath": "email"
+          }
+        },
+        "url": "https://calendar.google.com/"
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "google_calendar_accounts",
+      "description": "列出本插件已连接的 Google Calendar 账号及状态。账号必须先在 Google Calendar 插件详情页单独授权。",
+      "parameters": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "google_calendar",
+      "description": "执行 Google Calendar 操作：list_calendars、list_events、get_event、create_event、update_event、delete_event。创建、修改和删除日程必须有用户明确意图。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["list_calendars", "list_events", "get_event", "create_event", "update_event", "delete_event"]
+          },
+          "account": { "type": "string" },
+          "calendar_id": { "type": "string" },
+          "time_min": { "type": "string", "description": "ISO8601" },
+          "time_max": { "type": "string", "description": "ISO8601" },
+          "max_results": { "type": "number" },
+          "event_id": { "type": "string" },
+          "summary": { "type": "string" },
+          "description": { "type": "string" },
+          "start": { "type": "string", "description": "ISO8601 或 YYYY-MM-DD" },
+          "end": { "type": "string", "description": "ISO8601 或 YYYY-MM-DD" },
+          "attendees": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["action"]
+      }
+    }
+  ]
+}

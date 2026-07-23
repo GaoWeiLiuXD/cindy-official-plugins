@@ -15,6 +15,18 @@
     },
     "cindy-gitlab": {
       "audience": "all"
+    },
+    "google-gmail": {
+      "audience": "all"
+    },
+    "google-drive": {
+      "audience": "all"
+    },
+    "google-calendar": {
+      "audience": "all"
+    },
+    "google-sheets": {
+      "audience": "all"
     }
   }
 }
