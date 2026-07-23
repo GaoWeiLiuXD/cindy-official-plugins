@@ -1,0 +1,188 @@
+name: Publish Cindy Plugins
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cindy-plugin-publish-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Detect plugins to publish
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.changes.outputs.result }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Build plugin matrix
+        id: changes
+        uses: actions/github-script@v9
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        with:
+          script: |
+            const { execFileSync } = require('node:child_process');
+            const path = require('node:path');
+
+            const git = (args) => execFileSync('git', args, { encoding: 'buffer' });
+            const lines = (value) => value
+              .toString('utf8')
+              .split('\0')
+              .filter(Boolean);
+
+            const after = process.env.AFTER_SHA ?? '';
+            if (!/^[0-9a-f]{40}$/i.test(after)) {
+              throw new Error('GitHub event is missing a valid target SHA');
+            }
+
+            const trackedFiles = lines(git([
+              'ls-tree',
+              '-r',
+              '--name-only',
+              '-z',
+              after,
+            ]));
+            const pluginRoots = trackedFiles
+              .filter((file) => path.posix.basename(file) === 'ghost.json')
+              .map((file) => path.posix.dirname(file))
+              .filter((directory) => directory !== '.')
+              .sort((left, right) => right.length - left.length || left.localeCompare(right));
+
+            if (process.env.EVENT_NAME === 'workflow_dispatch') {
+              const plugins = [...pluginRoots]
+                .sort((left, right) => left.localeCompare(right))
+                .map((directory) => ({ directory }));
+              core.info(
+                plugins.length === 0
+                  ? 'No Cindy plugin directories found'
+                  : `Publishing all Cindy plugins: ${plugins.map(({ directory }) => directory).join(', ')}`,
+              );
+              return plugins;
+            }
+
+            let before = process.env.BEFORE_SHA ?? '';
+            if (!/^[0-9a-f]{40}$/i.test(before)) {
+              throw new Error('GitHub push event is missing a valid before SHA');
+            }
+            const emptyTree = () => execFileSync(
+              'git',
+              ['hash-object', '-t', 'tree', '/dev/null'],
+              { encoding: 'utf8' },
+            ).trim();
+            const hasCommit = (sha) => {
+              try {
+                git(['cat-file', '-e', `${sha}^{commit}`]);
+                return true;
+              } catch {
+                return false;
+              }
+            };
+            if (/^0{40}$/.test(before)) {
+              before = emptyTree();
+            } else if (!hasCommit(before)) {
+              try {
+                git(['fetch', '--no-tags', '--depth=1', 'origin', before]);
+              } catch {
+                core.warning(`Could not fetch before SHA ${before}`);
+              }
+              if (!hasCommit(before)) {
+                core.warning('Before SHA is unavailable; publishing all current plugins');
+                before = emptyTree();
+              }
+            }
+
+            const changedFiles = lines(git([
+              'diff',
+              '--name-only',
+              '--no-renames',
+              '--diff-filter=AMD',
+              '-z',
+              before,
+              after,
+              '--',
+            ]));
+            const changedRoots = new Set();
+            for (const file of changedFiles) {
+              const root = pluginRoots.find(
+                (directory) => file === directory || file.startsWith(`${directory}/`),
+              );
+              if (root) changedRoots.add(root);
+            }
+
+            const plugins = [...changedRoots]
+              .sort((left, right) => left.localeCompare(right))
+              .map((directory) => ({ directory }));
+            core.info(
+              plugins.length === 0
+                ? 'No changed Cindy plugin directories found'
+                : `Changed Cindy plugins: ${plugins.map(({ directory }) => directory).join(', ')}`,
+            );
+            return plugins;
+
+  publish:
+    name: Publish ${{ matrix.plugin.directory }}
+    needs: detect
+    if: ${{ needs.detect.outputs.plugins != '[]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJSON(needs.detect.outputs.plugins) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Package plugin
+        env:
+          PLUGIN_DIRECTORY: ${{ matrix.plugin.directory }}
+        run: |
+          set -euo pipefail
+          git archive \
+            --format=zip \
+            --output="$RUNNER_TEMP/plugin.cindy" \
+            "HEAD:${PLUGIN_DIRECTORY}"
+
+      - name: Publish plugin
+        run: |
+          set -euo pipefail
+
+          oidc_response="$(curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --header "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=cindy-plugin")"
+          oidc_token="$(jq -er '.value' <<<"${oidc_response}")"
+          echo "::add-mask::${oidc_token}"
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 3 \
+            --retry-connrefused \
+            --retry-delay 2 \
+            --retry-max-time 180 \
+            --request POST \
+            --header "Authorization: Bearer ${oidc_token}" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary "@$RUNNER_TEMP/plugin.cindy" \
+            "https://plugin.cindy.com.cn/api/publisher/releases"
+          echo
