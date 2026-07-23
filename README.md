@@ -1,21 +1,69 @@
-# cindy-official-plugin
+# Cindy Official Plugins
 
-Cindy 官方内置插件（Ghost / 意识）种子仓。作为 Cindy 桌面端客户端的 submodule 随客户端一起分发，并在客户端启动时自动播种安装。
+Cindy 官方内置插件（Ghost）开源仓库。这里存放随 Cindy 桌面端一起分发的全部官方插件源码 —— 客户端以 submodule 挂载本仓，启动时自动"播种"安装到用户本地。
 
-## 内容
+> This is the official open-source repository of Cindy's built-in plugins (Ghosts). Each subdirectory is a self-contained plugin that ships with the Cindy desktop client. Contributions are welcome — see [参与贡献](#参与贡献) below.
 
-每个子目录 = 一个意识包源码（`ghost.json` 身份卡 + `main.js` 等），根目录 `provisioning.json` 声明各插件的受众（audience）与档位（tier）。
+## 插件列表
 
-| 插件 | 说明 |
-|---|---|
-| `cindy-art` | 图片 / 短视频生成 |
-| `cindy-github` | GitHub issue / PR / 仓库操作 |
-| `cindy-gitlab` | GitLab issue / MR / 仓库操作 |
-| `cindy-mermaid` | Mermaid 图表绘制 |
-| `cindy-web-search` | 公网搜索（Brave / Tavily） |
+| 插件 | 目录 | 说明 |
+|---|---|---|
+| Cindy Art | [`cindy-art`](./cindy-art) | 图片 / 短视频生成，支持基于已生成图片的改图与风格化 |
+| Cindy GitHub | [`cindy-github`](./cindy-github) | GitHub issue / PR / code review / Actions / release 全流程操作 |
+| Cindy GitLab | [`cindy-gitlab`](./cindy-gitlab) | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作 |
+| Cindy Mermaid | [`cindy-mermaid`](./cindy-mermaid) | Mermaid 图表源码规范化与常见语法修复 |
+| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key） |
 
-## 开发
+## 仓库结构
 
-- 意识编写契约以客户端总机工具 `ghost_forge_guide` 现拿现读的 `FORGE_GUIDE` 为准。
-- 改动流程：本仓提 PR 合入后，由客户端更新对本仓的 submodule 指针。dev 环境下改本地文件重启即生效（播种按内容指纹收敛，不看 version 字段）。
-- `provisioning.json` 解析失败时客户端按 fail-closed 处理（本种子根整轮跳过播种），改动后务必保证 JSON 合法。
+每个子目录就是一个完整的插件（"意识包"）源码：
+
+```
+cindy-github/
+├── ghost.json      # 身份卡:插件 id、描述、工具声明、网络与密钥声明
+├── main.js         # 入口:沙箱内运行的插件逻辑
+├── settings.html   # (可选) 设置页,如粘贴 API token
+├── settings.js
+└── assets/         # (可选) 图标等静态资源
+cindy-art/
+├── ghost.json
+├── main.js
+└── panel.*         # (可选) 自定义面板 UI
+```
+
+根目录的 [`provisioning.json`](./provisioning.json) 声明每个插件的受众（`audience`）与档位（`tier`）：
+
+- 本仓官方插件均为 `audience: "all"`（对所有用户播种安装）。
+- 该文件解析失败时客户端按 **fail-closed** 处理（整轮跳过播种），改动后务必保证 JSON 合法。
+
+`.tests/` 目录存放插件行为测试（vitest 风格，当前为存档状态，待接入 CI runner 后启用）。
+
+## 设计原则
+
+官方插件遵循几条硬约束，PR 也会按这些标准审查：
+
+1. **零依赖、纯沙箱**：插件运行在 Cindy 的隔离沙箱中，没有文件系统 / 任意网络访问；只能通过 `ghost.json` 显式声明的网络白名单与主机通道通信。
+2. **密钥不落插件**：用户的 API token 通过主机的 `/secrets` 只写通道保存，插件代码拿不到、也不该尝试拿到密钥字节（可参考 `cindy-github/settings.js` 的写法）。
+3. **工具描述即契约**：`ghost.json` 里每个 tool 的 `description` 是给 Agent 看的使用说明，必须准确描述行为边界（做什么、不做什么、返回什么）。
+4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
+
+## 本地开发
+
+插件编写的完整契约（`ghost.json` 全字段、卡槽、`cindy.send` 管子 API、打包流程）以 Cindy 客户端内置的 `ghost_forge_guide` 工具返回的手册为准 —— 在 Cindy 对话里说"帮我做一个插件"即可现拿现读。
+
+常用流程：
+
+1. 用客户端的 `ghost_forge_scaffold` 生成骨架，或直接参考本仓任一插件的写法。
+2. dev 环境下直接改本地文件、重启客户端即生效（播种按内容指纹收敛，不看 `version` 字段）。
+3. 完成后用 `ghost_forge_pack` 打包成 `.cindy` 装入验证。
+
+## 参与贡献
+
+**欢迎提交 PR！** 无论是修 bug、改进现有插件，还是提议新的官方插件。
+
+- **修 bug / 小改进**：直接提 PR，描述清楚改了什么、为什么。
+- **新增官方插件**：建议先开 issue 讨论定位与边界（避免与现有插件职责重叠），达成一致后再提 PR。
+- **改动 `ghost.json` 工具声明**：请在 PR 描述中说明对 Agent 行为的影响。
+- 合入后由 Cindy 客户端更新对本仓的 submodule 指针，随下一个客户端版本发布给所有用户。
+
+提 issue 报告问题时，请附上插件名、复现步骤和期望行为。
