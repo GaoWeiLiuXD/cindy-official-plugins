@@ -1,0 +1,25 @@
+name: Publish Cindy Plugins (Dev)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cindy-plugin-publish-dev-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-dev:
+    name: Publish plugins to dev
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish-cindy-plugins.yml
+    with:
+      deployment_name: dev
+      plugin_server_url: https://plugin-dev.cindy.com.cn
