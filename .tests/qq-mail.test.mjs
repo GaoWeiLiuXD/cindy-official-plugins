@@ -1,0 +1,293 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import test from 'node:test';
+import { createContext, Script } from 'node:vm';
+
+const pluginRoot = new URL('../qq-mail/', import.meta.url);
+const manifest = JSON.parse(readFileSync(new URL('ghost.json', pluginRoot), 'utf8'));
+const mainSource = readFileSync(new URL('main.js', pluginRoot), 'utf8');
+const settingsSource = readFileSync(new URL('settings.js', pluginRoot), 'utf8');
+const require = createRequire(import.meta.url);
+const worker = require('../qq-mail/src/worker.cjs');
+
+class FakeBroadcastChannel {
+  static instances = [];
+
+  constructor(name) {
+    this.name = name;
+    this.messages = [];
+    this.onmessage = null;
+    FakeBroadcastChannel.instances.push(this);
+  }
+
+  postMessage(message) {
+    this.messages.push(message);
+  }
+}
+
+function response(value, ok = true) {
+  return {
+    ok,
+    async json() {
+      return value;
+    },
+  };
+}
+
+function createMainHarness(nodeResponder, initial = {}) {
+  FakeBroadcastChannel.instances.length = 0;
+  const nodeRequests = [];
+  const sent = [];
+  const kv = { email: initial.email || 'user@qq.com' };
+  let secretSaved = initial.secretSaved !== false;
+  let hostHandler;
+  let resolveToolResult;
+  const fetchCalls = [];
+  const cindy = {
+    node: {
+      async request(request) {
+        nodeRequests.push(request);
+        return nodeResponder(request);
+      },
+    },
+    onHostMessage(handler) {
+      hostHandler = handler;
+    },
+    async send(message) {
+      sent.push(message);
+      if (message.type === 'tool-result' && resolveToolResult) {
+        const resolve = resolveToolResult;
+        resolveToolResult = null;
+        resolve(message);
+      }
+    },
+  };
+  async function fetch(path, options = {}) {
+    fetchCalls.push({ path, options });
+    if (path === '/kv') return response({ ...kv });
+    if (path === '/secrets') {
+      return response([{ key: 'qq_mail_authorization_code', saved: secretSaved }]);
+    }
+    return response(null, false);
+  }
+  new Script(mainSource, { filename: 'qq-mail/main.js' }).runInContext(createContext({
+    BroadcastChannel: FakeBroadcastChannel,
+    Map,
+    Number,
+    Object,
+    Promise,
+    String,
+    cindy,
+    fetch,
+    isFinite,
+    setTimeout,
+  }));
+  return {
+    channel: FakeBroadcastChannel.instances[0],
+    fetchCalls,
+    nodeRequests,
+    sent,
+    setSecretSaved(value) {
+      secretSaved = value;
+    },
+    async settings(action, payload, reqId = `settings-${action}`) {
+      const channel = FakeBroadcastChannel.instances[0];
+      channel.onmessage({ data: { type: 'settings-request', reqId, action, payload } });
+      for (let index = 0; index < 20; index += 1) {
+        await new Promise((resolve) => setImmediate(resolve));
+        const result = channel.messages.find((message) => message.reqId === reqId);
+        if (result) return result;
+      }
+      throw new Error('settings response timed out');
+    },
+    call(tool, args = {}) {
+      return new Promise((resolve) => {
+        resolveToolResult = resolve;
+        hostHandler({ type: 'tool-call', tool, args, callId: `call-${tool}` });
+      });
+    },
+  };
+}
+
+test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
+  assert.equal(manifest.id, 'qq-mail');
+  assert.equal(manifest.version, '0.2.0');
+  assert.deepEqual(manifest.slots, ['tool', 'node']);
+  assert.deepEqual(manifest.node.secretBindings, [{
+    key: 'qq_mail_authorization_code',
+    label: 'IMAP/SMTP 授权码',
+    methods: ['account/connect', 'mail/action'],
+    hint: 'QQ 邮箱生成的 IMAP/SMTP 授权码，不是 QQ 密码',
+    url: 'https://wx.mail.qq.com/account',
+  }]);
+  assert.match(manifest.description, /Cindy 安全保存/);
+});
+
+test('设置页把授权码直接写入 /secrets，BroadcastChannel 只发送邮箱', () => {
+  assert.match(settingsSource, /fetch\('\/secrets\/'\s*\+\s*SECRET_KEY/);
+  assert.match(settingsSource, /body:\s*JSON\.stringify\(\{\s*value:\s*value\s*\}\)/);
+  assert.match(settingsSource, /payload:\s*\{\s*email:\s*email\s*\}/);
+  assert.doesNotMatch(mainSource, /authorizationCode/);
+  assert.match(
+    settingsSource,
+    /fetch\('\/wake'\)\.then\(beginPosting,\s*beginPosting\)/,
+    '设置页必须等 /wake 完成后再开始发送连接请求',
+  );
+});
+
+test('main.js 的连接与邮件请求都只携带非敏感邮箱地址', async () => {
+  const harness = createMainHarness(async (request) => ({
+    ok: true,
+    result: request.method === 'account/connect'
+      ? { connected: true, email: 'user@qq.com', persistence: 'cindy-safe-storage' }
+      : { folder: 'INBOX', messages: [] },
+  }));
+
+  const connected = await harness.settings('connect', { email: 'USER@qq.com' });
+  assert.equal(connected.ok, true);
+  assert.equal(
+    JSON.stringify(harness.nodeRequests[0].params),
+    JSON.stringify({ email: 'user@qq.com' }),
+  );
+
+  const result = await harness.call('qq_mail', { action: 'search', text: '账单' });
+  assert.equal(result.ok, true);
+  assert.equal(harness.nodeRequests[1].method, 'mail/action');
+  assert.equal(harness.nodeRequests[1].params.email, 'user@qq.com');
+  assert.equal('credentials' in harness.nodeRequests[1].params, false);
+  assert.equal('authorizationCode' in harness.nodeRequests[1].params, false);
+});
+
+test('状态取自 Cindy 持久存储，不依赖 Worker 是否仍在运行', async () => {
+  const harness = createMainHarness(async () => {
+    throw new Error('status 不应唤醒 Worker');
+  });
+  const connected = await harness.call('qq_mail_status');
+  assert.equal(
+    JSON.stringify(connected.result),
+    JSON.stringify({
+      connected: true,
+      email: 'user@qq.com',
+      persistence: 'cindy-safe-storage',
+    }),
+  );
+  assert.equal(harness.nodeRequests.length, 0);
+
+  harness.setSecretSaved(false);
+  const disconnected = await harness.call('qq_mail_status');
+  assert.equal(disconnected.result.connected, false);
+  assert.equal(disconnected.result.email, 'user@qq.com');
+});
+
+test('Worker 构造安全的搜索条件并保留 IMAP folder + UID 身份', () => {
+  const criteria = worker.buildSearchCriteria({
+    text: 'project',
+    unread: true,
+    from: 'alice@example.com',
+    since: '2026-07-01',
+  });
+  assert.equal(criteria.seen, false);
+  assert.equal(criteria.from, 'alice@example.com');
+  assert.equal(criteria.since instanceof Date, true);
+  assert.deepEqual(criteria.or, [
+    { subject: 'project' },
+    { from: 'project' },
+    { to: 'project' },
+    { body: 'project' },
+  ]);
+  const summary = worker.summaryFromMessage({
+    uid: 42,
+    envelope: {
+      from: [{ name: 'Alice', address: 'alice@example.com' }],
+      to: [{ address: 'user@qq.com' }],
+      subject: 'Hello',
+      date: new Date('2026-07-24T08:00:00Z'),
+    },
+    flags: new Set(),
+    size: 100,
+  }, 'INBOX');
+  assert.equal(summary.uid, 42);
+  assert.equal(summary.folder, 'INBOX');
+  assert.equal(summary.unread, true);
+});
+
+test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + logout', async () => {
+  const calls = [];
+  class FakeImap {
+    async connect() { calls.push('connect'); }
+    async logout() { calls.push('logout'); }
+    close() { calls.push('close'); }
+    async list() {
+      calls.push('list');
+      return [{ path: 'INBOX', name: 'INBOX', delimiter: '/', specialUse: '\\Inbox', flags: new Set() }];
+    }
+  }
+  const deps = {
+    createImap(options) {
+      assert.equal(options.email, 'user@qq.com');
+      assert.equal(options.authorizationCode, 'abcdefghijklmnop');
+      return new FakeImap();
+    },
+    createSmtp() {
+      throw new Error('unexpected SMTP');
+    },
+    createComposer() {
+      throw new Error('unexpected composer');
+    },
+    parseMessage() {
+      throw new Error('unexpected parser');
+    },
+  };
+  const connectRequest = {
+    method: 'account/connect',
+    params: { email: 'user@qq.com' },
+    cindy: { secrets: { qq_mail_authorization_code: 'abcdefghijklmnop' } },
+  };
+  const connected = await worker.handleRequest(connectRequest, {
+    ...deps,
+    createSmtp() {
+      return {
+        async verify() { calls.push('smtp-verify'); },
+        close() { calls.push('smtp-close'); },
+      };
+    },
+  });
+  assert.equal(connected.persistence, 'cindy-safe-storage');
+  assert.equal(connectRequest.cindy.secrets.qq_mail_authorization_code, '');
+
+  calls.length = 0;
+  const actionRequest = {
+    method: 'mail/action',
+    params: {
+      email: 'user@qq.com',
+      action: { action: 'list_folders' },
+    },
+    cindy: { secrets: { qq_mail_authorization_code: 'abcdefghijklmnop' } },
+  };
+  const result = await worker.handleRequest(actionRequest, deps);
+  assert.deepEqual(calls, ['connect', 'list', 'logout']);
+  assert.equal(result.folders[0].path, 'INBOX');
+  assert.equal(actionRequest.cindy.secrets.qq_mail_authorization_code, '');
+  assert.equal(JSON.stringify(result).includes('abcdefghijklmnop'), false);
+});
+
+test('Worker 拒绝 params 伪造的授权码，只信任宿主注入字段', async () => {
+  await assert.rejects(
+    worker.handleRequest({
+      method: 'mail/action',
+      params: {
+        email: 'user@qq.com',
+        authorizationCode: 'forged-code',
+        action: { action: 'list_folders' },
+      },
+    }),
+    /授权码/,
+  );
+});
+
+test('Worker 将认证、网络与频控错误转换成可行动文案', () => {
+  assert.match(worker.humanizeError(Object.assign(new Error('Authentication failed'), { code: 'EAUTH' })), /授权码/);
+  assert.match(worker.humanizeError(Object.assign(new Error('connect timed out'), { code: 'ETIMEDOUT' })), /网络/);
+  assert.match(worker.humanizeError(new Error('Too many simultaneous connections')), /稍后/);
+});
