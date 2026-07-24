@@ -13,6 +13,7 @@ submodule 随桌面端打包或在启动时播种。
 | Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作           |
 | Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
 | Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
+| TapTap Maker     | [`taptap-maker`](./taptap-maker)         | 账号连接、项目同步、构建与官方动态工具                         |
 
 ## 仓库结构
 
@@ -37,8 +38,8 @@ cindy-art/
 
 官方插件遵循几条硬约束，PR 也会按这些标准审查：
 
-1. **零依赖、纯沙箱**：插件运行在 Cindy 的隔离沙箱中，没有文件系统 / 任意网络访问；只能通过 `ghost.json` 显式声明的网络白名单与主机通道通信。
-2. **密钥不落插件**：用户的 API token 通过主机的 `/secrets` 只写通道保存，插件代码拿不到、也不该尝试拿到密钥字节（可参考 `cindy-github/settings.js` 的写法）。
+1. **默认纯沙箱、能力显式声明**：普通插件运行在 Cindy 的隔离沙箱中，只能使用 `ghost.json` 声明的网络白名单与主机通道。确需 Node Runtime 的官方插件必须显式声明 `node` slot、固定入口和最小子进程边界。
+2. **密钥归属明确**：普通 API token 通过主机的 `/secrets` 只写通道保存；若官方第三方 Runtime 自己管理账号凭证（如 TapTap Maker），插件只负责把凭证交给 Runtime，不复制到 Cindy KV/Secret，也不在日志或页面状态中保留明文。
 3. **工具描述即契约**：`ghost.json` 里每个 tool 的 `description` 是给 Agent 看的使用说明，必须准确描述行为边界（做什么、不做什么、返回什么）。
 4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
 
@@ -51,6 +52,10 @@ cindy-art/
 1. 用客户端的 `ghost_forge_scaffold` 生成骨架，或直接参考本仓任一插件的写法。
 2. dev 环境下直接导入插件目录或 `.cindy` 包验证。
 3. 完成后用 `ghost_forge_pack` 打包成 `.cindy` 装入验证。
+
+`taptap-maker/vendor/taptap-maker/` 固定随插件分发官方
+`@taptap/maker@0.0.24`。升级时应整体替换 npm 包发布内容并同步更新插件版本，
+不要单独修改生成后的 `dist/maker.js`。
 
 ## 自动发布
 
