@@ -105,6 +105,7 @@ class FakeSettingsElement {
 
 class FakeSettingsBroadcastChannel {
   readonly listeners = new Set<EventListener>();
+  readonly messages: Array<Record<string, unknown>> = [];
   removeCalls = 0;
 
   addEventListener(type: string, listener: EventListener): void {
@@ -118,7 +119,13 @@ class FakeSettingsBroadcastChannel {
     }
   }
 
-  postMessage(): void {}
+  postMessage(message: Record<string, unknown>): void {
+    this.messages.push(message);
+  }
+
+  emitMessage(message: Record<string, unknown>): void {
+    for (const listener of [...this.listeners]) listener({ data: message });
+  }
 }
 
 interface SettingsFetchResponse {
@@ -606,6 +613,45 @@ describe('Cindy Notion settings', () => {
       expect(harness.channel.removeCalls).toBe(1);
       expect(harness.channel.listeners.size).toBe(0);
       expect(harness.elements.get('status')!.textContent).toBe('检查超时——请稍后重试');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('新连接检查会取消旧检查，旧超时不会覆盖新结果', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = await createSettingsHarness();
+
+      harness.elements.get('test')!.emit('click');
+      await flushSettingsTasks();
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      harness.elements.get('test')!.emit('click');
+      await flushSettingsTasks();
+      const latestRequest = harness.channel.messages.findLast(
+        (message) => message.type === 'test-connection',
+      );
+      expect(harness.channel.listeners.size).toBe(1);
+
+      harness.channel.emitMessage({
+        type: 'test-connection-result',
+        reqId: latestRequest?.reqId,
+        ok: true,
+        visibleCount: 1,
+      });
+      await flushSettingsTasks();
+      expect(harness.elements.get('status')!.textContent).toBe(
+        '连接完成，Cindy 已能读取授权内容',
+      );
+
+      await vi.advanceTimersByTimeAsync(14_000);
+      await flushSettingsTasks();
+
+      expect(harness.channel.listeners.size).toBe(0);
+      expect(harness.elements.get('status')!.textContent).not.toBe(
+        '检查超时——请稍后重试',
+      );
     } finally {
       vi.useRealTimers();
     }

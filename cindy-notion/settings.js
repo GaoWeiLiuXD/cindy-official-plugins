@@ -5,6 +5,7 @@
   var bc = new BroadcastChannel('cindy-notion');
   var statusTimer = null;
   var testSeq = 0;
+  var cancelActiveTest = null;
   var saved = false;
   var tail = '';
   var identity = null;
@@ -264,7 +265,9 @@
   }
 
   async function test() {
-    var reqId = 'notion-test-' + Date.now() + '-' + (++testSeq);
+    var generation = ++testSeq;
+    var reqId = 'notion-test-' + Date.now() + '-' + generation;
+    if (cancelActiveTest) cancelActiveTest();
     $('test').disabled = true;
     showStatus('正在验证 Token 并检查可见页面…', true);
     try {
@@ -272,14 +275,30 @@
     } catch (e) {
       /* 广播重发与超时会提供最终反馈。 */
     }
+    if (generation !== testSeq) return;
 
     var settled = false;
     var resendTimer = null;
-    var deadline = setTimeout(function () {
+    var deadline = null;
+
+    function cleanup() {
+      bc.removeEventListener('message', onMessage);
+      if (deadline) clearTimeout(deadline);
+      if (resendTimer) clearInterval(resendTimer);
+      if (cancelActiveTest === cancel) cancelActiveTest = null;
+    }
+
+    function cancel() {
       if (settled) return;
       settled = true;
-      bc.removeEventListener('message', onMessage);
-      if (resendTimer) clearInterval(resendTimer);
+      cleanup();
+    }
+
+    cancelActiveTest = cancel;
+    deadline = setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      cleanup();
       showStatus('检查超时——请稍后重试', true);
       void load();
     }, 15000);
@@ -289,9 +308,7 @@
       if (!message || message.type !== 'test-connection-result' || message.reqId !== reqId) return;
       if (settled) return;
       settled = true;
-      bc.removeEventListener('message', onMessage);
-      clearTimeout(deadline);
-      if (resendTimer) clearInterval(resendTimer);
+      cleanup();
 
       if (!message.ok) {
         showStatus(message.message || 'Token 无效，请检查后重新保存', true);
