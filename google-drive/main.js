@@ -129,7 +129,7 @@ async function drive(args, callId) {
     var folderId = args.folder_id || 'root';
     var folder = await api({
       url: BASE + '/files?q=' +
-        encodeURIComponent("'" + folderId.replace(/'/g, "\\'") + "' in parents and trashed=false") +
+        encodeURIComponent("'" + folderId.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "' in parents and trashed=false") +
         '&pageSize=' + clampInt(args.max_results, 25, 100) +
         '&fields=' + encodeURIComponent('files(' + FIELDS + ')'),
       account: args.account,
