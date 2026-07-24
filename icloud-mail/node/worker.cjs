@@ -66110,7 +66110,7 @@ var require_worker = __commonJS({
     var MAX_BODY_CHARS = 2e4;
     var MAX_SOURCE_BYTES = 12 * 1024 * 1024;
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    var SECRET_KEY = "icloud_mail_app_specific_password";
+    var SECRET_KEY = "icloud_mail_app_password";
     function normalizeCredentials(value) {
       const input = value && typeof value === "object" ? value : {};
       const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";

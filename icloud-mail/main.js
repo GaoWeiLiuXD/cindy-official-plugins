@@ -9,7 +9,7 @@
 /* global BroadcastChannel, cindy, fetch, setTimeout */
 
 var SETTINGS_CHANNEL = 'icloud-mail-settings';
-var SECRET_KEY = 'icloud_mail_app_specific_password';
+var SECRET_KEY = 'icloud_mail_app_password';
 var settingsRequests = new Map();
 
 function isObject(value) {

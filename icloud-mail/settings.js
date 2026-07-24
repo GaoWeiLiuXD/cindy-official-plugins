@@ -2,7 +2,7 @@
   'use strict';
 
   var CHANNEL = 'icloud-mail-settings';
-  var SECRET_KEY = 'icloud_mail_app_specific_password';
+  var SECRET_KEY = 'icloud_mail_app_password';
   var channel = new BroadcastChannel(CHANNEL);
   var pending = {};
 

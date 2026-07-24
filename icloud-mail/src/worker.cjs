@@ -15,7 +15,7 @@ const ICLOUD = Object.freeze({
 const MAX_BODY_CHARS = 20000;
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SECRET_KEY = 'icloud_mail_app_specific_password';
+const SECRET_KEY = 'icloud_mail_app_password';
 
 function normalizeCredentials(value) {
   const input = value && typeof value === 'object' ? value : {};

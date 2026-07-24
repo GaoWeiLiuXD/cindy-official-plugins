@@ -21,7 +21,7 @@
     "idleTimeoutSeconds": 3600,
     "secretBindings": [
       {
-        "key": "icloud_mail_app_specific_password",
+        "key": "icloud_mail_app_password",
         "label": "Apple 账户 App 专用密码",
         "methods": [
           "account/connect",

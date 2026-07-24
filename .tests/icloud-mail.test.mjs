@@ -68,7 +68,7 @@ function createMainHarness(nodeResponder, initial = {}) {
     fetchCalls.push({ path, options });
     if (path === '/kv') return response({ ...kv });
     if (path === '/secrets') {
-      return response([{ key: 'icloud_mail_app_specific_password', saved: secretSaved }]);
+      return response([{ key: 'icloud_mail_app_password', saved: secretSaved }]);
     }
     return response(null, false);
   }
@@ -142,12 +142,13 @@ test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.version, '0.1.0');
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [{
-    key: 'icloud_mail_app_specific_password',
+    key: 'icloud_mail_app_password',
     label: 'Apple 账户 App 专用密码',
     methods: ['account/connect', 'mail/action'],
     hint: '在 Apple 账户网站生成的 App 专用密码，不是 Apple 账户密码',
     url: 'https://account.apple.com/',
   }]);
+  assert.match(manifest.node.secretBindings[0].key, /^[a-z][a-z0-9_]{0,31}$/);
   assert.match(manifest.description, /Cindy 安全保存/);
 });
 
@@ -297,7 +298,7 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
   const connectRequest = {
     method: 'account/connect',
     params: { email: 'user@icloud.com' },
-    cindy: { secrets: { icloud_mail_app_specific_password: 'abcd-efgh-ijkl-mnop' } },
+    cindy: { secrets: { icloud_mail_app_password: 'abcd-efgh-ijkl-mnop' } },
   };
   const connected = await worker.handleRequest(connectRequest, {
     ...deps,
@@ -309,7 +310,7 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     },
   });
   assert.equal(connected.persistence, 'cindy-safe-storage');
-  assert.equal(connectRequest.cindy.secrets.icloud_mail_app_specific_password, '');
+  assert.equal(connectRequest.cindy.secrets.icloud_mail_app_password, '');
 
   calls.length = 0;
   const actionRequest = {
@@ -318,12 +319,12 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
       email: 'user@icloud.com',
       action: { action: 'list_folders' },
     },
-    cindy: { secrets: { icloud_mail_app_specific_password: 'abcd-efgh-ijkl-mnop' } },
+    cindy: { secrets: { icloud_mail_app_password: 'abcd-efgh-ijkl-mnop' } },
   };
   const result = await worker.handleRequest(actionRequest, deps);
   assert.deepEqual(calls, ['connect', 'list', 'logout']);
   assert.equal(result.folders[0].path, 'INBOX');
-  assert.equal(actionRequest.cindy.secrets.icloud_mail_app_specific_password, '');
+  assert.equal(actionRequest.cindy.secrets.icloud_mail_app_password, '');
   assert.equal(JSON.stringify(result).includes('abcd-efgh-ijkl-mnop'), false);
 });
 
