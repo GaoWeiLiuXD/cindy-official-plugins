@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    padding: 2px 0 0;
+    color: var(--text-primary, #1a1a1a);
+    font: 13px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .label-row { display: flex; align-items: center; gap: 8px; }
+  .name { font-weight: 500; }
+  .badge {
+    padding: 1px 8px; border-radius: 6px; font-size: 11px;
+    background: var(--surface-chip, #efefec); color: var(--text-tertiary, #8a8a86);
+  }
+  .account {
+    display: flex; align-items: center; gap: 8px; margin-top: 8px;
+    padding: 8px 12px; border: 1px solid var(--border-default, #e4e4e0);
+    border-radius: 10px; background: var(--surface-elevated, #ffffff);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary, #8a8a86); }
+  .dot.connected { background: #2e9d62; }
+  .dot.disconnected { background: var(--error-fg, #b53333); }
+  #account-state { flex: 1 1 auto; min-width: 0; }
+  .option { margin-top: 12px; }
+  .option-title { font-weight: 500; }
+  .option-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .input {
+    min-width: 0; flex: 1 1 auto; padding: 5px 10px; border-radius: 8px;
+    border: 1px solid var(--border-default, #e4e4e0);
+    background: var(--surface-elevated, #ffffff); color: inherit; font: inherit;
+  }
+  .input:focus { outline: 1px solid var(--text-tertiary, #8a8a86); }
+  .btn {
+    padding: 3px 12px; border-radius: 999px; cursor: pointer; flex: 0 0 auto;
+    border: 1px solid var(--border-default, #e4e4e0); background: transparent;
+    color: var(--text-secondary, #55554f); font: inherit; font-size: 11px;
+  }
+  .btn:hover { background: var(--surface-chip, #efefec); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn.primary {
+    border-color: var(--text-primary, #1a1a1a);
+    background: var(--text-primary, #1a1a1a);
+    color: var(--surface-elevated, #ffffff);
+  }
+  .btn.primary:hover { opacity: 0.88; }
+  .hint { margin-top: 6px; font-size: 11px; color: var(--text-tertiary, #8a8a86); }
+  .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .project-section {
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid var(--border-default, #e4e4e0);
+  }
+  .projects { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .project-row {
+    display: flex; align-items: center; gap: 9px; padding: 7px 10px;
+    border: 1px solid var(--border-default, #e4e4e0); border-radius: 9px;
+    background: var(--surface-elevated, #ffffff); cursor: pointer;
+  }
+  .project-row:hover { background: var(--surface-chip, #efefec); }
+  .project-row input { margin: 0; accent-color: var(--text-primary, #1a1a1a); }
+  .project-main { min-width: 0; flex: 1 1 auto; }
+  .project-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .project-meta {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--text-tertiary, #8a8a86); font-size: 11px;
+  }
+  .empty {
+    padding: 12px; border: 1px dashed var(--border-default, #e4e4e0);
+    border-radius: 9px; color: var(--text-tertiary, #8a8a86); text-align: center;
+  }
+  .sync-actions {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-top: 8px;
+  }
+  #message:empty, #project-message:empty { display: none; }
+</style>
+</head>
+<body>
+  <div class="label-row">
+    <span class="name">TapTap Maker 账号</span>
+    <span class="badge">官方 Runtime</span>
+  </div>
+  <div class="account">
+    <span id="state-dot" class="dot"></span>
+    <span id="account-state">正在检查登录状态…</span>
+  </div>
+
+  <section class="option">
+    <div class="option-title">方式一：浏览器授权</div>
+    <div class="option-row">
+      <button id="connect" class="btn" type="button">打开浏览器授权</button>
+    </div>
+    <p class="hint">由官方 CLI 打开 TapTap 页面，授权完成后自动连接。</p>
+  </section>
+
+  <form id="pat-form" class="option">
+    <div class="option-title">方式二：手动 PAT</div>
+    <div class="option-row">
+      <button id="get-pat" class="btn" type="button">获取 PAT</button>
+      <input id="pat" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴 TapTap Maker PAT" aria-label="TapTap Maker PAT">
+      <button id="save-pat" class="btn" type="submit">保存 PAT</button>
+    </div>
+    <p class="hint">“获取 PAT”会在系统默认浏览器打开 TapTap Maker 页面；PAT 由 TapTap Maker Runtime 验证和保存，设置页只显示脱敏摘要。</p>
+  </form>
+
+  <p id="message" class="hint"></p>
+
+  <section class="option project-section">
+    <div class="section-head">
+      <div class="option-title">同步 Maker 项目到本地</div>
+      <button id="refresh-projects" class="btn" type="button">刷新项目</button>
+    </div>
+    <p class="hint">筛选并选择最近项目（最多 5 个），再选择一个父目录；每个项目会初始化到独立子目录。</p>
+    <div class="option-row">
+      <input id="project-filter" class="input" type="search" autocomplete="off" placeholder="按项目名称或 ID 筛选" aria-label="筛选 TapTap Maker 项目">
+    </div>
+    <div id="projects" class="projects">
+      <div class="empty">连接账号后加载项目</div>
+    </div>
+    <div class="sync-actions">
+      <span id="selected-count" class="hint">已选择 0 个</span>
+      <button id="sync-projects" class="btn primary" type="button" disabled>选择父目录并同步</button>
+    </div>
+    <p id="project-message" class="hint"></p>
+  </section>
+
+  <script src="/settings.js"></script>
+</body>
+</html>

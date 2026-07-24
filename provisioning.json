@@ -27,6 +27,9 @@
     },
     "google-sheets": {
       "audience": "all"
+    },
+    "taptap-maker": {
+      "audience": "all"
     }
   }
 }

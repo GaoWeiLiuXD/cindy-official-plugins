@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 2,
+  "id": "taptap-maker",
+  "name": "TapTap Maker",
+  "description": "使用插件随附的官方 TapTap Maker Runtime 连接账号、同步或初始化项目、构建游戏并打开官方预览；无需自行安装 CLI 或配置 MCP。",
+  "whenToUse": "创建、初始化、检查、构建或预览 TapTap Maker 游戏，以及调用 Maker 素材和调试工具时使用。只操作当前本地会话工作区；Maker 工具返回“MCP error -32600: INSUFFICIENT_BALANCE”才表示积分不足，此时说明 Cindy Art 替代能力并等待用户确认。",
+  "version": "2.0.0",
+  "author": "Cindy",
+  "icon": "assets/icon.png",
+  "entry": "main.js",
+  "settingsHtml": "settings.html",
+  "settingsHeight": 760,
+  "slots": [
+    "tool",
+    "card",
+    "node",
+    "session-context",
+    "pick",
+    "preview"
+  ],
+  "card": {
+    "externalLinks": true
+  },
+  "node": {
+    "entry": "node/maker-mcp.cjs",
+    "entries": [
+      "node/account.cjs",
+      "node/maker-child.cjs"
+    ],
+    "protocol": "mcp-stdio",
+    "lifecycle": "on-demand",
+    "idleTimeoutSeconds": 600,
+    "childSpawn": true
+  },
+  "preview": {
+    "hosts": [
+      "maker.taptap.cn"
+    ]
+  },
+  "command": "taptap-maker",
+  "tools": [
+    {
+      "name": "maker_status",
+      "description": "检查当前会话工作区的 TapTap Maker 状态，包括登录、项目绑定、Git、Python、Lua LSP 与开发工具就绪情况。只操作宿主提供的当前本地工作区。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "skip_remote_sync": {
+            "type": "boolean",
+            "description": "频繁轮询时可设为 true，跳过远端 Git 同步检查。"
+          }
+        }
+      }
+    },
+    {
+      "name": "maker_login",
+      "description": "通过 TapTap Maker 官方 CLI 打开浏览器授权并连接账号。也可在插件设置页手动配置已有 PAT。"
+    },
+    {
+      "name": "maker_apps",
+      "description": "列出当前 TapTap Maker 账号下可用的项目，供初始化前选择 app_id。"
+    },
+    {
+      "name": "maker_init",
+      "description": "把当前会话工作区初始化为 TapTap Maker 项目。已有项目传 app_id；仅当用户明确要求创建项目时传 create=true 与 name。不会修改用户的 Agent MCP 配置。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "app_id": {
+            "type": "string",
+            "description": "已有 TapTap Maker 项目的 app id，与 create/name 二选一。"
+          },
+          "create": {
+            "type": "boolean",
+            "description": "仅当用户明确要求创建新项目时传 true。"
+          },
+          "name": {
+            "type": "string",
+            "description": "新项目名称；create=true 时必填。"
+          }
+        }
+      }
+    },
+    {
+      "name": "maker_doctor",
+      "description": "诊断当前会话工作目录的 TapTap Maker 本地开发环境与项目配置。"
+    },
+    {
+      "name": "maker_build",
+      "description": "通过插件随附的官方 Runtime 同步、提交并构建当前会话工作区。仅在用户明确要求构建、运行、预览、提交或推送 Maker 游戏时调用；成功后在当前会话右侧浏览器打开官方预览，并返回可点击地址。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "entry": {
+            "type": "string",
+            "description": "可选，单人游戏 Lua 入口文件，相对 scriptsPath。"
+          },
+          "scriptsPath": {
+            "type": "string",
+            "description": "可选，脚本目录，相对项目根目录。"
+          },
+          "entry_client": {
+            "type": "string",
+            "description": "可选，多人游戏客户端 Lua 入口。"
+          },
+          "entry_server": {
+            "type": "string",
+            "description": "可选，多人游戏服务端 Lua 入口。"
+          },
+          "multiplayer": {
+            "type": "object",
+            "description": "可选，官方 Maker 多人游戏配置。"
+          },
+          "message": {
+            "type": "string",
+            "description": "可选，本次 Maker 提交说明。"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "可选，本次要提交的项目内相对文件路径。"
+          },
+          "confirm_remote_build_without_submit": {
+            "type": "boolean",
+            "description": "仅当用户明确要求不提交本地改动、只构建远端版本时传 true。"
+          }
+        }
+      }
+    },
+    {
+      "name": "maker_list_tools",
+      "description": "列出当前工作区实时可用的官方 Maker 动态工具及参数 schema。调用 maker_call_tool 前先调用本工具，不要凭记忆硬编码工具名。"
+    },
+    {
+      "name": "maker_call_tool",
+      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具。素材能力优先使用 Maker；只有错误完整匹配“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，并告知 Cindy Art 可作为替代，等待用户确认后再切换。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "动态工具名，来自最近一次 maker_list_tools。"
+          },
+          "args": {
+            "type": "object",
+            "description": "该动态工具的参数对象；无参数时传 {}。"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    }
+  ]
+}

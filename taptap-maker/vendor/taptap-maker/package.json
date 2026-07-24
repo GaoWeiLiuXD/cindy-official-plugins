@@ -1,0 +1,46 @@
+{
+  "name": "@taptap/maker",
+  "version": "0.0.24",
+  "type": "module",
+  "description": "TapTap Maker local development CLI and MCP server",
+  "main": "dist/maker.js",
+  "bin": {
+    "taptap-maker": "bin/taptap-maker"
+  },
+  "exports": {
+    ".": "./dist/maker.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/taptap-maker",
+    "dist/maker.js",
+    "skills/taptap-maker-local/",
+    "skills/taptap-maker-dev-kit-guide/",
+    "skills/update-taptap-mcp/",
+    "README.md"
+  ],
+  "keywords": [
+    "taptap",
+    "maker",
+    "mcp",
+    "cli",
+    "game-development"
+  ],
+  "author": "TapTap Team",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.14.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taptap/instant-games-open-mcp.git",
+    "directory": "packages/maker"
+  },
+  "homepage": "https://github.com/taptap/instant-games-open-mcp/tree/main/packages/maker#readme",
+  "bugs": {
+    "url": "https://github.com/taptap/instant-games-open-mcp/issues"
+  }
+}
