@@ -1,0 +1,13 @@
+{
+  "name": "Google Sheets",
+  "description": "Google Sheets を個別に接続し、シート一覧、範囲の読み取り、セルへの書き込みを行います。Sheets に必要な権限だけを要求し、認証とトークンはホストが管理します。",
+  "whenToUse": "Google Sheets のデータを読み取りまたは更新するときに使用します。先にこのプラグインの詳細画面で Google Sheets アカウントを個別に接続してください。",
+  "tools": {
+    "google_sheets_accounts": {
+      "description": "このプラグインに接続済みの Google Sheets アカウントと状態を一覧表示します。アカウントは Google Sheets プラグインの詳細画面で個別に認証する必要があります。"
+    },
+    "google_sheets": {
+      "description": "Google Sheets の操作 list_sheets、read_range、write_range を実行します。セルに書き込む前に対象範囲と内容をユーザーに示し、確認を得る必要があります。"
+    }
+  }
+}

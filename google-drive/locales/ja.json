@@ -1,0 +1,13 @@
+{
+  "name": "Google Drive",
+  "description": "Google Drive を個別に接続し、クラウド上のファイルを検索、閲覧、ダウンロード、アップロード、移動、削除します。Drive に必要な権限だけを要求し、認証とトークンはホストが管理します。",
+  "whenToUse": "Google Drive、Docs、Slides のファイルを検索または管理するときに使用します。先にこのプラグインの詳細画面で Google Drive アカウントを個別に接続してください。",
+  "tools": {
+    "google_drive_accounts": {
+      "description": "このプラグインに接続済みの Google Drive アカウントと状態を一覧表示します。アカウントは Google Drive プラグインの詳細画面で個別に認証する必要があります。"
+    },
+    "google_drive": {
+      "description": "Google Drive の操作 search、list_folder、get_meta、read、download、upload、move、delete を実行します。query_mode=raw を明示しない限り、search は query をファイル名の一部として扱います。download では ghost_call 最上位の save_dir に保存先ディレクトリを指定し、ホストに save_deposit を注入させます。削除、上書き、移動、アップロードにはユーザーの明確な意図が必要です。"
+    }
+  }
+}

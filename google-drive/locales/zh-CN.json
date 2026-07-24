@@ -1,0 +1,13 @@
+{
+  "name": "Google Drive",
+  "description": "独立连接 Google Drive：搜索、读取、下载、上传、移动和删除云端文件。只申请 Drive 所需权限，授权与令牌由宿主管理。",
+  "whenToUse": "需要搜索或管理 Google Drive、Docs、Slides 文件时使用。请先在本插件详情页单独连接 Google Drive 账号。",
+  "tools": {
+    "google_drive_accounts": {
+      "description": "列出本插件已连接的 Google Drive 账号及状态。账号必须先在 Google Drive 插件详情页单独授权。"
+    },
+    "google_drive": {
+      "description": "执行 Google Drive 操作：search、list_folder、get_meta、read、download、upload、move、delete。search 默认把 query 当作文件名片段，只有显式传 query_mode=raw 才按 Drive 查询语法发送。download 需要在 ghost_call 顶层 save_dir 提供落盘目录，由宿主注入 save_deposit。删除、覆盖、移动和上传必须有用户明确意图。"
+    }
+  }
+}

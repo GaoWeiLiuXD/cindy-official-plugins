@@ -1,0 +1,10 @@
+{
+  "name": "Mermaid",
+  "description": "Cindy 内蔵の Mermaid 図表プラグインです。Agent が作成した Mermaid ソースを決定的に正規化し、よくある機械的な構文ミスを修正して、そのまま描画できる Mermaid Markdown を返します。",
+  "whenToUse": "Mermaid のフローチャート、シーケンス図、アーキテクチャ図、状態図、クラス図、ガントチャート、ER 図の作成・修正、または Mermaid ソースの整理が必要なときに使用します。",
+  "tools": {
+    "prepare_mermaid": {
+      "description": "完全な Mermaid ソースを整形し、回答にそのまま入れられる Markdown コードブロックを返します。ユーザーが Mermaid 図を求めたら、まず完全な Mermaid ソースを作成してからこのツールを呼び、返された markdown を書き写したり変更したりせず最終図として使用します。改行の正規化と一般的な機械的構文修正は行いますが、Mermaid エンジンで parse/render は実行せず、意味や完全な構文の妥当性は保証しません。{ markdown, source, changed, validation: \"not-performed\", note } を返します。"
+    }
+  }
+}

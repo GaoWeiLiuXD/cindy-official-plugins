@@ -1,0 +1,13 @@
+{
+  "name": "Google Calendar",
+  "description": "独立连接 Google Calendar：查询日程与空闲时间，创建或修改会议。只申请日历所需权限，授权与令牌由宿主管理。",
+  "whenToUse": "需要查询 Google 日历、安排会议、修改或取消日程时使用。请先在本插件详情页单独连接 Google Calendar 账号。",
+  "tools": {
+    "google_calendar_accounts": {
+      "description": "列出本插件已连接的 Google Calendar 账号及状态。账号必须先在 Google Calendar 插件详情页单独授权。"
+    },
+    "google_calendar": {
+      "description": "执行 Google Calendar 操作：list_calendars、list_events、get_event、create_event、update_event、delete_event。创建、修改和删除日程必须有用户明确意图。"
+    }
+  }
+}

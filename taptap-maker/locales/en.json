@@ -1,0 +1,31 @@
+{
+  "name": "TapTap Maker",
+  "description": "Use the bundled official TapTap Maker Runtime to connect an account, sync or initialize projects, build games, and open official previews. No separate CLI installation or MCP configuration is required.",
+  "whenToUse": "Use to create, initialize, inspect, build, or preview TapTap Maker games and call Maker asset or debugging tools. It operates only on the current local workspace. Only the exact error “MCP error -32600: INSUFFICIENT_BALANCE” means insufficient credits; then offer Art and wait for confirmation.",
+  "tools": {
+    "maker_status": {
+      "description": "Inspect the current session workspace's TapTap Maker status, including login, project binding, Git, Python, Lua LSP, and development-tool readiness. Operates only on the current local workspace supplied by the host."
+    },
+    "maker_login": {
+      "description": "Open browser authorization through the official TapTap Maker CLI and connect an account. An existing PAT can also be configured manually in the plugin settings."
+    },
+    "maker_apps": {
+      "description": "List projects available to the current TapTap Maker account so an app_id can be selected before initialization."
+    },
+    "maker_init": {
+      "description": "Initialize the current session workspace as a TapTap Maker project. Pass app_id for an existing project. Only when the user explicitly asks to create a project, pass create=true and name. Does not modify the user's Agent MCP configuration."
+    },
+    "maker_doctor": {
+      "description": "Diagnose the TapTap Maker local development environment and project configuration in the current session work directory."
+    },
+    "maker_build": {
+      "description": "Use the bundled official Runtime to sync, submit, and build the current session workspace. Call only when the user explicitly asks to build, run, preview, submit, or push a Maker game. On success, open the official preview in the current session's right-side browser and return a clickable URL."
+    },
+    "maker_list_tools": {
+      "description": "List the official Maker dynamic tools and parameter schemas currently available in the workspace. Always call this before maker_call_tool; do not rely on remembered tool names."
+    },
+    "maker_call_tool": {
+      "description": "Call an official Maker dynamic tool just returned by maker_list_tools. If the Runtime says the project is not initialized or .project/project.json is missing, explain that a build will submit and push the project and ask whether to build or preview now. Only after confirmation call maker_build, then retry; never build without confirmation. After build prerequisites are complete, if the Runtime explicitly returns missing_taptap_identity, the plugin calls generate_test_qrcode once and retries. If it still requires a user choice such as screen orientation, stop and ask. Prefer Maker for assets. Only when the complete error exactly matches “MCP error -32600: INSUFFICIENT_BALANCE” should you explain insufficient credits, offer the Art plugin as an alternative, and wait for confirmation before switching."
+    }
+  }
+}

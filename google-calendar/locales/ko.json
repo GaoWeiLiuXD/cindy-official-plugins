@@ -1,0 +1,13 @@
+{
+  "name": "Google Calendar",
+  "description": "Google Calendar를 독립적으로 연결해 일정과 빈 시간을 조회하고 회의를 생성하거나 수정합니다. Calendar에 필요한 권한만 요청하며 인증과 토큰은 호스트가 관리합니다.",
+  "whenToUse": "Google 캘린더 일정을 조회하거나 회의를 예약하고 일정을 수정 또는 취소할 때 사용합니다. 먼저 이 플러그인 상세 화면에서 Google Calendar 계정을 별도로 연결하세요.",
+  "tools": {
+    "google_calendar_accounts": {
+      "description": "이 플러그인에 연결된 Google Calendar 계정과 상태를 나열합니다. 계정은 Google Calendar 플러그인 상세 화면에서 별도로 인증해야 합니다."
+    },
+    "google_calendar": {
+      "description": "Google Calendar 작업 list_calendars, list_events, get_event, create_event, update_event, delete_event를 실행합니다. 일정 생성, 수정, 삭제에는 사용자의 명확한 의도가 필요합니다."
+    }
+  }
+}

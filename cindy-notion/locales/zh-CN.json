@@ -1,0 +1,31 @@
+{
+  "name": "Notion",
+  "description": "连接你的 Notion 工作区，搜索和读取页面、查询 data source，并创建或更新页面与评论。使用 Notion 官方 Internal Integration Token；Token 由 Cindy 加密保管，只注入 api.notion.com 请求。",
+  "whenToUse": "需要在 Notion 中搜索资料、读取页面或数据库、查询 data source、创建页面、追加或修改页面内容、更新属性、添加评论时使用。请先在插件详情页连接 Notion，并把目标页面分享给该 Integration。",
+  "tools": {
+    "notion_status": {
+      "description": "验证 Notion Token，并检查当前 Integration 实际可见的页面与 data source 数量，返回 bot、工作区、可见内容样本和明确的授权诊断。连接异常、搜索为空或用户询问连接状态时使用。"
+    },
+    "notion_search": {
+      "description": "按标题搜索已分享给 Integration 的 Notion 页面或 data source，返回结果和下一页 cursor。省略搜索词时列出最近编辑的内容。"
+    },
+    "notion_fetch": {
+      "description": "按 ID 或 Notion URL 读取 page、data_source、database 或 block。page 默认同时返回页面元数据与完整 Markdown；block 可同时返回一级子块。读取页面正文和 data source schema 时优先使用。"
+    },
+    "notion_query_data_source": {
+      "description": "查询 Notion data source，支持原生 filter、sorts 与分页。先用 notion_fetch 并传 object_type=data_source 获取属性 schema，再构造过滤条件。"
+    },
+    "notion_create_page": {
+      "description": "仅在用户明确要求时，在 Notion page 或 data source 下创建页面。向 data source 写入前会先读取 schema 并校验 properties；常见 Markdown 会转换为 Notion blocks。"
+    },
+    "notion_update_page": {
+      "description": "仅在用户明确要求时更新 Notion 页面的属性、图标、封面或 Markdown。写 properties 前会读取页面及 data source schema；整页覆盖、归档、移入回收站或删除子内容时必须传 confirm:true。"
+    },
+    "notion_append_content": {
+      "description": "仅在用户明确要求时，把 Markdown 追加到 Notion 页面或 block 末尾，不覆盖原内容。支持标题、段落、列表、待办、引用、分隔线和代码块。"
+    },
+    "notion_create_comment": {
+      "description": "仅在用户明确要求时，在已分享的 Notion 页面添加纯文本评论，并返回新评论信息。"
+    }
+  }
+}

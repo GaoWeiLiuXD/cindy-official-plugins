@@ -1,0 +1,31 @@
+{
+  "name": "Notion",
+  "description": "自分の Notion ワークスペースを接続して、ページの検索・閲覧、データソースの照会、ページやコメントの作成・更新を行います。Notion 公式の Internal Integration Token を使用し、Cindy が暗号化して保管し、api.notion.com へのリクエストにだけ注入します。",
+  "whenToUse": "Notion 内の検索、ページやデータベースの閲覧、データソースの照会、ページ作成、内容の追記・編集、プロパティ更新、コメント追加に使用します。先にプラグイン詳細で Notion を接続し、対象ページを Integration と共有してください。",
+  "tools": {
+    "notion_status": {
+      "description": "Notion トークンを検証し、現在の Integration が実際に閲覧できるページとデータソースの件数を確認します。bot・ワークスペース情報、閲覧可能な内容の例、明確な認可診断を返します。接続異常、検索結果が空、またはユーザーが接続状態を尋ねたときに使用します。"
+    },
+    "notion_search": {
+      "description": "Integration と共有された Notion ページまたはデータソースをタイトルで検索し、結果と次ページ cursor を返します。検索語を省略すると最近編集された内容を一覧表示します。"
+    },
+    "notion_fetch": {
+      "description": "ID または Notion URL で page、data_source、database、block を読み取ります。page は既定でメタデータと完全な Markdown を返し、block は直下の子ブロックも返せます。ページ本文やデータソース schema の取得に優先して使用します。"
+    },
+    "notion_query_data_source": {
+      "description": "Notion データソースをネイティブ filter、sorts、ページング付きで照会します。先に notion_fetch へ object_type=data_source を渡してプロパティ schema を取得し、それからフィルターを組み立てます。"
+    },
+    "notion_create_page": {
+      "description": "ユーザーが明確に要求した場合だけ、Notion の page または data source の下にページを作成します。data source へ書き込む前に schema を読み取り properties を検証します。一般的な Markdown は Notion blocks に変換します。"
+    },
+    "notion_update_page": {
+      "description": "ユーザーが明確に要求した場合だけ、Notion ページのプロパティ、アイコン、カバー、Markdown を更新します。properties を書く前にページと data source schema を読み取ります。ページ全体の置換、アーカイブ、ゴミ箱への移動、子内容の削除には confirm:true が必要です。"
+    },
+    "notion_append_content": {
+      "description": "ユーザーが明確に要求した場合だけ、既存内容を上書きせず Notion ページまたは block の末尾へ Markdown を追記します。見出し、段落、リスト、To-do、引用、区切り線、コードブロックに対応します。"
+    },
+    "notion_create_comment": {
+      "description": "ユーザーが明確に要求した場合だけ、共有済み Notion ページにプレーンテキストのコメントを追加し、新しいコメント情報を返します。"
+    }
+  }
+}

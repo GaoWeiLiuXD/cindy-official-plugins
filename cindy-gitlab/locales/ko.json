@@ -1,0 +1,13 @@
+{
+  "name": "GitLab",
+  "description": "gitlab.com, 자체 호스팅, 다중 인스턴스를 지원하는 GitLab 내장 서비스 플러그인입니다. 인스턴스 URL과 api scope가 있는 Personal Access Token을 추가하면 issue, Merge Request, 리뷰, 저장소, CI, release, 검색 등 카탈로그화된 107개 작업을 읽고 쓸 수 있습니다. 각 토큰은 호스트가 암호화해 보관하며 해당 인스턴스 요청에만 주입합니다.",
+  "whenToUse": "gitlab.com, 회사 또는 자체 호스팅 GitLab 인스턴스에 사용합니다. github.com 링크는 GitHub을 사용하세요. issue와 Merge Request 조회·수정, 코드 리뷰 제출·답변·게시, Merge Request 병합·rebase, 저장소·브랜치·commit·파일·CI pipeline·job 로그 조회, release·tag·브랜치 관리, 인스턴스 검색, 저장소 아카이브 다운로드를 지원합니다. 먼저 플러그인 상세 화면에서 인스턴스와 토큰을 추가하세요.",
+  "tools": {
+    "list_tools": {
+      "description": "issues, merge_requests, repo, commits, events, search, projects, users, pipelines, jobs, discussions, approvals, draft_notes, reactions, groups, environments, wiki, snippets, releases, meta를 포함한 107개 GitLab 작업을 나열합니다. category를 생략하면 카테고리 이름, 개수, 설명을 반환하고, category를 지정하면 해당 카테고리의 모든 작업과 설명 및 매개변수를 반환합니다."
+    },
+    "call_tool": {
+      "description": "list_tools가 반환한 GitLab 작업을 해당 매개변수 schema에 맞는 args로 실행합니다. 프로젝트 작업에는 group/subgroup/project 형식의 project_path를 명시해야 하며 Git 저장소에서는 git remote get-url origin으로 추론할 수 있습니다. 인스턴스가 여러 개면 instance에 연결 ID 또는 인스턴스 URL을 지정하고 생략하면 기본 연결을 사용합니다. 기본적으로 avatar와 _links 필드를 제거하고 raw=true이면 원본 JSON을 반환합니다. 결과가 50KB를 넘으면 세션 작업 디렉터리에 쓰고 파일 경로만 반환하며 out_file로 경로를 지정할 수 있습니다. 저장소 아카이브 다운로드에는 ghost_call 최상위 save_dir가 필요하고 upload_project_file에는 사용자 미디어를 최상위 attachments로 전달해야 합니다."
+    }
+  }
+}

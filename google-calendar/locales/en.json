@@ -1,0 +1,13 @@
+{
+  "name": "Google Calendar",
+  "description": "Connect Google Calendar independently to view schedules and availability or create and update meetings. Only Calendar permissions are requested; authorization and tokens are managed by the host.",
+  "whenToUse": "Use this plugin to view Google Calendar events, schedule meetings, or update and cancel events. Connect a Google Calendar account separately in this plugin's details first.",
+  "tools": {
+    "google_calendar_accounts": {
+      "description": "List the Google Calendar accounts connected to this plugin and their status. Accounts must be authorized separately in the Google Calendar plugin details."
+    },
+    "google_calendar": {
+      "description": "Run a Google Calendar operation: list_calendars, list_events, get_event, create_event, update_event, or delete_event. Creating, updating, or deleting events requires clear user intent."
+    }
+  }
+}
