@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/settings.css">
+</head>
+<body>
+  <section class="settings" aria-labelledby="page-title">
+    <header class="page-head">
+      <h2 id="page-title">Notion</h2>
+      <p>连接后，Cindy 可以读取和编辑你授权的 Notion 页面。</p>
+    </header>
+
+    <section class="connection-row" id="connection-row" aria-label="连接状态">
+      <div class="connection-copy">
+        <div class="status-title">
+          <span class="status-dot" aria-hidden="true"></span>
+          <strong id="hero-status">尚未连接</strong>
+        </div>
+        <p id="workspace-meta">完成下面 3 个步骤后即可使用</p>
+      </div>
+      <div class="connection-actions">
+        <button class="btn secondary" id="clear" type="button" hidden>清除</button>
+        <button class="btn primary" id="rebind" type="button">开始连接</button>
+      </div>
+    </section>
+
+    <section class="steps-section" aria-labelledby="steps-title">
+      <button class="steps-toggle" id="steps-toggle" type="button" aria-expanded="true">
+        <span>
+          <strong id="steps-title">连接步骤</strong>
+          <small id="steps-summary">尚未完成</small>
+        </span>
+        <span class="toggle-copy" id="toggle-copy">收起步骤</span>
+        <span class="toggle-chevron" aria-hidden="true">⌃</span>
+      </button>
+
+      <div class="step-list" id="step-list">
+        <article class="step" id="step-create">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-index">01</span>
+            <span class="step-body">
+              <strong>创建 Internal connection</strong>
+              <small>在 Notion Developer portal 中创建 “Cindy Notion”</small>
+            </span>
+            <span class="step-result">待完成</span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="step-panel">
+            <p>进入 Internal connections，创建连接后在 Configuration 中复制 Installation access token。</p>
+            <a href="https://www.notion.so/profile/integrations/internal">打开 Internal connections ↗</a>
+          </div>
+        </article>
+
+        <article class="step" id="step-token">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-index">02</span>
+            <span class="step-body">
+              <strong>保存 Token</strong>
+              <small>复制以 <code>ntn_</code> 开头的访问令牌</small>
+            </span>
+            <span class="step-result">待完成</span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="step-panel">
+            <div class="token-row">
+              <label class="token-input">
+                <span class="sr-only">Notion Token</span>
+                <input id="token" type="password" placeholder="粘贴 ntn_…" autocomplete="off" spellcheck="false">
+                <button id="eye" type="button" aria-label="显示或隐藏 Token">显示</button>
+              </label>
+              <button class="btn primary" id="save" type="button">保存并检查</button>
+            </div>
+            <p class="helper">Token 只保存在 Cindy 保险库，无法被页面读回。</p>
+          </div>
+        </article>
+
+        <article class="step" id="step-access">
+          <button class="step-head" type="button" aria-expanded="false">
+            <span class="step-index">03</span>
+            <span class="step-body">
+              <strong>授权页面</strong>
+              <small>在 Content access 中选择 Cindy 可以访问的内容</small>
+            </span>
+            <span class="step-result">待完成</span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="step-panel">
+            <p>选择 Cindy Notion → Content access → Edit access，可批量授权页面；也可以在单个页面的 Connections 菜单中添加。</p>
+            <div class="panel-actions">
+              <a href="https://www.notion.so/profile/integrations/internal">打开 Content access ↗</a>
+              <button class="btn secondary" id="test" type="button">检查页面</button>
+            </div>
+            <div id="visible-list" class="visible-list"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <p id="status" class="status-message" role="status" aria-live="polite"></p>
+  </section>
+  <script src="/settings.js"></script>
+</body>
+</html>

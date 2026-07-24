@@ -12,6 +12,7 @@ submodule 随桌面端打包或在启动时播种。
 | Cindy GitHub     | [`cindy-github`](./cindy-github)         | GitHub issue / PR / code review / Actions / release 全流程操作 |
 | Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作           |
 | Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
+| Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
 | Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
 | TapTap Maker     | [`taptap-maker`](./taptap-maker)         | 账号连接、项目同步、构建与官方动态工具                         |
 
