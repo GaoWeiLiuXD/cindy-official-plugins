@@ -90,8 +90,11 @@ function makerErrorText(stdout, stderr) {
 function isMissingLogin(error) {
   const message = String(error && error.message ? error.message : error).toLowerCase();
   return message.includes('maker pat not found')
+    || message.includes('maker pat missing')
     || message.includes('maker jwt not found')
+    || message.includes('pat expired')
     || message.includes('http 401')
+    || message.includes('http 403')
     || message.includes('unauthorized');
 }
 

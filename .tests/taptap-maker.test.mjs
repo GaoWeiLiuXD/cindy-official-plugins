@@ -270,6 +270,13 @@ test('项目同步失败返回可行动原因且不回显底层敏感信息', ()
       message: 'TapTap Maker 登录已失效，请重新连接账号后重试',
     },
   );
+  for (const loginError of [
+    'Maker PAT missing. Run `taptap-maker login`.',
+    'Maker PAT expired',
+    'Maker API returned HTTP 403 Forbidden',
+  ]) {
+    assert.equal(projectSyncFailure(new Error(loginError)).code, 'AUTH_REQUIRED');
+  }
   assert.deepEqual(
     { ...projectSyncFailure(new Error('目标目录已被其他内容占用：/Users/example/private')) },
     {
