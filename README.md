@@ -15,6 +15,7 @@ submodule 随桌面端打包或在启动时播种。
 | Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
 | Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
 | 163 邮箱         | [`163-mail`](./163-mail)                 | 通过 IMAP/SMTP 搜索、阅读、整理、撰写和发送 163 邮箱邮件       |
+| QQ 邮箱          | [`qq-mail`](./qq-mail)                   | Cindy 安全保存授权码，按需通过 IMAP/SMTP 搜索、阅读、整理和发送 |
 | TapTap Maker     | [`taptap-maker`](./taptap-maker)         | 账号连接、项目同步、构建与官方动态工具                         |
 
 ## 仓库结构
@@ -41,7 +42,7 @@ cindy-art/
 官方插件遵循几条硬约束，PR 也会按这些标准审查：
 
 1. **默认纯沙箱、能力显式声明**：普通插件运行在 Cindy 的隔离沙箱中，只能使用 `ghost.json` 声明的网络白名单与主机通道。确需 Node Runtime 的官方插件必须显式声明 `node` slot、固定入口和最小子进程边界。
-2. **密钥归属明确**：普通 API token 通过主机的 `/secrets` 只写通道保存；若官方第三方 Runtime 自己管理账号凭证（如 TapTap Maker），插件只负责把凭证交给 Runtime，不复制到 Cindy KV/Secret，也不在日志或页面状态中保留明文。
+2. **密钥归属明确**：普通 API token 通过主机的 `/secrets` 只写通道保存；Node 插件需明文凭证时，用 `node.secretBindings` 将其限制到指定 Worker 方法并由宿主临时注入，不经过浏览器 `main.js`、Agent 参数或日志。若官方第三方 Runtime 自己管理账号凭证（如 TapTap Maker），插件只负责把凭证交给 Runtime，不复制到 Cindy KV/Secret，也不在日志或页面状态中保留明文。
 3. **工具描述即契约**：`ghost.json` 里每个 tool 的 `description` 是给 Agent 看的使用说明，必须准确描述行为边界（做什么、不做什么、返回什么）。
 4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
 
