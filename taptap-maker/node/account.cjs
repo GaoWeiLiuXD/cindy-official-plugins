@@ -1,6 +1,7 @@
 'use strict';
 
 const childProcess = require('node:child_process');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -245,7 +246,14 @@ function projectDirectoryName(project) {
     .slice(0, 80);
   const fallback = project.id.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 80);
   const name = cleaned || fallback || 'maker-project';
-  return /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(name) ? `maker-${name}` : name;
+  const safeName = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(name)
+    ? `maker-${name}`
+    : name;
+  const projectKey = crypto.createHash('sha256').update(project.id).digest('hex').slice(0, 16);
+  const keyedName = safeName
+    .slice(0, 80 - projectKey.length - 1)
+    .replace(/[. ]+$/g, '') || 'maker-project';
+  return `${keyedName}-${projectKey}`;
 }
 
 async function ensureTargetAvailable(targetDir) {
@@ -390,14 +398,8 @@ async function executeAction(args) {
       return { ok: false, message: '所选项目已不可用，请刷新列表后重试' };
     }
 
-    const usedNames = new Set();
     const targets = selected.map(function target(project) {
-      let directoryName = projectDirectoryName(project);
-      if (usedNames.has(directoryName.toLocaleLowerCase())) {
-        directoryName = `${directoryName}-${project.id.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) || 'project'}`;
-      }
-      usedNames.add(directoryName.toLocaleLowerCase());
-      return { project, targetDir: path.join(parentDir, directoryName) };
+      return { project, targetDir: path.join(parentDir, projectDirectoryName(project)) };
     });
     for (const target of targets) await ensureTargetAvailable(target.targetDir);
 

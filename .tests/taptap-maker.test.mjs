@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
 import { EventEmitter, once } from 'node:events';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
@@ -13,11 +14,13 @@ import rootRouterModule from '../taptap-maker/node/mcp-root-router.cjs';
 
 const pluginRoot = new URL('../taptap-maker/', import.meta.url);
 const mainSource = readFileSync(new URL('main.js', pluginRoot), 'utf8');
+const accountSource = readFileSync(new URL('node/account.cjs', pluginRoot), 'utf8');
 const manifest = JSON.parse(readFileSync(new URL('ghost.json', pluginRoot), 'utf8'));
 const provisioning = JSON.parse(readFileSync(new URL('../provisioning.json', import.meta.url), 'utf8'));
 const vendorPackage = JSON.parse(
   readFileSync(new URL('vendor/taptap-maker/package.json', pluginRoot), 'utf8'),
 );
+const requireFromTest = createRequire(import.meta.url);
 
 class FakeBroadcastChannel {
   static instances = [];
@@ -117,6 +120,32 @@ function fakeChildHandle() {
   };
 }
 
+function loadProjectDirectoryName() {
+  const readline = {
+    createInterface() {
+      return { on() {} };
+    },
+  };
+  const context = createContext({
+    Buffer,
+    clearInterval,
+    clearTimeout,
+    process,
+    require(id) {
+      if (id === 'node:readline') return readline;
+      if (id === './child-process-adapter.cjs') return adapter;
+      return requireFromTest(id);
+    },
+    setInterval,
+    setTimeout,
+  });
+  new Script(
+    `${accountSource}\nglobalThis.__projectDirectoryName = projectDirectoryName;`,
+    { filename: 'taptap-maker/node/account.cjs' },
+  ).runInContext(context);
+  return context.__projectDirectoryName;
+}
+
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
@@ -128,6 +157,25 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.deepEqual(provisioning.ghosts['taptap-maker'], { audience: 'all' });
   assert.equal(vendorPackage.name, '@taptap/maker');
   assert.equal(vendorPackage.version, '0.0.24');
+});
+
+test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {
+  const projectDirectoryName = loadProjectDirectoryName();
+  const first = projectDirectoryName({ id: 'project-a', name: '同名 / 项目' });
+  const firstAgain = projectDirectoryName({ id: 'project-a', name: '同名 / 项目' });
+  const second = projectDirectoryName({ id: 'project-b', name: '同名 / 项目' });
+
+  assert.equal(first, firstAgain);
+  assert.notEqual(first.toLocaleLowerCase(), second.toLocaleLowerCase());
+  assert.match(first, /^同名 - 项目-[a-f0-9]{16}$/);
+  assert.match(second, /^同名 - 项目-[a-f0-9]{16}$/);
+
+  const longName = projectDirectoryName({
+    id: 'project-long',
+    name: `${'a'.repeat(62)}. ${'b'.repeat(20)}`,
+  });
+  assert.ok(longName.length <= 80);
+  assert.match(longName, /^[^. ]+-[a-f0-9]{16}$/);
 });
 
 test('主工具只使用宿主注入的本地 workdir，并为长构建开启续命与右侧预览', async () => {
