@@ -267,9 +267,6 @@ async function ensureTargetAvailable(targetDir) {
   if (stat.isSymbolicLink() || !stat.isDirectory()) {
     throw new Error(`目标路径已被占用：${targetDir}`);
   }
-  if ((await fs.promises.readdir(targetDir)).length > 0) {
-    throw new Error(`目标目录不是空目录：${targetDir}`);
-  }
 }
 
 function requireAbsoluteDir(value, label) {
@@ -401,12 +398,12 @@ async function executeAction(args) {
     const targets = selected.map(function target(project) {
       return { project, targetDir: path.join(parentDir, projectDirectoryName(project)) };
     });
-    for (const target of targets) await ensureTargetAvailable(target.targetDir);
 
     const results = await withMutation(async function syncProjects() {
       const synced = [];
       for (const target of targets) {
         try {
+          await ensureTargetAvailable(target.targetDir);
           await runMaker([
             'init',
             '--target-dir',

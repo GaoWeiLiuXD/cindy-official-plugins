@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
 import { EventEmitter, once } from 'node:events';
 import { readFileSync } from 'node:fs';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
@@ -120,7 +122,7 @@ function fakeChildHandle() {
   };
 }
 
-function loadProjectDirectoryName() {
+function loadAccountInternals() {
   const readline = {
     createInterface() {
       return { on() {} };
@@ -140,10 +142,10 @@ function loadProjectDirectoryName() {
     setTimeout,
   });
   new Script(
-    `${accountSource}\nglobalThis.__projectDirectoryName = projectDirectoryName;`,
+    `${accountSource}\nglobalThis.__accountInternals = { ensureTargetAvailable, projectDirectoryName };`,
     { filename: 'taptap-maker/node/account.cjs' },
   ).runInContext(context);
-  return context.__projectDirectoryName;
+  return context.__accountInternals;
 }
 
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
@@ -160,7 +162,7 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
 });
 
 test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {
-  const projectDirectoryName = loadProjectDirectoryName();
+  const { projectDirectoryName } = loadAccountInternals();
   const first = projectDirectoryName({ id: 'project-a', name: '同名 / 项目' });
   const firstAgain = projectDirectoryName({ id: 'project-a', name: '同名 / 项目' });
   const second = projectDirectoryName({ id: 'project-b', name: '同名 / 项目' });
@@ -176,6 +178,21 @@ test('项目目录名跨批次稳定，并用 project id 区分清洗后同名�
   });
   assert.ok(longName.length <= 80);
   assert.match(longName, /^[^. ]+-[a-f0-9]{16}$/);
+});
+
+test('项目目标允许 Maker Runtime 处理非空目录，但拒绝文件占位', async (t) => {
+  const { ensureTargetAvailable } = loadAccountInternals();
+  const root = await mkdtemp(path.join(os.tmpdir(), 'cindy-maker-target-'));
+  t.after(() => rm(root, { force: true, recursive: true }));
+  const directory = path.join(root, 'existing-project');
+  await mkdir(directory);
+  await writeFile(path.join(directory, 'local-change.txt'), 'keep');
+
+  await assert.doesNotReject(ensureTargetAvailable(directory));
+
+  const occupied = path.join(root, 'occupied');
+  await writeFile(occupied, 'not a directory');
+  await assert.rejects(ensureTargetAvailable(occupied), /目标路径已被占用/);
 });
 
 test('主工具只使用宿主注入的本地 workdir，并为长构建开启续命与右侧预览', async () => {
