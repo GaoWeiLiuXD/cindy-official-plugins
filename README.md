@@ -1,18 +1,18 @@
 # Cindy Official Plugins
 
-Cindy 官方内置插件（Ghost）开源仓库。这里存放随 Cindy 桌面端一起分发的全部官方插件源码 —— 客户端以 submodule 挂载本仓，启动时自动"播种"安装到用户本地。
-
-> This is the official open-source repository of Cindy's built-in plugins (Ghosts). Each subdirectory is a self-contained plugin that ships with the Cindy desktop client. Contributions are welcome — see [参与贡献](#参与贡献) below.
+Cindy 官方公开插件（Ghost）源码仓库。每个插件进入 `main` 后由 GitHub Actions
+使用 OIDC 发布到 Cindy Plugin Server，客户端从插件市场发现并安装，不再通过
+submodule 随桌面端打包或在启动时播种。
 
 ## 插件列表
 
-| 插件 | 目录 | 说明 |
-|---|---|---|
-| Cindy Art | [`cindy-art`](./cindy-art) | 图片 / 短视频生成，支持基于已生成图片的改图与风格化 |
-| Cindy GitHub | [`cindy-github`](./cindy-github) | GitHub issue / PR / code review / Actions / release 全流程操作 |
-| Cindy GitLab | [`cindy-gitlab`](./cindy-gitlab) | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作 |
-| Cindy Mermaid | [`cindy-mermaid`](./cindy-mermaid) | Mermaid 图表源码规范化与常见语法修复 |
-| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key） |
+| 插件             | 目录                                     | 说明                                                           |
+| ---------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| Cindy Art        | [`cindy-art`](./cindy-art)               | 图片 / 短视频生成，支持基于已生成图片的改图与风格化            |
+| Cindy GitHub     | [`cindy-github`](./cindy-github)         | GitHub issue / PR / code review / Actions / release 全流程操作 |
+| Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作           |
+| Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
+| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
 
 ## 仓库结构
 
@@ -30,11 +30,6 @@ cindy-art/
 ├── main.js
 └── panel.*         # (可选) 自定义面板 UI
 ```
-
-根目录的 [`provisioning.json`](./provisioning.json) 声明每个插件的受众（`audience`）与档位（`tier`）：
-
-- 本仓官方插件均为 `audience: "all"`（对所有用户播种安装）。
-- 该文件解析失败时客户端按 **fail-closed** 处理（整轮跳过播种），改动后务必保证 JSON 合法。
 
 `.tests/` 目录存放插件行为测试（vitest 风格，当前为存档状态，待接入 CI runner 后启用）。
 
@@ -54,8 +49,24 @@ cindy-art/
 常用流程：
 
 1. 用客户端的 `ghost_forge_scaffold` 生成骨架，或直接参考本仓任一插件的写法。
-2. dev 环境下直接改本地文件、重启客户端即生效（播种按内容指纹收敛，不看 `version` 字段）。
+2. dev 环境下直接导入插件目录或 `.cindy` 包验证。
 3. 完成后用 `ghost_forge_pack` 打包成 `.cindy` 装入验证。
+
+## 自动发布
+
+仓库的 [`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml)
+只允许从 `main` 发布：
+
+- `main` 的普通 push 只发布本次发生变化的插件目录。
+- Actions 页面手动运行 `Publish Cindy Plugins` 会全量发布当前全部插件，供仓库迁移
+  后首次建档或显式重发使用。
+- Workflow 使用 GitHub Actions OIDC（audience `cindy-plugin`）发布；国内地址由
+  Workflow 内的 `CINDY_PLUGIN_SERVER_URL_CN` 固定为
+  `https://plugin.cindy.com.cn`，不需要 Repository Secret、API Key 或 Actions
+  Variable。后续海外发布使用独立的 `CINDY_PLUGIN_SERVER_URL_GLOBAL`。
+
+修改插件内容时必须同步更新 `ghost.json.version`。同一版本内容不同会被服务端以
+`RELEASE_VERSION_CONFLICT` 拒绝，不会覆盖既有 Release。
 
 ## 参与贡献
 
@@ -64,6 +75,6 @@ cindy-art/
 - **修 bug / 小改进**：直接提 PR，描述清楚改了什么、为什么。
 - **新增官方插件**：建议先开 issue 讨论定位与边界（避免与现有插件职责重叠），达成一致后再提 PR。
 - **改动 `ghost.json` 工具声明**：请在 PR 描述中说明对 Agent 行为的影响。
-- 合入后由 Cindy 客户端更新对本仓的 submodule 指针，随下一个客户端版本发布给所有用户。
+- 合入 `main` 后由发布 Workflow 自动同步到 Cindy 插件市场。
 
 提 issue 报告问题时，请附上插件名、复现步骤和期望行为。
