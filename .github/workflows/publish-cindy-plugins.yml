@@ -160,6 +160,8 @@ jobs:
             "HEAD:${PLUGIN_DIRECTORY}"
 
       - name: Publish plugin
+        env:
+          CINDY_PLUGIN_SERVER_URL_CN: https://plugin.cindy.com.cn
         run: |
           set -euo pipefail
 
@@ -184,5 +186,5 @@ jobs:
             --header "Authorization: Bearer ${oidc_token}" \
             --header "Content-Type: application/octet-stream" \
             --data-binary "@$RUNNER_TEMP/plugin.cindy" \
-            "https://plugin.cindy.com.cn/api/publisher/releases"
+            "${CINDY_PLUGIN_SERVER_URL_CN%/}/api/publisher/releases"
           echo
