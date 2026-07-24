@@ -204,7 +204,10 @@ test('项目目标只允许空目录或同一 Maker 项目的安全重试', asyn
     JSON.stringify({ project_id: 'project-a' }),
   );
   await writeFile(path.join(bound, 'local-change.txt'), 'keep');
-  await assert.doesNotReject(ensureTargetAvailable(bound, 'project-a'));
+  await assert.rejects(
+    ensureTargetAvailable(bound, 'project-a'),
+    /目标目录已被其他内容占用/,
+  );
   await assert.rejects(
     ensureTargetAvailable(bound, 'project-b'),
     /目标目录已被其他内容占用/,
@@ -234,7 +237,10 @@ test('项目目标只允许空目录或同一 Maker 项目的安全重试', asyn
     JSON.stringify({ project_id: 'project-a' }),
   );
   await writeFile(path.join(noOrigin, '.git', 'config'), '[core]\n\tbare = false\n');
-  await assert.doesNotReject(ensureTargetAvailable(noOrigin, 'project-a'));
+  await assert.rejects(
+    ensureTargetAvailable(noOrigin, 'project-a'),
+    /目标目录已被其他内容占用/,
+  );
 
   for (const origin of [
     'https://maker.taptap.cn/git/project-b.git',

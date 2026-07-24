@@ -285,20 +285,16 @@ async function ensureGitOriginSafe(targetDir, projectId) {
   try {
     stat = await fs.promises.lstat(gitDir);
   } catch (error) {
-    if (error && error.code === 'ENOENT') return;
+    if (error && error.code === 'ENOENT') {
+      throw new Error(`目标目录缺少可验证的 Git 元数据：${targetDir}`);
+    }
     throw error;
   }
   if (stat.isSymbolicLink() || !stat.isDirectory()) {
     throw new Error(`目标目录的 Git 元数据不可安全验证：${targetDir}`);
   }
 
-  let config;
-  try {
-    config = await fs.promises.readFile(path.join(gitDir, 'config'), 'utf8');
-  } catch (error) {
-    if (error && error.code === 'ENOENT') return;
-    throw error;
-  }
+  const config = await fs.promises.readFile(path.join(gitDir, 'config'), 'utf8');
   let inOrigin = false;
   const origins = [];
   for (const line of config.split(/\r?\n/)) {
@@ -315,7 +311,7 @@ async function ensureGitOriginSafe(targetDir, projectId) {
     const url = line.match(/^\s*url\s*=\s*(.*?)\s*$/i);
     if (url && url[1]) origins.push(url[1]);
   }
-  if (origins.some(function unexpected(origin) {
+  if (origins.length === 0 || origins.some(function unexpected(origin) {
     return !isExpectedMakerOrigin(origin, projectId);
   })) {
     throw new Error(`目标目录已绑定其他 Git 远端：${targetDir}`);
