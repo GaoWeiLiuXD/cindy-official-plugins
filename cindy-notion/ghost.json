@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 2,
+  "id": "cindy-notion",
+  "name": "Cindy Notion",
+  "description": "连接用户自己的 Notion 工作区，搜索和读取页面、查询 data source，并创建或更新页面与评论。使用 Notion 官方 Internal Integration Token；token 由 Cindy 加密保管，只注入 api.notion.com 请求。",
+  "whenToUse": "需要在 Notion 中搜索资料、读取页面或数据库、查询 data source、创建页面、追加或修改页面内容、更新属性、添加评论时找我（需先在主界面侧边栏「插件」→「Cindy Notion」详情页连接 Notion，并把目标页面分享给该 integration）。",
+  "version": "1.2.2",
+  "author": "Cindy",
+  "icon": "assets/icon.png",
+  "entry": "main.js",
+  "launch": "on-demand",
+  "settingsHtml": "settings.html",
+  "slots": [
+    "tool",
+    "network",
+    "notify",
+    "fs"
+  ],
+  "command": "cindy-notion",
+  "network": {
+    "hosts": [
+      "api.notion.com"
+    ],
+    "secrets": [
+      {
+        "key": "notion_token",
+        "label": "Notion Integration Token",
+        "source": "user",
+        "hint": "在 Notion Internal connections 中创建连接，从 Configuration 复制 ntn_… token，再在 Content access 中授权页面",
+        "url": "https://www.notion.so/profile/integrations/internal",
+        "inject": {
+          "header": "Authorization",
+          "format": "Bearer {value}",
+          "hosts": [
+            "api.notion.com"
+          ]
+        }
+      }
+    ]
+  },
+  "setup": {
+    "requires": [
+      {
+        "anyOf": [
+          "secret:notion_token"
+        ]
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "notion_status",
+      "description": "验证 Notion Token，并检查当前 integration 实际可见的页面/data source 数量，返回 bot、工作区、可见内容样本与明确的授权诊断。连接异常、搜索为空或用户询问当前连接状态时使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "notion_search",
+      "description": "按标题搜索已分享给 integration 的 Notion 页面或 data source，返回结果和下一页 cursor。搜索词可省略以列出最近编辑内容。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "标题关键词；省略时列出最近编辑内容"
+          },
+          "object_type": {
+            "type": "string",
+            "enum": [
+              "page",
+              "data_source"
+            ],
+            "description": "可选，只返回页面或 data source"
+          },
+          "sort_direction": {
+            "type": "string",
+            "enum": [
+              "ascending",
+              "descending"
+            ],
+            "description": "按 last_edited_time 排序，默认 descending"
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "每页数量，默认 50"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "上一页返回的 next_cursor"
+          },
+          "out_file": {
+            "type": "string",
+            "description": "可选，把完整 JSON 写入当前会话工作目录的相对路径；结果超过 60KB 时也会自动落盘"
+          }
+        }
+      }
+    },
+    {
+      "name": "notion_fetch",
+      "description": "按 ID 或 Notion URL 读取 page、data_source、database 或 block。page 默认同时返回页面元数据与完整 Markdown；block 可同时返回一级子块。读取页面正文和 data source schema 时优先使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Notion 对象 ID 或完整 Notion URL"
+          },
+          "object_type": {
+            "type": "string",
+            "enum": [
+              "page",
+              "data_source",
+              "database",
+              "block"
+            ],
+            "description": "对象类型"
+          },
+          "include_content": {
+            "type": "boolean",
+            "description": "page/block 是否带正文或子块，默认 true"
+          },
+          "include_transcript": {
+            "type": "boolean",
+            "description": "读取 page Markdown 时是否内联会议记录 transcript，默认 false"
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "block 子块每页数量，默认 100"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "block children 的 start_cursor"
+          },
+          "out_file": {
+            "type": "string",
+            "description": "可选，把完整 JSON 写入当前会话工作目录的相对路径；结果超过 60KB 时也会自动落盘"
+          }
+        },
+        "required": [
+          "id",
+          "object_type"
+        ]
+      }
+    },
+    {
+      "name": "notion_query_data_source",
+      "description": "查询 Notion data source（数据库中的表），支持 Notion 原生 filter、sorts 与分页。先用 notion_fetch(object_type=data_source) 获取属性 schema，再构造过滤条件。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "data_source_id": {
+            "type": "string",
+            "description": "data source ID 或包含该 ID 的 Notion URL"
+          },
+          "filter": {
+            "type": "object",
+            "description": "Notion data source filter 对象"
+          },
+          "sorts": {
+            "type": "array",
+            "description": "Notion sorts 数组",
+            "items": {
+              "type": "object"
+            }
+          },
+          "page_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "每页数量，默认 50"
+          },
+          "cursor": {
+            "type": "string",
+            "description": "上一页返回的 next_cursor"
+          },
+          "out_file": {
+            "type": "string",
+            "description": "可选，把完整 JSON 写入当前会话工作目录的相对路径；结果超过 60KB 时也会自动落盘"
+          }
+        },
+        "required": [
+          "data_source_id"
+        ]
+      }
+    },
+    {
+      "name": "notion_create_page",
+      "description": "仅在用户明确要求时，在 Notion page 或 data source 下创建页面。data source 写入前会先读取 schema 并校验 properties；Markdown 会转换为常见 Notion blocks。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "parent_id": {
+            "type": "string",
+            "description": "父 page 或 data source 的 ID/URL"
+          },
+          "parent_type": {
+            "type": "string",
+            "enum": [
+              "page",
+              "data_source"
+            ],
+            "description": "父对象类型"
+          },
+          "title": {
+            "type": "string",
+            "description": "页面标题；data source 页面会自动写入 schema 中的 title 属性"
+          },
+          "properties": {
+            "type": "object",
+            "description": "Notion page properties 原生对象；data source 页面写入前必须与 schema 匹配"
+          },
+          "markdown": {
+            "type": "string",
+            "description": "可选正文，支持标题、段落、列表、待办、引用、分隔线和代码块"
+          },
+          "icon_emoji": {
+            "type": "string",
+            "description": "可选页面 emoji 图标"
+          },
+          "cover_url": {
+            "type": "string",
+            "description": "可选 https 封面图 URL"
+          }
+        },
+        "required": [
+          "parent_id",
+          "parent_type"
+        ]
+      }
+    },
+    {
+      "name": "notion_update_page",
+      "description": "仅在用户明确要求时更新 Notion 页面属性、图标、封面或 Markdown。写 properties 前会读取页面及 data source schema；整页覆盖、归档、移入回收站或允许删除子内容时必须传 confirm:true。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "页面 ID 或 URL"
+          },
+          "properties": {
+            "type": "object",
+            "description": "要更新的 Notion page properties 原生对象"
+          },
+          "icon_emoji": {
+            "type": "string",
+            "description": "可选页面 emoji 图标"
+          },
+          "cover_url": {
+            "type": "string",
+            "description": "可选 https 封面图 URL"
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "true 归档页面；需要 confirm:true"
+          },
+          "in_trash": {
+            "type": "boolean",
+            "description": "true 移入回收站；需要 confirm:true"
+          },
+          "replace_markdown": {
+            "type": "string",
+            "description": "整页替换后的完整 Markdown；覆盖现有正文，需要 confirm:true"
+          },
+          "content_updates": {
+            "type": "array",
+            "description": "精确查找替换，最多 100 项；每项含 old_str、new_str、可选 replace_all_matches",
+            "items": {
+              "type": "object",
+              "properties": {
+                "old_str": {
+                  "type": "string"
+                },
+                "new_str": {
+                  "type": "string"
+                },
+                "replace_all_matches": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "old_str",
+                "new_str"
+              ]
+            }
+          },
+          "allow_deleting_content": {
+            "type": "boolean",
+            "description": "允许 Markdown 更新删除子页面或子数据库；需要 confirm:true"
+          },
+          "confirm": {
+            "type": "boolean",
+            "description": "用户已明确确认归档、移入回收站、整页覆盖或删除子内容时才传 true"
+          }
+        },
+        "required": [
+          "page_id"
+        ]
+      }
+    },
+    {
+      "name": "notion_append_content",
+      "description": "仅在用户明确要求时，把 Markdown 追加到 Notion 页面或 block 末尾；不会覆盖原内容。支持标题、段落、列表、待办、引用、分隔线和代码块。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "block_id": {
+            "type": "string",
+            "description": "目标 page/block ID 或 Notion URL"
+          },
+          "markdown": {
+            "type": "string",
+            "description": "要追加的 Markdown"
+          }
+        },
+        "required": [
+          "block_id",
+          "markdown"
+        ]
+      }
+    },
+    {
+      "name": "notion_create_comment",
+      "description": "仅在用户明确要求时，在已分享的 Notion 页面添加纯文本评论，返回新评论信息。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "page_id": {
+            "type": "string",
+            "description": "页面 ID 或 URL"
+          },
+          "text": {
+            "type": "string",
+            "description": "评论正文"
+          }
+        },
+        "required": [
+          "page_id",
+          "text"
+        ]
+      }
+    }
+  ]
+}
