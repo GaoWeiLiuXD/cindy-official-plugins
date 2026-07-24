@@ -14,6 +14,7 @@ submodule 随桌面端打包或在启动时播种。
 | Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
 | Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
 | Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
+| 163 邮箱         | [`163-mail`](./163-mail)                 | 通过 IMAP/SMTP 搜索、阅读、整理、撰写和发送 163 邮箱邮件       |
 | TapTap Maker     | [`taptap-maker`](./taptap-maker)         | 账号连接、项目同步、构建与官方动态工具                         |
 
 ## 仓库结构
