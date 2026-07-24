@@ -142,7 +142,7 @@ function loadAccountInternals() {
     setTimeout,
   });
   new Script(
-    `${accountSource}\nglobalThis.__accountInternals = { ensureTargetAvailable, projectDirectoryName };`,
+    `${accountSource}\nglobalThis.__accountInternals = { ensureTargetAvailable, projectDirectoryName, projectSyncFailure };`,
     { filename: 'taptap-maker/node/account.cjs' },
   ).runInContext(context);
   return context.__accountInternals;
@@ -158,7 +158,7 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.deepEqual(manifest.preview.hosts, ['maker.taptap.cn']);
   assert.deepEqual(provisioning.ghosts['taptap-maker'], { audience: 'all' });
   assert.equal(vendorPackage.name, '@taptap/maker');
-  assert.equal(vendorPackage.version, '0.0.24');
+  assert.equal(vendorPackage.version, '0.0.26');
 });
 
 test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {
@@ -261,6 +261,49 @@ test('项目目标只允许空目录或同一 Maker 项目的安全重试', asyn
   await assert.rejects(ensureTargetAvailable(occupied, 'project-a'), /目标路径已被占用/);
 });
 
+test('项目同步失败返回可行动原因且不回显底层敏感信息', () => {
+  const { projectSyncFailure } = loadAccountInternals();
+  assert.deepEqual(
+    { ...projectSyncFailure(new Error('Maker PAT not found: token=secret')) },
+    {
+      code: 'AUTH_REQUIRED',
+      message: 'TapTap Maker 登录已失效，请重新连接账号后重试',
+    },
+  );
+  for (const loginError of [
+    'Maker PAT missing. Run `taptap-maker login`.',
+    'Maker PAT expired',
+    'Maker API returned HTTP 403 Forbidden',
+  ]) {
+    assert.equal(projectSyncFailure(new Error(loginError)).code, 'AUTH_REQUIRED');
+  }
+  assert.deepEqual(
+    { ...projectSyncFailure(new Error('目标目录已被其他内容占用：/Users/example/private')) },
+    {
+      code: 'TARGET_OCCUPIED',
+      message: '目标子目录已有内容，且无法安全确认属于同一 Maker 项目；请改选父目录或手动处理该子目录',
+    },
+  );
+  assert.deepEqual(
+    { ...projectSyncFailure(new Error('TapTap Maker 初始化已暂停：Python 环境准备失败。')) },
+    {
+      code: 'PYTHON_SETUP_FAILED',
+      message: 'Maker 自动准备 Python 环境失败，请检查网络、代理和目录权限后重试',
+    },
+  );
+  assert.deepEqual(
+    { ...projectSyncFailure(new Error('Could not resolve host: maker.taptap.cn')) },
+    {
+      code: 'NETWORK_ERROR',
+      message: '连接 TapTap Maker 超时，请检查网络后重试',
+    },
+  );
+  assert.doesNotMatch(
+    JSON.stringify(projectSyncFailure(new Error('unexpected token=secret at /Users/example/private'))),
+    /secret|\/Users/,
+  );
+});
+
 test('主工具只使用宿主注入的本地 workdir，并为长构建开启续命与右侧预览', async () => {
   const buildResult = {
     content: [{
@@ -352,6 +395,311 @@ test('动态工具列表携带可信项目 root，并过滤固定工具', async 
   assert.deepEqual(JSON.parse(JSON.stringify(harness.nodeRequests[0].params)), {
     target_dir: '/tmp/trusted-maker',
   });
+});
+
+test('Maker 状态保留登录结论但不暴露本地绝对路径', async () => {
+  const harness = createMainHarness(async () => ({
+    ok: true,
+    result: {
+      content: [{
+        type: 'text',
+        text: [
+          'TapTap Maker MCP status',
+          '- pat: found (/Users/example/.taptap-maker/pat.json)',
+          '- python: /opt/homebrew/bin/python3',
+          '- target_dir: /private/tmp/maker-project',
+          '- next_action: reconnect in /mcp',
+        ].join('\n'),
+      }],
+      structuredContent: {
+        pat: true,
+        configPath: 'C:\\Users\\example\\.taptap-maker\\config.json',
+      },
+    },
+  }));
+
+  const result = await harness.call('maker_status', {
+    session_context: {
+      workdir_is_local: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.match(result.result.content[0].text, /pat: found \(<local-path>\)/);
+  assert.match(result.result.content[0].text, /python: <local-path>/);
+  assert.match(result.result.content[0].text, /target_dir: <local-path>/);
+  assert.match(result.result.content[0].text, /reconnect in \/mcp/);
+  assert.equal(result.result.structuredContent.configPath, '<local-path>');
+  assert.doesNotMatch(JSON.stringify(result.result), /\/Users|\/private\/tmp|\/opt\/homebrew/);
+});
+
+test('账号工具不向模型返回 PAT 提示和 CLI 本地保存路径', async () => {
+  const harness = createMainHarness(async () => ({
+    ok: true,
+    result: {
+      structuredContent: {
+        ok: true,
+        patHint: 'abcd********wxyz',
+        result: {
+          tap_auth_path: '/Users/example/.taptap-maker/tap-auth.json',
+        },
+      },
+    },
+  }));
+
+  const result = await harness.call('maker_login');
+  assert.equal(result.result.ok, true);
+  assert.equal(result.result.patHint, undefined);
+  assert.equal(result.result.result.tap_auth_path, '<local-path>');
+  assert.doesNotMatch(JSON.stringify(result.result), /abcd|wxyz|\/Users/);
+});
+
+test('Maker 明确要求恢复身份时会自动创建身份并重试原调用一次', async () => {
+  let feedbackCalls = 0;
+  const calledTools = [];
+  const harness = createMainHarness(async (request) => {
+    if (request.method === 'cindy/tools-list') {
+      return {
+        ok: true,
+        result: { tools: [{ name: 'get_debug_feedbacks' }] },
+      };
+    }
+    calledTools.push(request.params.name);
+    if (request.params.name === 'generate_test_qrcode') {
+      return { ok: true, result: { content: [{ type: 'text', text: 'created' }] } };
+    }
+    feedbackCalls += 1;
+    if (feedbackCalls === 1) {
+      return {
+        ok: true,
+        result: {
+          isError: true,
+          content: [{
+            type: 'text',
+            text: [
+              'Maker project initialization',
+              '- status: missing_taptap_identity',
+              '- missing_fields: app_id',
+              '- next_action: call generate_test_qrcode',
+            ].join('\n'),
+          }],
+        },
+      };
+    }
+    return { ok: true, result: { content: [{ type: 'text', text: 'feedbacks' }] } };
+  });
+
+  const result = await harness.call('maker_call_tool', {
+    name: 'get_debug_feedbacks',
+    args: {},
+    session_context: {
+      workdir_is_local: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(calledTools, [
+    'get_debug_feedbacks',
+    'generate_test_qrcode',
+    'get_debug_feedbacks',
+  ]);
+  assert.equal(result.result.content[0].text, 'feedbacks');
+});
+
+test('兼容 Maker JSON 文本中的缺失身份信号并重试原调用一次', async () => {
+  let adConfigCalls = 0;
+  const calledTools = [];
+  const harness = createMainHarness(async (request) => {
+    if (request.method === 'cindy/tools-list') {
+      return {
+        ok: true,
+        result: { tools: [{ name: 'get_ad_config' }] },
+      };
+    }
+    calledTools.push(request.params.name);
+    if (request.params.name === 'generate_test_qrcode') {
+      return { ok: true, result: { content: [{ type: 'text', text: 'created' }] } };
+    }
+    adConfigCalls += 1;
+    if (adConfigCalls === 1) {
+      return {
+        ok: true,
+        result: {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success: false,
+              error: [
+                '项目配置中缺少 app_id 或 developer_id。',
+                '请先调用 generate_test_qrcode 生成这些字段。',
+              ].join('\n'),
+            }),
+          }],
+        },
+      };
+    }
+    return { ok: true, result: { content: [{ type: 'text', text: 'ad config ready' }] } };
+  });
+
+  const result = await harness.call('maker_call_tool', {
+    name: 'get_ad_config',
+    args: {},
+    session_context: {
+      workdir_is_local: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.deepEqual(calledTools, [
+    'get_ad_config',
+    'generate_test_qrcode',
+    'get_ad_config',
+  ]);
+  assert.equal(result.result.content[0].text, 'ad config ready');
+});
+
+test('项目尚未构建时只返回前置约束，不自动构建或生成二维码', async () => {
+  const calledTools = [];
+  const harness = createMainHarness(async (request) => {
+    if (request.method === 'cindy/tools-list') {
+      return {
+        ok: true,
+        result: { tools: [{ name: 'get_ad_config' }] },
+      };
+    }
+    calledTools.push(request.params.name);
+    return {
+      ok: true,
+      result: {
+        isError: true,
+        content: [{
+          type: 'text',
+          text: [
+            'Maker project structure',
+            '- status: not_initialized',
+            '- can_generate_test_qrcode: no',
+            '- issue: missing_project_json: /Users/example/project/.project/project.json',
+            '- next_action: 仅当用户明确要求构建、提交或预览时调用 maker_build_current_directory。',
+          ].join('\n'),
+        }],
+      },
+    };
+  });
+
+  const result = await harness.call('maker_call_tool', {
+    name: 'get_ad_config',
+    args: {},
+    session_context: {
+      workdir_is_local: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.deepEqual(calledTools, ['get_ad_config']);
+  assert.equal(result.result.isError, true);
+  assert.match(result.result.content[0].text, /status: not_initialized/);
+  assert.match(result.result.content[0].text, /明确要求构建、提交或预览/);
+  assert.doesNotMatch(result.result.content[0].text, /\/Users\/example/);
+});
+
+test('二维码缺构建信息时引导用户主动构建，不泄露凭证、路径和调用栈', async () => {
+  const calledTools = [];
+  const harness = createMainHarness(async (request) => {
+    if (request.method === 'cindy/tools-list') {
+      return {
+        ok: true,
+        result: { tools: [{ name: 'get_ad_config' }] },
+      };
+    }
+    calledTools.push(request.params.name);
+    if (request.params.name === 'get_ad_config') {
+      return {
+        ok: true,
+        result: {
+          structuredContent: { status: 'missing_taptap_identity' },
+          content: [{
+            type: 'text',
+            text: '- status: missing_taptap_identity\n- next_action: generate_test_qrcode',
+          }],
+        },
+      };
+    }
+    return {
+      ok: true,
+      result: {
+        isError: true,
+        content: [{
+          type: 'text',
+          text: [
+            '✗ Maker MCP tool failed',
+            '- tool: generate_test_qrcode',
+            '- error_name: McpError',
+            '- message: MCP error -32603: 无效的游戏类型 token=secret',
+            'debug:',
+            '  at Client.file:///Users/example/private/runtime.js:1:1',
+          ].join('\n'),
+        }],
+      },
+    };
+  });
+  const result = await harness.call('maker_call_tool', {
+    name: 'get_ad_config',
+    args: {},
+    session_context: {
+      workdir_is_local: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.deepEqual(calledTools, ['get_ad_config', 'generate_test_qrcode']);
+  assert.equal(result.result.isError, true);
+  assert.match(
+    result.result.content[0].text,
+    /请先明确执行一次构建或预览，并按提示完成游戏类型、屏幕方向等选择/,
+  );
+  assert.doesNotMatch(
+    result.result.content[0].text,
+    /secret|\/Users|runtime\.js|debug|无效的游戏类型/i,
+  );
+  assert.equal(result.result.structuredContent.step, 'generate_test_qrcode');
+  assert.equal(result.result.structuredContent.errorCode, -32603);
+});
+
+test('普通 Maker 工具失败也会统一脱敏并保留积分不足信号', async () => {
+  const harness = createMainHarness(async (request) => {
+    if (request.method === 'cindy/tools-list') {
+      return {
+        ok: true,
+        result: { tools: [{ name: 'generate_image' }] },
+      };
+    }
+    return {
+      ok: true,
+      result: {
+        isError: true,
+        content: [{
+          type: 'text',
+          text: [
+            '✗ Maker MCP tool failed',
+            '- tool: generate_image',
+            '- message: MCP error -32600: INSUFFICIENT_BALANCE',
+            'debug:',
+            '  Authorization: Bearer secret-token',
+            '  at file:///private/tmp/maker.js:1:1',
+          ].join('\n'),
+        }],
+      },
+    };
+  });
+  const result = await harness.call('maker_call_tool', {
+    name: 'generate_image',
+    args: {},
+    session_context: {
+      workdir_is_local: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.equal(result.result.isError, true);
+  assert.equal(result.result.content[0].text, 'MCP error -32600: INSUFFICIENT_BALANCE');
+  assert.equal(result.result.structuredContent.errorCode, -32600);
+  assert.equal(result.result.structuredContent.reason, 'INSUFFICIENT_BALANCE');
+  assert.doesNotMatch(JSON.stringify(result.result), /secret-token|\/private\/tmp|debug/i);
 });
 
 test('远程 workdir 在启动 Node Runtime 前即被拒绝', async () => {

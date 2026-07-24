@@ -16,6 +16,7 @@ var FIXED_MAKER_TOOLS = {
 var SETTINGS_CHANNEL = 'taptap-maker-settings';
 var WORKSPACE_HINT = '请先在 Cindy 中打开目标 TapTap Maker 项目目录，再重新调用本插件。';
 var nextProgressToken = 1;
+var identityInitializations = new Map();
 
 function isObject(value) {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -135,6 +136,223 @@ async function callMakerTool(name, args, longRunning) {
   });
 }
 
+function makerErrorResult(message, details) {
+  return {
+    isError: true,
+    content: [{ type: 'text', text: message }],
+    structuredContent: Object.assign({ success: false, message: message }, details || {}),
+  };
+}
+
+function makerResultText(result) {
+  var content = isObject(result) && Array.isArray(result.content) ? result.content : [];
+  return content
+    .filter(function textItem(item) {
+      return isObject(item) && item.type === 'text' && typeof item.text === 'string';
+    })
+    .map(function itemText(item) { return item.text; })
+    .join('\n');
+}
+
+function makerResultPayloads(result) {
+  if (!isObject(result)) return [];
+  var payloads = [];
+  if (isObject(result.structuredContent)) payloads.push(result.structuredContent);
+  var content = Array.isArray(result.content) ? result.content : [];
+  for (var i = 0; i < content.length; i += 1) {
+    if (!isObject(content[i]) || content[i].type !== 'text' || typeof content[i].text !== 'string') continue;
+    var text = content[i].text.trim();
+    if (!text.startsWith('{') || !text.endsWith('}')) continue;
+    try {
+      var parsed = JSON.parse(text);
+      if (isObject(parsed)) payloads.push(parsed);
+    } catch (_error) {
+      // 普通文本结果，不是结构化 payload。
+    }
+  }
+  return payloads;
+}
+
+function redactLocalPaths(value) {
+  return String(value || '')
+    .replace(
+      /(?:file:\/\/)?\/(?:Users|home|private|tmp|var\/folders|opt|Applications|Library|Volumes|workspace|root)\/[^\s"'`),}\]]+/g,
+      '<local-path>',
+    )
+    .replace(/[A-Za-z]:\\[^\s"'`),}\]]+/g, '<local-path>');
+}
+
+function redactLocalPathsInValue(value) {
+  if (typeof value === 'string') return redactLocalPaths(value);
+  if (Array.isArray(value)) return value.map(redactLocalPathsInValue);
+  if (!isObject(value)) return value;
+  var result = {};
+  for (var key in value) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+    result[key] = redactLocalPathsInValue(value[key]);
+  }
+  return result;
+}
+
+function redactSensitiveText(value, shouldRedactLocalPaths) {
+  var text = String(value || '')
+    .replace(/(https?:\/\/)[^/\s:@]+:[^@\s/]+@/gi, '$1<redacted>@')
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, 'Bearer <redacted>')
+    .replace(
+      /\b(pat|token|authorization|jwt|secret|password)\s*[:=]\s*["']?[^"',}\s]+/gi,
+      '$1: <redacted>',
+    )
+    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '<redacted-jwt>');
+  return shouldRedactLocalPaths ? redactLocalPaths(text) : text;
+}
+
+function publicAccountResult(value) {
+  var result = redactLocalPathsInValue(value);
+  if (!isObject(result) || result.patHint === undefined) return result;
+  var withoutPatHint = Object.assign({}, result);
+  delete withoutPatHint.patHint;
+  return withoutPatHint;
+}
+
+function publicMakerErrorMessage(result) {
+  var payloads = makerResultPayloads(result);
+  var payloadMessage = '';
+  for (var i = 0; i < payloads.length; i += 1) {
+    if (typeof payloads[i].error === 'string') {
+      payloadMessage = payloads[i].error;
+      break;
+    }
+    if (typeof payloads[i].message === 'string') {
+      payloadMessage = payloads[i].message;
+      break;
+    }
+  }
+  var text = payloadMessage || makerResultText(result);
+  var messageLine = /(?:^|\n)-\s*message:\s*([^\n]+)/i.exec(text);
+  var publicText = messageLine
+    ? messageLine[1]
+    : text.split(/\n(?:error_details|debug|stack(?: trace)?):/i)[0];
+  publicText = redactSensitiveText(publicText, true)
+    .split(/\r?\n/)
+    .filter(function publicLine(line) {
+      return !/^\s*(?:✗\s*)?Maker MCP tool failed\s*$/i.test(line)
+        && !/^\s*-\s*(?:tool|error_name):/i.test(line);
+    })
+    .join('\n')
+    .trim();
+  return (publicText || 'Maker Runtime 未返回可公开的错误详情').slice(0, 2000);
+}
+
+function sanitizeMakerFailure(result) {
+  if (!makerResultIsFailure(result)) return result;
+  var message = publicMakerErrorMessage(result);
+  return makerErrorResult(message, makerFailureDetails(message));
+}
+
+function makerFailureDetails(message) {
+  var codeMatch = /MCP error\s+(-?\d+)/i.exec(message);
+  var details = {};
+  if (codeMatch) details.errorCode = Number(codeMatch[1]);
+  if (/MCP error\s+-32600:\s*INSUFFICIENT_BALANCE/i.test(message)) {
+    details.reason = 'INSUFFICIENT_BALANCE';
+  }
+  return details;
+}
+
+function sanitizeMakerStatus(result) {
+  if (!isObject(result) || !Array.isArray(result.content)) return result;
+  return Object.assign({}, result, {
+    content: result.content.map(function sanitizeStatusItem(item) {
+      if (!isObject(item) || item.type !== 'text' || typeof item.text !== 'string') return item;
+      return Object.assign({}, item, { text: redactLocalPaths(item.text) });
+    }),
+    ...(result.structuredContent !== undefined
+      ? { structuredContent: redactLocalPathsInValue(result.structuredContent) }
+      : {}),
+  });
+}
+
+function makerResultIsFailure(result) {
+  if (!isObject(result)) return false;
+  if (result.isError === true) return true;
+  return makerResultPayloads(result).some(function failedPayload(payload) {
+    return payload.ok === false || payload.success === false;
+  });
+}
+
+function makerIdentityRecoveryText(text) {
+  return (
+    /(?:status\s*:\s*)?missing_taptap_identity/i.test(text)
+    || (
+      /(?:缺少|missing)[^\n]*(?:app_id|developer_id)/i.test(text)
+      && /generate_test_qrcode/i.test(text)
+    )
+  );
+}
+
+function makerRequestsIdentityRecovery(result) {
+  if (!isObject(result)) return false;
+  var payloads = makerResultPayloads(result);
+  for (var i = 0; i < payloads.length; i += 1) {
+    if (payloads[i].status === 'missing_taptap_identity') return true;
+    var message = typeof payloads[i].error === 'string'
+      ? payloads[i].error
+      : payloads[i].message;
+    if (typeof message === 'string' && makerIdentityRecoveryText(message)) return true;
+  }
+  var text = makerResultText(result);
+  return makerIdentityRecoveryText(text) && /generate_test_qrcode/i.test(text);
+}
+
+async function initializeMakerIdentity(workdir) {
+  var existing = identityInitializations.get(workdir);
+  if (existing) return existing;
+  var initializing = callMakerTool(
+    'generate_test_qrcode',
+    { target_dir: workdir },
+    true,
+  );
+  identityInitializations.set(workdir, initializing);
+  try {
+    return await initializing;
+  } finally {
+    identityInitializations.delete(workdir);
+  }
+}
+
+async function callMakerToolWithIdentityRecovery(name, args, workdir) {
+  var firstResult = await callMakerTool(name, args, true);
+  if (name === 'generate_test_qrcode' || !makerRequestsIdentityRecovery(firstResult)) {
+    return sanitizeMakerFailure(firstResult);
+  }
+  var initialized = await initializeMakerIdentity(workdir);
+  if (makerResultIsFailure(initialized)) {
+    var initializationMessage = publicMakerErrorMessage(initialized);
+    var initializationDetails = makerFailureDetails(initializationMessage);
+    if (initializationDetails.reason === 'INSUFFICIENT_BALANCE') {
+      return makerErrorResult(initializationMessage, initializationDetails);
+    }
+    if (/无效的游戏类型|invalid game type/i.test(initializationMessage)) {
+      return makerErrorResult(
+        'TapTap Maker 生成测试二维码前还缺少有效的项目构建信息。请先明确执行一次构建或预览，并按提示完成游戏类型、屏幕方向等选择后再重试。',
+        Object.assign({ step: 'generate_test_qrcode' }, initializationDetails),
+      );
+    }
+    return makerErrorResult(
+      'TapTap Maker 自动初始化 App 身份失败：\n' + initializationMessage,
+      Object.assign({ step: 'generate_test_qrcode' }, initializationDetails),
+    );
+  }
+  var retried = await callMakerTool(name, args, true);
+  if (makerRequestsIdentityRecovery(retried)) {
+    return makerErrorResult(
+      'TapTap Maker 已完成一次身份初始化，但项目仍缺少可用的 App 身份，已停止自动重试。',
+      { step: 'retry_after_identity_initialization' },
+    );
+  }
+  return sanitizeMakerFailure(retried);
+}
+
 function previewUrlFromResult(result) {
   var content = isObject(result) && Array.isArray(result.content) ? result.content : [];
   for (var i = 0; i < content.length; i += 1) {
@@ -156,26 +374,34 @@ function previewUrlFromResult(result) {
 async function handleTool(message) {
   var args = withoutSessionContext(message.args);
   if (message.tool === 'maker_login') {
-    return accountRequest('login', {}, true);
+    return publicAccountResult(await accountRequest('login', {}, true));
   }
   if (message.tool === 'maker_apps') {
     return accountRequest('apps', {}, false);
   }
   if (message.tool === 'maker_init') {
     var initContext = requireLocalContext(message);
-    return accountRequest('init', Object.assign({}, args, { workdir: initContext.workdir }), true);
+    return publicAccountResult(await accountRequest(
+      'init',
+      Object.assign({}, args, { workdir: initContext.workdir }),
+      true,
+    ));
   }
   if (message.tool === 'maker_doctor') {
     var doctorContext = requireLocalContext(message);
-    return accountRequest('doctor', { workdir: doctorContext.workdir }, true);
+    return publicAccountResult(await accountRequest(
+      'doctor',
+      { workdir: doctorContext.workdir },
+      true,
+    ));
   }
   if (message.tool === 'maker_status') {
     var statusContext = requireLocalContext(message);
-    return callMakerTool(
+    return sanitizeMakerStatus(sanitizeMakerFailure(await callMakerTool(
       'maker_status_lite',
       Object.assign({}, args, { target_dir: statusContext.workdir }),
       false,
-    );
+    )));
   }
   if (message.tool === 'maker_build') {
     var buildContext = requireLocalContext(message);
@@ -184,7 +410,7 @@ async function handleTool(message) {
       Object.assign({}, args, { target_dir: buildContext.workdir }),
       true,
     );
-    if (isObject(built) && built.isError === true) return built;
+    if (makerResultIsFailure(built)) return sanitizeMakerFailure(built);
     var previewUrl = previewUrlFromResult(built);
     if (!previewUrl) return built;
     var preview;
@@ -220,10 +446,11 @@ async function handleTool(message) {
     if (!available.some(function sameTool(tool) { return tool.name === args.name; })) {
       throw new Error('Maker 动态工具不存在或当前不可用：' + args.name);
     }
-    return callMakerTool(
+    var toolArgs = Object.assign({}, args.args || {}, { target_dir: callContext.workdir });
+    return callMakerToolWithIdentityRecovery(
       args.name,
-      Object.assign({}, args.args || {}, { target_dir: callContext.workdir }),
-      true,
+      toolArgs,
+      callContext.workdir,
     );
   }
   throw new Error('未知 TapTap Maker 工具：' + String(message.tool));
@@ -260,7 +487,7 @@ async function sendToolResult(message) {
       type: 'tool-result',
       callId: message.callId,
       ok: false,
-      message: errorMessage(error),
+      message: redactSensitiveText(errorMessage(error), true).slice(0, 2000),
     });
   }
 }
@@ -320,7 +547,12 @@ if (settingsChannel) {
         return { type: 'settings-result', reqId: message.reqId, ok: true, result: result };
       })
       .catch(function failure(error) {
-        return { type: 'settings-result', reqId: message.reqId, ok: false, message: errorMessage(error) };
+        return {
+          type: 'settings-result',
+          reqId: message.reqId,
+          ok: false,
+          message: redactSensitiveText(errorMessage(error), true).slice(0, 2000),
+        };
       });
     settingsRequests.set(message.reqId, entry);
     promise.then(function reply(response) {

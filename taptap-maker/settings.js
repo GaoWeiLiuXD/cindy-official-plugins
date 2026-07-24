@@ -307,9 +307,13 @@
       if (failed.length === 0) {
         projectMessage.textContent = '已同步 ' + succeeded.length + ' 个项目到 ' + result.parentDir;
       } else {
-        var names = failed.map(function name(item) { return item && item.name; }).filter(Boolean).join('、');
+        var failures = failed.map(function failureText(item) {
+          var name = item && typeof item.name === 'string' ? item.name : '未知项目';
+          var reason = item && typeof item.message === 'string' ? item.message : '同步失败，请重试';
+          return name + '：' + reason;
+        }).join('；');
         projectMessage.textContent = '已同步 ' + succeeded.length + ' 个，失败 ' + failed.length
-          + (names ? '：' + names : '');
+          + (failures ? '。' + failures : '');
       }
     } catch (error) {
       projectMessage.textContent = error.message || 'TapTap Maker 项目同步失败，请重试';

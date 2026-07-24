@@ -28,13 +28,18 @@ This skill covers:
 Build, submit, push, preview, and verify behavior belongs to the single Maker MCP build tool. The
 post-build runtime log polling loop belongs to the local Maker CLI watcher.
 
+Do not infer or set a service environment from preview, build, test, or local-development intent.
+Do not add environment parameters to Maker tool calls or user MCP config; use the default Maker
+service configuration.
+
 For multiplayer builds, use `maker_build_current_directory` structured parameters instead of
 editing project JSON directly. `entry_client` / `entry_server` map to `project.json`
 `entry@client` / `entry@server`; `multiplayer.enabled`, `max_players`, `background_match`,
 `match_info`, and `persistent_world` map to `.project/settings.json` `@runtime.multiplayer`.
 On the first multiplayer build, pass `multiplayer.enabled=true` together with
-`entry_client` / `entry_server`; single-player defaults are only injected when no multiplayer entry
-is provided. The remote build keeps omitted multiplayer fields unchanged on later builds.
+`entry_client` / `entry_server`. Send multiplayer settings only when the user explicitly provides
+them; missing local `.project/settings.json` must not inject `enabled=false`. The remote build keeps
+omitted multiplayer fields unchanged on later builds.
 
 Maker status, status_lite, and doctor run a lightweight `.project/settings.json` health check.
 Normal `maker_build_current_directory` blocks before commit/push when settings JSON is invalid or
@@ -42,6 +47,16 @@ build-critical fields are damaged. `$schema`, `sources`, and `build` must keep t
 shape; `sources.*.tag` must be `stable` for online user projects, and `build.asset_ignores` only
 needs to exist. Do not edit settings build fields directly for feature work; restore only the
 build-critical fields when the check fails, and preserve valid `@runtime` config.
+The health checker itself is read-only. When repair is needed, prefer the exact
+file from Git or an intact misplaced copy; only repair fixed fields in a parseable
+settings object. Never synthesize project identity, entry, version, publish metadata,
+or resource groups from defaults. With user confirmation, missing settings defaults may
+be added without overwriting existing intent: `$schema`, `build.output_dir=../dist`,
+`build.asset_dirs=["../assets","../scripts"]`, `build.generate_fs_path=true`,
+`build.asset_ignores=[]`, `assets_7z_threshold=50`, `preload_include_refs=true`,
+`trim_remote_refs=true`, `legacy_binary=false`, and `tags={}`. Do not invent locked
+`sources.*.tag` values; recover them from Git or an intact copy. `entry=main.lua`
+is only safe after confirming that the project uses that entry script.
 
 ## Responsibilities
 
@@ -147,26 +162,47 @@ This guidance helps users prefer Maker-managed tools for Maker game assets.
 - Use `edit_image` for modifying project images.
 - Use `create_video_task` for game videos and image/video referenced generation.
 - Use `query_video_task` to refresh video task status, release completed task quota, and fetch final videos.
-- Use `text_to_music` for game music or audio.
+- Use `text_to_music` for game music.
+- Use `text_to_sound_effect` for one sound effect.
+- Use `batch_sound_effects` for multiple sound effects.
+- Use `text_to_dialogue` for final character dialogue.
+- `text_to_dialogue` automatically converts local project audio to data URLs and reuses confirmed local voice mappings.
+- After `audition_voices_for_character` returns previews, show them to the user and wait
+  for the user to choose. Do not select or confirm a voice automatically.
+- Before a Doubao audition, extract the character gender from the character settings or
+  `character_description` and pass `voice_profile.gender` as `male` or `female`; never rely on a
+  default gender.
+- Call `confirm_character_voice` only after the user explicitly chooses one preview.
+- After confirmation, follow `next_step_hint`: call `text_to_dialogue` with the character name and
+  text, and omit `reference_audio` unless the user requests a one-time override.
+- Generated sound effects and dialogue are saved in the project.
+- Voice audition previews are not saved to the project.
+- Local MCP does not transcode generated audio to OGG.
 - Follow each tool schema for supported local path, remote URL, and data URL inputs.
 - Local proxy may convert resolvable local reference media to data URLs before forwarding.
 - If a Maker proxy tool returns an error or `isError`, report the full remote result/error payload.
   Include the server response payload so developers can diagnose the issue.
-- Use `create_3d_model_task` for game 3D models.
-- Use `query_3d_model_task` for polling 3D model tasks.
+- Use `create_3d_asset` for the complete 3D asset lifecycle. Start with `action="start"`, poll
+  with `action="query"`, and use `action="continue"` only after explicit user approval of a
+  returned review step. Use `action="post_process"` for rigging, texturing, retopology, or format
+  conversion when supported by the remote schema.
+- Preserve and inspect the complete remote 3D response. When `local_delivery.status` is `success`,
+  use the returned local model path. The local proxy materializes only the `model_files` copy/extract
+  instructions returned by the local runtime; report `delivery_failures` when no model can be delivered.
 - For any ad-related request such as 广告, rewarded videos, play ads, ad ID, ad placement,
-  ad status, ad config, or `ShowRewardVideoAd`, call `get_ad_config` first to get the
-  current project ad activation status and ad config.
+  ad status, ad config, or `ShowRewardVideoAd`, inspect Maker project status first. Call
+  `get_ad_config` only after the primary local project configs are initialized.
 - Do not infer ad readiness from local SDK docs, `.maker-mcp/config.json`, or runtime callbacks.
-  If `.project/project.json` is missing, build once with `maker_build_current_directory` to
-  initialize the project, then call `get_ad_config` again. Implement or test ad code only
-  after the config is available.
+  If the primary local project configs are missing, keep ad config unavailable and do not call the
+  remote tool. Build only for an explicit user build/submit/preview request. If a successful build
+  still leaves local configs missing, explain the known limitation and do not automatically rebuild.
 - If `get_ad_config` reports missing `app_id` or `developer_id`, call `generate_test_qrcode` once
   to generate test QR code metadata, then call `get_ad_config` again. Do not use publish-only tools
   for this recovery path.
 - If status or doctor reports `Maker project initialization` with `missing_project_json` or
   `missing_taptap_identity`, follow that `next_action` before using tools that depend on remote
-  project config.
+  project config. `.project` directory presence alone is never proof of initialization; empty,
+  voice-mapping-only, and primary-config-incomplete directories remain buildable new-project state.
 - For online player feedback, problem reports, issue reports, debug feedback, real-device logs,
   screenshots, 问题反馈, 问题上报, 真机日志, or 玩家反馈, call the Maker proxy
   `get_debug_feedbacks` tool when available.
@@ -179,10 +215,10 @@ This guidance helps users prefer Maker-managed tools for Maker game assets.
 - Do not call `edit_image` without an image path or CDN URL.
 
 Generated assets should be saved by Maker MCP under `assets/image`, `assets/video`, or
-`assets/audio`; generated 3D model outputs save the original GLB/FBX and MDL zip under
-`assets/model`, then extract MDL contents into `assets/Meshes`, `assets/Materials`,
-`assets/Textures`, and `assets/Prefabs`. Do not prefer client-native image generation when the user
-is asking for Maker game assets in a bound project.
+`assets/audio`. `create_3d_asset` local runtime `model_files` instructions are materialized under
+`assets/model`; use `local_delivery` for the usable model path and `preview_assets` for local review images.
+Do not prefer client-native image generation when the user is asking for Maker game assets in a
+bound project.
 
 ## Project Detection
 
@@ -229,10 +265,56 @@ directory.
 
 ### Proxy Tools Missing From The Current Session
 
+If Maker MCP is completely unavailable, tools are missing, the process exits immediately, or the
+client reports `-32000`, `Connection closed`, or `command not found`, do not call Maker MCP tools
+for the initial diagnosis. Work offline first:
+
+1. Find the MCP config file the current client actually reads and back it up.
+2. Attempt `npx -y -p @taptap/maker taptap-maker mcp verify --json`; on Windows use
+   `npx.cmd -y -p @taptap/maker taptap-maker mcp verify --json`. If the command itself fails, keep
+   that failure as diagnostic evidence.
+3. This command checks only the standard `@taptap/maker` npx/CLI launch path and returns command,
+   status, signal, stdout, stderr, error, and failure_type. It does not start the Maker MCP server
+   and does not read or validate the client's active MCP config, WorkBuddy trust, cwd, or Roots.
+   A successful verify result does not prove that the client MCP config works.
+4. Inspect and reproduce the active config path, command, ordered args, cwd, WorkBuddy enable/trust
+   state, workspace/Roots, Node/npm/npx paths, the AI client's PATH, exit status, and stderr.
+5. For WorkBuddy, verify both the `taptap-maker` server entry and the account-level enable/trust
+   state. Do not edit account trust storage automatically; ask the user to enable it in WorkBuddy.
+6. On Windows, keep `cmd.exe`, `npx.cmd`, and each argument separate. Never replace cwd with a
+   `cd /d "<project>" && npx.cmd ...` command string, including for Chinese project paths.
+7. If WorkBuddy ignores configured cwd, do not keep rewriting the cwd field. Use the active
+   workspace/Roots and record the process actual cwd instead.
+8. Do not assume Windows 8.3 short paths exist or differ from the original long path. Verify the
+   result first; an unchanged or missing short path is not a usable cwd workaround.
+9. Reproduce the configured Windows launch with the same direct argv boundary when possible.
+   Separate outer shell quoting or stderr decoding failures from the MCP child process result, and
+   record both without treating wrapper failures as server evidence.
+10. Remember that multiple AI conversations share user-level MCP config. One conversation can break
+    every other conversation by rewriting the shared command or cwd.
+11. Classify the root cause from evidence before repairing it. Do not automatically change trust
+    storage, PATH, cwd, credentials, or game code. Use `taptap-maker mcp install --ide <client>` only
+    after evidence confirms that the active config entry is damaged. Reconnect and verify again in
+    both the current and a new conversation.
+
+If the MCP connection is established but a tool or resource call fails, including `-32003`, use a
+separate evidence-first runtime-error workflow. Do not assign a fixed meaning to `-32003`; preserve
+the exact client error. `mcp verify` is not the primary check for an already connected session
+because it only tests the standard npx/CLI launch path. Collect the failed tool/resource, redacted
+request parameters, current `tools/list`, exact error code/message/data, complete sanitized
+`remote_result`, request/correlation IDs, timestamp with timezone, OS/architecture, AI client and
+`@taptap/maker` package versions, and stable reproduction steps. Preserve useful nested error,
+warning, debug, and remote status fields while removing credentials. Do not rewrite command, cwd,
+PATH, trust state, credentials, or game code unless the collected evidence identifies that cause.
+
+Only after the base Maker MCP connection works should you use the following MCP-based cwd checks.
+
 If the user is in a bound Maker project but `generate_image`, `batch_generate_images`, `edit_image`,
-`create_video_task`, `query_video_task`, `text_to_music`, `create_3d_model_task`,
-`query_3d_model_task`, `generate_test_qrcode`, `get_ad_config`, or `get_debug_feedbacks`
-are missing from the current AI tool list, diagnose the MCP cwd before
+`create_video_task`, `query_video_task`, `text_to_music`, `text_to_sound_effect`,
+`batch_sound_effects`, `text_to_dialogue`, `audition_voices_for_character`,
+`confirm_character_voice`, `create_3d_asset`,
+`generate_test_qrcode`, `get_ad_config`, or `get_debug_feedbacks` are missing from the current AI
+tool list, diagnose the MCP cwd before
 suggesting repeated restarts:
 
 1. Read `maker://status` or call `maker_status_lite` without `target_dir` to see the MCP server cwd.
@@ -242,9 +324,10 @@ suggesting repeated restarts:
    `tools/list` ran from the MCP server cwd, not the Maker project directory. Passing `target_dir`
    to `maker_status_lite` proves the project is valid, but it does not dynamically add proxy tools
    to the already-started MCP session.
-4. Tell the user to start the AI client from the Maker project directory, or update the
-   `taptap-maker` MCP config `cwd` to the Maker project directory, then reconnect `taptap-maker`
-   from the client's MCP UI such as `/mcp`.
+4. If the client is confirmed to honor MCP cwd, tell the user to start it from the Maker project
+   directory or update the `taptap-maker` config cwd, then reconnect from the client MCP UI. If
+   WorkBuddy ignores configured cwd, do not keep rewriting that field; use its active workspace,
+   MCP Roots, and actual process cwd evidence instead.
 
 When Maker proxy tools are missing, explain that this is likely a session/configuration problem and
 that Maker tools are preferred for Maker game assets.
@@ -661,11 +744,11 @@ If conflicts occur:
 When showing conflict content, keep excerpts small and focused around conflict markers:
 
 ```text
-<<<<<<<
-local version
-=======
-remote version
->>>>>>>
+  <<<<<<<
+  local version
+  =======
+  remote version
+  >>>>>>>
 ```
 
 Do not hide unresolved conflicts. After editing, run:

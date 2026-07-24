@@ -3233,8 +3233,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path21) {
-      let input2 = path21;
+    function removeDotSegments(path22) {
+      let input2 = path22;
       const output2 = [];
       let nextSlash = -1;
       let len = 0;
@@ -3433,8 +3433,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path21, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path21 && path21 !== "/" ? path21 : void 0;
+        const [path22, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path22 && path22 !== "/" ? path22 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -12491,12 +12491,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs19, exportName) {
+    function addFormats(ajv, list, fs20, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs19[f]);
+        ajv.addFormat(f, fs20[f]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12509,8 +12509,8 @@ var require_windows = __commonJS({
   "node_modules/isexe/windows.js"(exports, module) {
     module.exports = isexe;
     isexe.sync = sync;
-    var fs19 = __require("fs");
-    function checkPathExt(path21, options) {
+    var fs20 = __require("fs");
+    function checkPathExt(path22, options) {
       var pathext = options.pathExt !== void 0 ? options.pathExt : process.env.PATHEXT;
       if (!pathext) {
         return true;
@@ -12521,25 +12521,25 @@ var require_windows = __commonJS({
       }
       for (var i = 0; i < pathext.length; i++) {
         var p = pathext[i].toLowerCase();
-        if (p && path21.substr(-p.length).toLowerCase() === p) {
+        if (p && path22.substr(-p.length).toLowerCase() === p) {
           return true;
         }
       }
       return false;
     }
-    function checkStat(stat, path21, options) {
+    function checkStat(stat, path22, options) {
       if (!stat.isSymbolicLink() && !stat.isFile()) {
         return false;
       }
-      return checkPathExt(path21, options);
+      return checkPathExt(path22, options);
     }
-    function isexe(path21, options, cb) {
-      fs19.stat(path21, function(er, stat) {
-        cb(er, er ? false : checkStat(stat, path21, options));
+    function isexe(path22, options, cb) {
+      fs20.stat(path22, function(er, stat) {
+        cb(er, er ? false : checkStat(stat, path22, options));
       });
     }
-    function sync(path21, options) {
-      return checkStat(fs19.statSync(path21), path21, options);
+    function sync(path22, options) {
+      return checkStat(fs20.statSync(path22), path22, options);
     }
   }
 });
@@ -12549,14 +12549,14 @@ var require_mode = __commonJS({
   "node_modules/isexe/mode.js"(exports, module) {
     module.exports = isexe;
     isexe.sync = sync;
-    var fs19 = __require("fs");
-    function isexe(path21, options, cb) {
-      fs19.stat(path21, function(er, stat) {
+    var fs20 = __require("fs");
+    function isexe(path22, options, cb) {
+      fs20.stat(path22, function(er, stat) {
         cb(er, er ? false : checkStat(stat, options));
       });
     }
-    function sync(path21, options) {
-      return checkStat(fs19.statSync(path21), options);
+    function sync(path22, options) {
+      return checkStat(fs20.statSync(path22), options);
     }
     function checkStat(stat, options) {
       return stat.isFile() && checkMode(stat, options);
@@ -12580,7 +12580,7 @@ var require_mode = __commonJS({
 // node_modules/isexe/index.js
 var require_isexe = __commonJS({
   "node_modules/isexe/index.js"(exports, module) {
-    var fs19 = __require("fs");
+    var fs20 = __require("fs");
     var core;
     if (process.platform === "win32" || global.TESTING_WINDOWS) {
       core = require_windows();
@@ -12589,7 +12589,7 @@ var require_isexe = __commonJS({
     }
     module.exports = isexe;
     isexe.sync = sync;
-    function isexe(path21, options, cb) {
+    function isexe(path22, options, cb) {
       if (typeof options === "function") {
         cb = options;
         options = {};
@@ -12599,7 +12599,7 @@ var require_isexe = __commonJS({
           throw new TypeError("callback not provided");
         }
         return new Promise(function(resolve, reject) {
-          isexe(path21, options || {}, function(er, is) {
+          isexe(path22, options || {}, function(er, is) {
             if (er) {
               reject(er);
             } else {
@@ -12608,7 +12608,7 @@ var require_isexe = __commonJS({
           });
         });
       }
-      core(path21, options || {}, function(er, is) {
+      core(path22, options || {}, function(er, is) {
         if (er) {
           if (er.code === "EACCES" || options && options.ignoreErrors) {
             er = null;
@@ -12618,9 +12618,9 @@ var require_isexe = __commonJS({
         cb(er, is);
       });
     }
-    function sync(path21, options) {
+    function sync(path22, options) {
       try {
-        return core.sync(path21, options || {});
+        return core.sync(path22, options || {});
       } catch (er) {
         if (options && options.ignoreErrors || er.code === "EACCES") {
           return false;
@@ -12636,7 +12636,7 @@ var require_isexe = __commonJS({
 var require_which = __commonJS({
   "node_modules/which/which.js"(exports, module) {
     var isWindows = process.platform === "win32" || process.env.OSTYPE === "cygwin" || process.env.OSTYPE === "msys";
-    var path21 = __require("path");
+    var path22 = __require("path");
     var COLON = isWindows ? ";" : ":";
     var isexe = require_isexe();
     var getNotFoundError = (cmd) => Object.assign(new Error(`not found: ${cmd}`), { code: "ENOENT" });
@@ -12674,7 +12674,7 @@ var require_which = __commonJS({
           return opt.all && found.length ? resolve(found) : reject(getNotFoundError(cmd));
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path21.join(pathPart, cmd);
+        const pCmd = path22.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         resolve(subStep(p, i, 0));
       });
@@ -12701,7 +12701,7 @@ var require_which = __commonJS({
       for (let i = 0; i < pathEnv.length; i++) {
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path21.join(pathPart, cmd);
+        const pCmd = path22.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         for (let j = 0; j < pathExt.length; j++) {
           const cur = p + pathExt[j];
@@ -12749,7 +12749,7 @@ var require_path_key = __commonJS({
 var require_resolveCommand = __commonJS({
   "node_modules/cross-spawn/lib/util/resolveCommand.js"(exports, module) {
     "use strict";
-    var path21 = __require("path");
+    var path22 = __require("path");
     var which = require_which();
     var getPathKey = require_path_key();
     function resolveCommandAttempt(parsed, withoutPathExt) {
@@ -12767,7 +12767,7 @@ var require_resolveCommand = __commonJS({
       try {
         resolved = which.sync(parsed.command, {
           path: env[getPathKey({ env })],
-          pathExt: withoutPathExt ? path21.delimiter : void 0
+          pathExt: withoutPathExt ? path22.delimiter : void 0
         });
       } catch (e) {
       } finally {
@@ -12776,7 +12776,7 @@ var require_resolveCommand = __commonJS({
         }
       }
       if (resolved) {
-        resolved = path21.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
+        resolved = path22.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
       }
       return resolved;
     }
@@ -12830,8 +12830,8 @@ var require_shebang_command = __commonJS({
       if (!match) {
         return null;
       }
-      const [path21, argument] = match[0].replace(/#! ?/, "").split(" ");
-      const binary = path21.split("/").pop();
+      const [path22, argument] = match[0].replace(/#! ?/, "").split(" ");
+      const binary = path22.split("/").pop();
       if (binary === "env") {
         return argument;
       }
@@ -12844,16 +12844,16 @@ var require_shebang_command = __commonJS({
 var require_readShebang = __commonJS({
   "node_modules/cross-spawn/lib/util/readShebang.js"(exports, module) {
     "use strict";
-    var fs19 = __require("fs");
+    var fs20 = __require("fs");
     var shebangCommand = require_shebang_command();
     function readShebang(command) {
       const size = 150;
       const buffer = Buffer.alloc(size);
       let fd;
       try {
-        fd = fs19.openSync(command, "r");
-        fs19.readSync(fd, buffer, 0, size, 0);
-        fs19.closeSync(fd);
+        fd = fs20.openSync(command, "r");
+        fs20.readSync(fd, buffer, 0, size, 0);
+        fs20.closeSync(fd);
       } catch (e) {
       }
       return shebangCommand(buffer.toString());
@@ -12866,7 +12866,7 @@ var require_readShebang = __commonJS({
 var require_parse = __commonJS({
   "node_modules/cross-spawn/lib/parse.js"(exports, module) {
     "use strict";
-    var path21 = __require("path");
+    var path22 = __require("path");
     var resolveCommand = require_resolveCommand();
     var escape2 = require_escape();
     var readShebang = require_readShebang();
@@ -12891,7 +12891,7 @@ var require_parse = __commonJS({
       const needsShell = !isExecutableRegExp.test(commandFile);
       if (parsed.options.forceShell || needsShell) {
         const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
-        parsed.command = path21.normalize(parsed.command);
+        parsed.command = path22.normalize(parsed.command);
         parsed.command = escape2.command(parsed.command);
         parsed.args = parsed.args.map((arg) => escape2.argument(arg, needsDoubleEscapeMetaChars));
         const shellCommand = [parsed.command].concat(parsed.args).join(" ");
@@ -13003,8 +13003,8 @@ var require_cross_spawn = __commonJS({
 
 // src/maker/server/mcp.ts
 import { execFileSync, spawn as spawn4 } from "node:child_process";
-import fs16 from "node:fs";
-import path17 from "node:path";
+import fs17 from "node:fs";
+import path18 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // node_modules/zod/v3/helpers/util.js
@@ -13183,31 +13183,31 @@ var ZodError = class _ZodError extends Error {
     this.issues = issues;
   }
   format(_mapper) {
-    const mapper = _mapper || function(issue2) {
-      return issue2.message;
+    const mapper = _mapper || function(issue3) {
+      return issue3.message;
     };
     const fieldErrors = { _errors: [] };
     const processError = (error2) => {
-      for (const issue2 of error2.issues) {
-        if (issue2.code === "invalid_union") {
-          issue2.unionErrors.map(processError);
-        } else if (issue2.code === "invalid_return_type") {
-          processError(issue2.returnTypeError);
-        } else if (issue2.code === "invalid_arguments") {
-          processError(issue2.argumentsError);
-        } else if (issue2.path.length === 0) {
-          fieldErrors._errors.push(mapper(issue2));
+      for (const issue3 of error2.issues) {
+        if (issue3.code === "invalid_union") {
+          issue3.unionErrors.map(processError);
+        } else if (issue3.code === "invalid_return_type") {
+          processError(issue3.returnTypeError);
+        } else if (issue3.code === "invalid_arguments") {
+          processError(issue3.argumentsError);
+        } else if (issue3.path.length === 0) {
+          fieldErrors._errors.push(mapper(issue3));
         } else {
           let curr = fieldErrors;
           let i = 0;
-          while (i < issue2.path.length) {
-            const el = issue2.path[i];
-            const terminal = i === issue2.path.length - 1;
+          while (i < issue3.path.length) {
+            const el = issue3.path[i];
+            const terminal = i === issue3.path.length - 1;
             if (!terminal) {
               curr[el] = curr[el] || { _errors: [] };
             } else {
               curr[el] = curr[el] || { _errors: [] };
-              curr[el]._errors.push(mapper(issue2));
+              curr[el]._errors.push(mapper(issue3));
             }
             curr = curr[el];
             i++;
@@ -13232,7 +13232,7 @@ var ZodError = class _ZodError extends Error {
   get isEmpty() {
     return this.issues.length === 0;
   }
-  flatten(mapper = (issue2) => issue2.message) {
+  flatten(mapper = (issue3) => issue3.message) {
     const fieldErrors = /* @__PURE__ */ Object.create(null);
     const formErrors = [];
     for (const sub of this.issues) {
@@ -13256,30 +13256,30 @@ ZodError.create = (issues) => {
 };
 
 // node_modules/zod/v3/locales/en.js
-var errorMap = (issue2, _ctx) => {
+var errorMap = (issue3, _ctx) => {
   let message;
-  switch (issue2.code) {
+  switch (issue3.code) {
     case ZodIssueCode.invalid_type:
-      if (issue2.received === ZodParsedType.undefined) {
+      if (issue3.received === ZodParsedType.undefined) {
         message = "Required";
       } else {
-        message = `Expected ${issue2.expected}, received ${issue2.received}`;
+        message = `Expected ${issue3.expected}, received ${issue3.received}`;
       }
       break;
     case ZodIssueCode.invalid_literal:
-      message = `Invalid literal value, expected ${JSON.stringify(issue2.expected, util.jsonStringifyReplacer)}`;
+      message = `Invalid literal value, expected ${JSON.stringify(issue3.expected, util.jsonStringifyReplacer)}`;
       break;
     case ZodIssueCode.unrecognized_keys:
-      message = `Unrecognized key(s) in object: ${util.joinValues(issue2.keys, ", ")}`;
+      message = `Unrecognized key(s) in object: ${util.joinValues(issue3.keys, ", ")}`;
       break;
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
       break;
     case ZodIssueCode.invalid_union_discriminator:
-      message = `Invalid discriminator value. Expected ${util.joinValues(issue2.options)}`;
+      message = `Invalid discriminator value. Expected ${util.joinValues(issue3.options)}`;
       break;
     case ZodIssueCode.invalid_enum_value:
-      message = `Invalid enum value. Expected ${util.joinValues(issue2.options)}, received '${issue2.received}'`;
+      message = `Invalid enum value. Expected ${util.joinValues(issue3.options)}, received '${issue3.received}'`;
       break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;
@@ -13291,50 +13291,50 @@ var errorMap = (issue2, _ctx) => {
       message = `Invalid date`;
       break;
     case ZodIssueCode.invalid_string:
-      if (typeof issue2.validation === "object") {
-        if ("includes" in issue2.validation) {
-          message = `Invalid input: must include "${issue2.validation.includes}"`;
-          if (typeof issue2.validation.position === "number") {
-            message = `${message} at one or more positions greater than or equal to ${issue2.validation.position}`;
+      if (typeof issue3.validation === "object") {
+        if ("includes" in issue3.validation) {
+          message = `Invalid input: must include "${issue3.validation.includes}"`;
+          if (typeof issue3.validation.position === "number") {
+            message = `${message} at one or more positions greater than or equal to ${issue3.validation.position}`;
           }
-        } else if ("startsWith" in issue2.validation) {
-          message = `Invalid input: must start with "${issue2.validation.startsWith}"`;
-        } else if ("endsWith" in issue2.validation) {
-          message = `Invalid input: must end with "${issue2.validation.endsWith}"`;
+        } else if ("startsWith" in issue3.validation) {
+          message = `Invalid input: must start with "${issue3.validation.startsWith}"`;
+        } else if ("endsWith" in issue3.validation) {
+          message = `Invalid input: must end with "${issue3.validation.endsWith}"`;
         } else {
-          util.assertNever(issue2.validation);
+          util.assertNever(issue3.validation);
         }
-      } else if (issue2.validation !== "regex") {
-        message = `Invalid ${issue2.validation}`;
+      } else if (issue3.validation !== "regex") {
+        message = `Invalid ${issue3.validation}`;
       } else {
         message = "Invalid";
       }
       break;
     case ZodIssueCode.too_small:
-      if (issue2.type === "array")
-        message = `Array must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `more than`} ${issue2.minimum} element(s)`;
-      else if (issue2.type === "string")
-        message = `String must contain ${issue2.exact ? "exactly" : issue2.inclusive ? `at least` : `over`} ${issue2.minimum} character(s)`;
-      else if (issue2.type === "number")
-        message = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
-      else if (issue2.type === "bigint")
-        message = `Number must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${issue2.minimum}`;
-      else if (issue2.type === "date")
-        message = `Date must be ${issue2.exact ? `exactly equal to ` : issue2.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue2.minimum))}`;
+      if (issue3.type === "array")
+        message = `Array must contain ${issue3.exact ? "exactly" : issue3.inclusive ? `at least` : `more than`} ${issue3.minimum} element(s)`;
+      else if (issue3.type === "string")
+        message = `String must contain ${issue3.exact ? "exactly" : issue3.inclusive ? `at least` : `over`} ${issue3.minimum} character(s)`;
+      else if (issue3.type === "number")
+        message = `Number must be ${issue3.exact ? `exactly equal to ` : issue3.inclusive ? `greater than or equal to ` : `greater than `}${issue3.minimum}`;
+      else if (issue3.type === "bigint")
+        message = `Number must be ${issue3.exact ? `exactly equal to ` : issue3.inclusive ? `greater than or equal to ` : `greater than `}${issue3.minimum}`;
+      else if (issue3.type === "date")
+        message = `Date must be ${issue3.exact ? `exactly equal to ` : issue3.inclusive ? `greater than or equal to ` : `greater than `}${new Date(Number(issue3.minimum))}`;
       else
         message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
-      if (issue2.type === "array")
-        message = `Array must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `less than`} ${issue2.maximum} element(s)`;
-      else if (issue2.type === "string")
-        message = `String must contain ${issue2.exact ? `exactly` : issue2.inclusive ? `at most` : `under`} ${issue2.maximum} character(s)`;
-      else if (issue2.type === "number")
-        message = `Number must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
-      else if (issue2.type === "bigint")
-        message = `BigInt must be ${issue2.exact ? `exactly` : issue2.inclusive ? `less than or equal to` : `less than`} ${issue2.maximum}`;
-      else if (issue2.type === "date")
-        message = `Date must be ${issue2.exact ? `exactly` : issue2.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue2.maximum))}`;
+      if (issue3.type === "array")
+        message = `Array must contain ${issue3.exact ? `exactly` : issue3.inclusive ? `at most` : `less than`} ${issue3.maximum} element(s)`;
+      else if (issue3.type === "string")
+        message = `String must contain ${issue3.exact ? `exactly` : issue3.inclusive ? `at most` : `under`} ${issue3.maximum} character(s)`;
+      else if (issue3.type === "number")
+        message = `Number must be ${issue3.exact ? `exactly` : issue3.inclusive ? `less than or equal to` : `less than`} ${issue3.maximum}`;
+      else if (issue3.type === "bigint")
+        message = `BigInt must be ${issue3.exact ? `exactly` : issue3.inclusive ? `less than or equal to` : `less than`} ${issue3.maximum}`;
+      else if (issue3.type === "date")
+        message = `Date must be ${issue3.exact ? `exactly` : issue3.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue3.maximum))}`;
       else
         message = "Invalid input";
       break;
@@ -13345,14 +13345,14 @@ var errorMap = (issue2, _ctx) => {
       message = `Intersection results could not be merged`;
       break;
     case ZodIssueCode.not_multiple_of:
-      message = `Number must be a multiple of ${issue2.multipleOf}`;
+      message = `Number must be a multiple of ${issue3.multipleOf}`;
       break;
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
       break;
     default:
       message = _ctx.defaultError;
-      util.assertNever(issue2);
+      util.assertNever(issue3);
   }
   return { message };
 };
@@ -13366,8 +13366,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path21, errorMaps, issueData } = params;
-  const fullPath = [...path21, ...issueData.path || []];
+  const { data, path: path22, errorMaps, issueData } = params;
+  const fullPath = [...path22, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -13392,7 +13392,7 @@ var makeIssue = (params) => {
 };
 function addIssueToContext(ctx, issueData) {
   const overrideMap = getErrorMap();
-  const issue2 = makeIssue({
+  const issue3 = makeIssue({
     issueData,
     data: ctx.data,
     path: ctx.path,
@@ -13407,7 +13407,7 @@ function addIssueToContext(ctx, issueData) {
       // then global default map
     ].filter((x) => !!x)
   });
-  ctx.common.issues.push(issue2);
+  ctx.common.issues.push(issue3);
 }
 var ParseStatus = class _ParseStatus {
   constructor() {
@@ -13482,11 +13482,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path21, key) {
+  constructor(parent, value, path22, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path21;
+    this._path = path22;
     this._key = key;
   }
   get path() {
@@ -15366,10 +15366,10 @@ var ZodObject = class _ZodObject extends ZodType {
       ...this._def,
       unknownKeys: "strict",
       ...message !== void 0 ? {
-        errorMap: (issue2, ctx) => {
+        errorMap: (issue3, ctx) => {
           var _a3, _b;
-          const defaultError = ((_b = (_a3 = this._def).errorMap) == null ? void 0 : _b.call(_a3, issue2, ctx).message) ?? ctx.defaultError;
-          if (issue2.code === "unrecognized_keys")
+          const defaultError = ((_b = (_a3 = this._def).errorMap) == null ? void 0 : _b.call(_a3, issue3, ctx).message) ?? ctx.defaultError;
+          if (issue3.code === "unrecognized_keys")
             return {
               message: errorUtil.errToObj(message).message ?? defaultError
             };
@@ -17135,10 +17135,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path21) {
-  if (!path21)
+function getElementAtPath(obj, path22) {
+  if (!path22)
     return obj;
-  return path21.reduce((acc, key) => acc == null ? void 0 : acc[key], obj);
+  return path22.reduce((acc, key) => acc == null ? void 0 : acc[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -17523,11 +17523,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path21, issues) {
+function prefixIssues(path22, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path21);
+    iss.path.unshift(path22);
     return iss;
   });
 }
@@ -17663,7 +17663,7 @@ var initializer = (inst, def) => {
 };
 var $ZodError = $constructor("$ZodError", initializer);
 var $ZodRealError = $constructor("$ZodError", initializer, { Parent: Error });
-function flattenError(error2, mapper = (issue2) => issue2.message) {
+function flattenError(error2, mapper = (issue3) => issue3.message) {
   const fieldErrors = {};
   const formErrors = [];
   for (const sub of error2.issues) {
@@ -17676,29 +17676,29 @@ function flattenError(error2, mapper = (issue2) => issue2.message) {
   }
   return { formErrors, fieldErrors };
 }
-function formatError(error2, mapper = (issue2) => issue2.message) {
+function formatError(error2, mapper = (issue3) => issue3.message) {
   const fieldErrors = { _errors: [] };
   const processError = (error3) => {
-    for (const issue2 of error3.issues) {
-      if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }));
-      } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues });
-      } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues });
-      } else if (issue2.path.length === 0) {
-        fieldErrors._errors.push(mapper(issue2));
+    for (const issue3 of error3.issues) {
+      if (issue3.code === "invalid_union" && issue3.errors.length) {
+        issue3.errors.map((issues) => processError({ issues }));
+      } else if (issue3.code === "invalid_key") {
+        processError({ issues: issue3.issues });
+      } else if (issue3.code === "invalid_element") {
+        processError({ issues: issue3.issues });
+      } else if (issue3.path.length === 0) {
+        fieldErrors._errors.push(mapper(issue3));
       } else {
         let curr = fieldErrors;
         let i = 0;
-        while (i < issue2.path.length) {
-          const el = issue2.path[i];
-          const terminal = i === issue2.path.length - 1;
+        while (i < issue3.path.length) {
+          const el = issue3.path[i];
+          const terminal = i === issue3.path.length - 1;
           if (!terminal) {
             curr[el] = curr[el] || { _errors: [] };
           } else {
             curr[el] = curr[el] || { _errors: [] };
-            curr[el]._errors.push(mapper(issue2));
+            curr[el]._errors.push(mapper(issue3));
           }
           curr = curr[el];
           i++;
@@ -20585,35 +20585,35 @@ var error = () => {
     nan: "NaN"
     // All other type names omitted - they fall back to raw values via ?? operator
   };
-  return (issue2) => {
-    switch (issue2.code) {
+  return (issue3) => {
+    switch (issue3.code) {
       case "invalid_type": {
-        const expected = TypeDictionary[issue2.expected] ?? issue2.expected;
-        const receivedType = parsedType(issue2.input);
+        const expected = TypeDictionary[issue3.expected] ?? issue3.expected;
+        const receivedType = parsedType(issue3.input);
         const received = TypeDictionary[receivedType] ?? receivedType;
         return `Invalid input: expected ${expected}, received ${received}`;
       }
       case "invalid_value":
-        if (issue2.values.length === 1)
-          return `Invalid input: expected ${stringifyPrimitive(issue2.values[0])}`;
-        return `Invalid option: expected one of ${joinValues(issue2.values, "|")}`;
+        if (issue3.values.length === 1)
+          return `Invalid input: expected ${stringifyPrimitive(issue3.values[0])}`;
+        return `Invalid option: expected one of ${joinValues(issue3.values, "|")}`;
       case "too_big": {
-        const adj = issue2.inclusive ? "<=" : "<";
-        const sizing = getSizing(issue2.origin);
+        const adj = issue3.inclusive ? "<=" : "<";
+        const sizing = getSizing(issue3.origin);
         if (sizing)
-          return `Too big: expected ${issue2.origin ?? "value"} to have ${adj}${issue2.maximum.toString()} ${sizing.unit ?? "elements"}`;
-        return `Too big: expected ${issue2.origin ?? "value"} to be ${adj}${issue2.maximum.toString()}`;
+          return `Too big: expected ${issue3.origin ?? "value"} to have ${adj}${issue3.maximum.toString()} ${sizing.unit ?? "elements"}`;
+        return `Too big: expected ${issue3.origin ?? "value"} to be ${adj}${issue3.maximum.toString()}`;
       }
       case "too_small": {
-        const adj = issue2.inclusive ? ">=" : ">";
-        const sizing = getSizing(issue2.origin);
+        const adj = issue3.inclusive ? ">=" : ">";
+        const sizing = getSizing(issue3.origin);
         if (sizing) {
-          return `Too small: expected ${issue2.origin} to have ${adj}${issue2.minimum.toString()} ${sizing.unit}`;
+          return `Too small: expected ${issue3.origin} to have ${adj}${issue3.minimum.toString()} ${sizing.unit}`;
         }
-        return `Too small: expected ${issue2.origin} to be ${adj}${issue2.minimum.toString()}`;
+        return `Too small: expected ${issue3.origin} to be ${adj}${issue3.minimum.toString()}`;
       }
       case "invalid_format": {
-        const _issue = issue2;
+        const _issue = issue3;
         if (_issue.format === "starts_with") {
           return `Invalid string: must start with "${_issue.prefix}"`;
         }
@@ -20623,18 +20623,18 @@ var error = () => {
           return `Invalid string: must include "${_issue.includes}"`;
         if (_issue.format === "regex")
           return `Invalid string: must match pattern ${_issue.pattern}`;
-        return `Invalid ${FormatDictionary[_issue.format] ?? issue2.format}`;
+        return `Invalid ${FormatDictionary[_issue.format] ?? issue3.format}`;
       }
       case "not_multiple_of":
-        return `Invalid number: must be a multiple of ${issue2.divisor}`;
+        return `Invalid number: must be a multiple of ${issue3.divisor}`;
       case "unrecognized_keys":
-        return `Unrecognized key${issue2.keys.length > 1 ? "s" : ""}: ${joinValues(issue2.keys, ", ")}`;
+        return `Unrecognized key${issue3.keys.length > 1 ? "s" : ""}: ${joinValues(issue3.keys, ", ")}`;
       case "invalid_key":
-        return `Invalid key in ${issue2.origin}`;
+        return `Invalid key in ${issue3.origin}`;
       case "invalid_union":
         return "Invalid input";
       case "invalid_element":
-        return `Invalid value in ${issue2.origin}`;
+        return `Invalid value in ${issue3.origin}`;
       default:
         return `Invalid input`;
     }
@@ -21419,11 +21419,11 @@ function _refine(Class2, fn, _params) {
 // @__NO_SIDE_EFFECTS__
 function _superRefine(fn) {
   const ch = /* @__PURE__ */ _check((payload) => {
-    payload.addIssue = (issue2) => {
-      if (typeof issue2 === "string") {
-        payload.issues.push(issue(issue2, payload.value, ch._zod.def));
+    payload.addIssue = (issue3) => {
+      if (typeof issue3 === "string") {
+        payload.issues.push(issue(issue3, payload.value, ch._zod.def));
       } else {
-        const _issue = issue2;
+        const _issue = issue3;
         if (_issue.fatal)
           _issue.continue = false;
         _issue.code ?? (_issue.code = "custom");
@@ -22697,8 +22697,8 @@ var initializer2 = (inst, issues) => {
       // enumerable: false,
     },
     addIssue: {
-      value: (issue2) => {
-        inst.issues.push(issue2);
+      value: (issue3) => {
+        inst.issues.push(issue3);
         inst.message = JSON.stringify(inst.issues, jsonStringifyReplacer, 2);
       }
       // enumerable: false,
@@ -23521,11 +23521,11 @@ var ZodTransform = /* @__PURE__ */ $constructor("ZodTransform", (inst, def) => {
     if (_ctx.direction === "backward") {
       throw new $ZodEncodeError(inst.constructor.name);
     }
-    payload.addIssue = (issue2) => {
-      if (typeof issue2 === "string") {
-        payload.issues.push(util_exports.issue(issue2, payload.value, def));
+    payload.addIssue = (issue3) => {
+      if (typeof issue3 === "string") {
+        payload.issues.push(util_exports.issue(issue3, payload.value, def));
       } else {
-        const _issue = issue2;
+        const _issue = issue3;
         if (_issue.fatal)
           _issue.continue = false;
         _issue.code ?? (_issue.code = "custom");
@@ -29156,8 +29156,24 @@ async function fetchWithTimeout(fetchImpl, url2, init, timeoutMs, label) {
 import crypto from "node:crypto";
 import fs5 from "node:fs";
 import path6 from "node:path";
+
+// src/maker/capabilityRouting.ts
+var MAKER_CAPABILITY_ROUTING_INDEX = `TapTap Maker routing index:
+- Start or resume Maker work, or diagnose project/MCP readiness: read
+  maker://status; use maker_status_lite when resources are unavailable.
+- Build, preview, run, submit, or push: after checking project status, use
+  maker_build_current_directory.
+- Tap flows: test QR -> generate_test_qrcode; ads or ad code -> first check
+  Maker project status, then use get_ad_config when primary configs are ready;
+  online player feedback, logs, or screenshots -> get_debug_feedbacks.
+- Game assets: Maker MCP also provides image, video, music, sound-effect,
+  dialogue/voice, and 3D generation tools when exposed.
+
+Follow the selected tool schema and returned next_action.`;
+
+// src/maker/cli/agentsPolicy.ts
 var MAKER_AGENTS_FILE = "AGENTS.md";
-var POLICY_VERSION = "1";
+var POLICY_VERSION = "3";
 var POLICY_END = "<!-- <<< TapTap Maker managed AGENTS policy <<< -->";
 var POLICY_BLOCK_PATTERN = /(?:# TapTap Maker Project Asset Tool Policy\s*)?<!-- >>> TapTap Maker (?:managed AGENTS policy version=([^ ]+) hash=sha256:([0-9a-f]+)|asset tool policy) >>> -->[\s\S]*?<!-- <<< TapTap Maker (?:managed AGENTS policy|asset tool policy) <<< -->\n?/;
 function inspectMakerAgentsPolicy(targetDir) {
@@ -29243,6 +29259,8 @@ function createMakerAgentsPolicyBody() {
     "",
     "This is a bound TapTap Maker project.",
     "",
+    MAKER_CAPABILITY_ROUTING_INDEX,
+    "",
     "Maker build workflow:",
     "",
     "- For user requests such as 构建, build, 预览, 跑一下, 查看结果, 看看效果, 验证游戏效果,",
@@ -29253,18 +29271,65 @@ function createMakerAgentsPolicyBody() {
     "",
     "Generic code checks such as 验证代码, 跑测试, lint, or 检查实现 should not trigger a Maker",
     "remote build unless the user explicitly asks to build, run, or preview the Maker game.",
+    "- Preview, build, test, and local-development intent must never select or change the service",
+    "  environment. Do not add environment parameters to Maker tool calls or user MCP config;",
+    "  use the default Maker service configuration.",
+    "",
+    "Maker MCP connection recovery:",
+    "",
+    "- If tools are missing, the process exits immediately, or the client reports `-32000`,",
+    "  `Connection closed`, or `command not found`, do not depend on Maker MCP tools for initial",
+    "  diagnosis. Work from local config, shell output, and client logs.",
+    "- Attempt `npx -y -p @taptap/maker taptap-maker mcp verify --json`; on Windows use",
+    "  `npx.cmd -y -p @taptap/maker taptap-maker mcp verify --json`. Record command failure as",
+    "  diagnostic evidence instead of skipping the check.",
+    "- This verifies only the standard `@taptap/maker` npx/CLI launch path and returns command,",
+    "  status, signal, stdout, stderr, error, and failure_type. It does not start the Maker MCP server",
+    "  and does not read or validate the client's active MCP config, WorkBuddy trust, cwd, or Roots.",
+    "  A successful verify result does not prove that the client MCP config works.",
+    "- Then inspect and reproduce the active config path, command, ordered args, cwd, WorkBuddy",
+    "  enable/trust state, workspace/Roots, Node/npm/npx paths, client PATH, exit status, and stderr.",
+    "- Classify the root cause from evidence before repairing it. Do not automatically change trust",
+    "  storage, PATH, cwd, credentials, or game code.",
+    "- Treat `taptap-maker mcp install --ide <client>` as an optional recovery only after evidence",
+    "  confirms that the active config entry is damaged.",
+    '- Never repair cwd by wrapping the command with `cd /d "<project>" && npx.cmd ...`.',
+    "  Maker supports Chinese project paths; command-shell quoting or client startup can fail",
+    "  independently of the project path.",
+    "- If WorkBuddy ignores configured cwd, do not keep rewriting the cwd field. Use the active",
+    "  workspace/Roots and record the process actual cwd instead.",
+    "- Do not assume Windows 8.3 short paths exist or differ from the original long path. Verify",
+    "  the result first; an unchanged or missing short path is not a usable cwd workaround.",
+    "- Reproduce the configured Windows launch with the same direct argv boundary when possible.",
+    "  Separate outer shell quoting or stderr decoding failures from the MCP child process result,",
+    "  and record both without treating wrapper failures as server evidence.",
+    "- AI conversations share user-level MCP config. Back up the active config before any repair,",
+    "  then reconnect and verify in both the current and a new conversation.",
+    "- If the MCP connection is established but a tool or resource call fails, including `-32003`,",
+    "  use a separate evidence-first runtime-error workflow. Do not assign a fixed meaning to the",
+    "  error code; preserve the exact client error.",
+    "- `mcp verify` is not the primary check for an already connected session because it only tests",
+    "  the standard npx/CLI launch path.",
+    "- Collect the failed tool/resource, redacted request parameters, current `tools/list`, exact",
+    "  error code/message/data, complete sanitized `remote_result`, request/correlation IDs,",
+    "  timestamp with timezone, OS/architecture, AI client and `@taptap/maker` package versions,",
+    "  and stable reproduction steps. Preserve useful nested fields while removing credentials.",
+    "- Do not rewrite command, cwd, PATH, trust state, credentials, or game code unless the",
+    "  collected evidence identifies that cause.",
     "",
     "Maker ad workflow:",
     "",
-    "- For any ad-related request or code touching ads, first call `get_ad_config` before reading",
+    "- For any ad-related request or code touching ads, first inspect Maker project status. Call",
+    "  `get_ad_config` only after primary local project configs are initialized and before reading",
     "  local SDK docs, editing ad code, or testing ad behavior. Triggers include 广告, 激励视频,",
     "  播放广告, ad ID, ad placement, ad status, ad config, and `ShowRewardVideoAd`.",
     "- Treat `get_ad_config` as the source of truth for current project ad activation status and",
     "  ad config. Do not infer ad readiness from local SDK docs, `.maker-mcp/config.json`, or",
     "  runtime callbacks.",
-    "- If `.project/project.json` is missing, build once with `maker_build_current_directory` to",
-    "  initialize the project, then call `get_ad_config` again. Implement or test ad code only",
-    "  after the config is available.",
+    "- If primary local project configs are missing, keep ad config unavailable and do not call the",
+    "  remote tool. Build only for an explicit user build/submit/preview request. If a successful",
+    "  build still leaves local configs missing, explain the known limitation and do not rebuild",
+    "  automatically. Implement or test ad code only after the config is available.",
     "- If `get_ad_config` reports missing `app_id` or `developer_id`, call",
     "  `generate_test_qrcode` once to generate test QR code metadata, then call `get_ad_config`",
     "  again. Do not use publish-only tools for this recovery path.",
@@ -29287,12 +29352,21 @@ function createMakerAgentsPolicyBody() {
     "- `edit_image` for modifying existing project images.",
     "- `create_video_task` for game video assets or referenced image/video generation.",
     "- `query_video_task` for refreshing video task status and fetching completed videos.",
-    "- `text_to_music` for game music or audio assets.",
-    "- `create_3d_model_task` for game 3D model assets.",
-    "- `query_3d_model_task` for polling 3D model tasks.",
-    "- For 3D characters that need skeletons, animation, or FBX output, ask whether to use",
-    "  `rig=true`. Use it only for biped humanoid characters in A-pose or A-pose-compatible",
-    "  front-view inputs; otherwise keep static model generation.",
+    "- `text_to_music` for game music.",
+    "- `text_to_sound_effect` for one sound effect.",
+    "- `batch_sound_effects` for multiple sound effects.",
+    "- `text_to_dialogue` for final character dialogue.",
+    "- `text_to_dialogue` automatically converts local project audio to data URLs and reuses confirmed local voice mappings.",
+    "- After `audition_voices_for_character` returns previews, show them to the user and wait",
+    "  for the user to choose. Do not select or confirm a voice automatically.",
+    "- Call `confirm_character_voice` only after the user explicitly chooses one preview.",
+    "- Generated sound effects and dialogue are saved in the project.",
+    "- Voice audition previews are not saved to the project.",
+    "- Local MCP does not transcode generated audio to OGG.",
+    "- `create_3d_asset` for the complete 3D lifecycle: start, query, explicit review continuation,",
+    "  option inspection, and post-processing.",
+    "- Never automatically continue a 3D review step. Show returned previews and wait for explicit",
+    '  user approval before calling `create_3d_asset` with `action="continue"`.',
     "",
     "Follow each Maker tool schema for supported local path, remote URL, and data URL inputs.",
     "If the user references attached/local media, inspect the attachment or workspace file path",
@@ -29307,8 +29381,8 @@ function createMakerAgentsPolicyBody() {
     "Generated Maker proxy assets should stay in the Maker project asset workflow under",
     "`assets/image`, `assets/video`, `assets/audio`, or `assets/model`, with remote mappings",
     "preserved for later edits and builds.",
-    "3D model results save the original GLB/FBX, the MDL zip, extracted MDL assets, and rendered",
-    "preview images when those URLs are returned."
+    "`create_3d_asset` local runtime `model_files` copy/extract instructions are materialized into",
+    "`assets/model`. Use `local_delivery` for the usable local model path and preserve the remote result."
   ].join("\n");
 }
 function hashPolicyBody(body) {
@@ -31095,19 +31169,19 @@ function inspectMakerDirectoryGitStatus(cwd) {
   const isUsableMakerGitRepo = Boolean(
     (makerBinding == null ? void 0 : makerBinding.projectRoot) && gitRoot && samePath(makerBinding.projectRoot, gitRoot)
   );
-  let issue2;
+  let issue3;
   let message;
   if (makerBinding && gitRoot && !samePath(makerBinding.projectRoot, gitRoot)) {
-    issue2 = "inside_parent_git_repo";
+    issue3 = "inside_parent_git_repo";
     message = [
       `${makerBinding.projectRoot} contains Maker binding config, but Git root is ${gitRoot}.`,
       "The Maker directory must be an independent Git repository before build or submit."
     ].join(" ");
   } else if (makerBinding && !gitRoot) {
-    issue2 = "missing_git_repo";
+    issue3 = "missing_git_repo";
     message = `${makerBinding.projectRoot} is bound to Maker but is not a Git repository.`;
   } else if (!makerBinding) {
-    issue2 = "missing_maker_config";
+    issue3 = "missing_maker_config";
     message = `${targetDir} is not bound to a Maker project. .maker-mcp/config.json is missing.`;
   }
   return {
@@ -31119,7 +31193,7 @@ function inspectMakerDirectoryGitStatus(cwd) {
     isGitWorkTree,
     isOwnGitRoot: isOwnGitRoot2,
     isUsableMakerGitRepo,
-    issue: issue2,
+    issue: issue3,
     message
   };
 }
@@ -32346,19 +32420,29 @@ function formatMakerSkillStatus(_options = {}) {
     "- Prefer Maker MCP proxy tools over native AI image/video/audio tools for bound Maker projects.",
     "- If Maker proxy tools are missing, explain the session/configuration issue and available alternatives.",
     "- Use generate_image, batch_generate_images, edit_image for game image assets.",
-    "- Use create_video_task, query_video_task, and text_to_music for game video/audio assets.",
-    "- Use create_3d_model_task and query_3d_model_task for game 3D model assets.",
-    "- For any ad-related request, call get_ad_config first to get ad activation status and ad config.",
+    "- Use create_video_task and query_video_task for game video assets.",
+    "- Use text_to_music for game music.",
+    "- Use text_to_sound_effect for one sound effect.",
+    "- Use batch_sound_effects for multiple sound effects.",
+    "- Use text_to_dialogue for final character dialogue.",
+    "- text_to_dialogue automatically converts local project audio to data URLs and reuses confirmed local voice mappings.",
+    "- After audition_voices_for_character returns previews, wait for the user to choose.",
+    "- Call confirm_character_voice only after the user explicitly chooses a preview.",
+    "- Generated sound effects and dialogue are saved in the project.",
+    "- Voice audition previews are not saved to the project.",
+    "- Local MCP does not transcode generated audio to OGG.",
+    "- Use create_3d_asset with start/query/continue/post_process for game 3D model assets.",
+    "- For any ad-related request, inspect Maker project status first and call get_ad_config only after primary local project configs are initialized.",
     "- Do not infer ad readiness from local SDK docs, .maker-mcp/config.json, or runtime callbacks.",
-    "- If .project/project.json is missing, build once with maker_build_current_directory, then call get_ad_config again.",
+    "- If primary local project configs are missing, keep ad config unavailable. Build only for an explicit user build/submit/preview request, and do not automatically rebuild when local configs remain missing after success.",
     "- If get_ad_config reports missing app_id or developer_id, call generate_test_qrcode once, then call get_ad_config again.",
     "- For online player feedback, issue reports, real-device logs, or screenshots, call get_debug_feedbacks.",
     "- Use local runtime logs only for the current local build/runtime session.",
     "- Generated assets are saved under assets/image, assets/video, assets/audio, or assets/model with remote mappings.",
     "- Follow each tool schema for supported local path, remote URL, and data URL inputs.",
     "- Local proxy may convert resolvable local reference media to data URLs before forwarding.",
-    "- Generated 3D outputs save original GLB/FBX and MDL zip under assets/model.",
-    "- MDL zip contents are extracted into assets/Meshes, assets/Materials, assets/Textures, and assets/Prefabs.",
+    "- create_3d_asset local runtime model_files copy/extract instructions are materialized under assets/model.",
+    "- Use local_delivery for the usable local model path and preview_assets for local review images.",
     "Maker initialization next_step: execute `taptap-maker init`.",
     "Load these documents when the current AI client supports reading local guide files."
   ].join("\n");
@@ -33302,20 +33386,28 @@ function formatMakerProjectInitializationStatus(status) {
       `- config: ${status.projectJsonPath}`,
       status.error ? `- error: ${status.error}` : "",
       "- impact: get_ad_config and other remote project-config tools cannot parse project metadata yet.",
-      "- next_action: 检查 .project/project.json 内容；必要时先调用 maker_build_current_directory 重新生成项目配置。"
+      "- next_action: 从 Git 或完整副本恢复合法的 .project/project.json；不要依赖 maker_build_current_directory 覆盖已有坏文件。"
     ].filter(Boolean).join("\n");
   }
   if (status.status === "missing_project_json") {
+    const projectDirState = inspectProjectDirectory(status.projectRoot);
     return [
       "Maker project initialization",
       "",
       "- status: missing_project_json",
       `- config: ${status.projectJsonPath}`,
       "- impact: get_ad_config and other remote project-config tools cannot read project metadata yet.",
-      "- next_action: 先调用 maker_build_current_directory 构建一次，生成 .project/project.json 后再重试。"
+      projectDirState === "invalid" ? "- next_action: .project 路径异常；先恢复为正常目录，再检查或恢复 project.json。" : "- next_action: 本地主要配置尚未初始化；仅当用户明确要求构建、提交或预览时调用 maker_build_current_directory。构建成功后若本地仍缺少 .project/project.json，保持配置依赖功能不可用，不要自动重复构建。"
     ].join("\n");
   }
   return "";
+}
+function inspectProjectDirectory(projectRoot) {
+  try {
+    return fs13.lstatSync(path14.join(projectRoot, ".project")).isDirectory() ? "directory" : "invalid";
+  } catch (error2) {
+    return error2.code === "ENOENT" ? "missing" : "invalid";
+  }
 }
 function hasNonEmptyIdentityField(value, fieldName) {
   if (!value || typeof value !== "object") {
@@ -33339,6 +33431,188 @@ function isNonEmptyStringLike(value) {
 import fs14 from "node:fs";
 import path15 from "node:path";
 var REQUIRED_SOURCE_TAGS = ["stable"];
+function inspectMakerProjectHealth(projectRoot, mode = "status") {
+  const resolvedProjectRoot = path15.resolve(projectRoot);
+  const paths = {
+    projectDir: path15.join(resolvedProjectRoot, ".project"),
+    projectJson: path15.join(resolvedProjectRoot, ".project", "project.json"),
+    resourcesJson: path15.join(resolvedProjectRoot, ".project", "resources.json"),
+    settingsJson: path15.join(resolvedProjectRoot, ".project", "settings.json")
+  };
+  const issues = [];
+  const projectDirState = inspectPath(paths.projectDir, "directory");
+  if (projectDirState === "wrong_type") {
+    issues.push(issue2("invalid_path_type", "error", ".project", ".project 必须是目录"));
+  }
+  const rootCandidates = [
+    ["project.json", paths.projectJson],
+    ["resources.json", paths.resourcesJson],
+    ["settings.json", paths.settingsJson],
+    ["assets/project.json", paths.projectJson]
+  ];
+  for (const [name, canonicalPath] of rootCandidates) {
+    const rootPath = path15.join(resolvedProjectRoot, name);
+    const rootState = inspectPath(rootPath, "file");
+    if (rootState === "file" && inspectPath(canonicalPath, "file") !== "file") {
+      if (name === "assets/project.json" && !hasTapTapPublish(path15.join(resolvedProjectRoot, name))) {
+        continue;
+      }
+      if (name !== "assets/project.json" && !hasMakerRootConfigSignature(rootPath, name)) {
+        continue;
+      }
+      issues.push({
+        code: "misplaced_config",
+        severity: "error",
+        path: name,
+        expectedPath: path15.relative(resolvedProjectRoot, canonicalPath),
+        message: `${name} 位于项目根目录，规范位置应为 ${path15.relative(resolvedProjectRoot, canonicalPath)}`
+      });
+    }
+  }
+  const projectDirExists = projectDirState === "directory";
+  const projectJsonState = projectDirExists ? inspectPath(paths.projectJson, "file") : "missing";
+  const resourcesJsonState = projectDirExists ? inspectPath(paths.resourcesJson, "file") : "missing";
+  const settingsJsonState = projectDirExists ? inspectPath(paths.settingsJson, "file") : "missing";
+  const projectJsonExists = projectJsonState === "file";
+  const resourcesJsonExists = resourcesJsonState === "file";
+  const settingsJsonExists = settingsJsonState === "file";
+  const hasMisplacedConfig = issues.some((item) => item.code === "misplaced_config");
+  const hasNoPrimaryConfig = projectJsonState === "missing" && settingsJsonState === "missing";
+  if (hasNoPrimaryConfig && !hasMisplacedConfig && issues.length === 0) {
+    return createHealthResult(
+      resolvedProjectRoot,
+      mode,
+      "not_initialized",
+      paths,
+      issues,
+      true,
+      false
+    );
+  }
+  addCanonicalFileIssue(projectJsonState, ".project/project.json", issues, mode === "qrcode");
+  addCanonicalFileIssue(resourcesJsonState, ".project/resources.json", issues, mode === "qrcode");
+  addCanonicalFileIssue(settingsJsonState, ".project/settings.json", issues, false);
+  if (projectJsonExists && settingsJsonState === "missing") {
+    issues.push(
+      issue2(
+        "missing_settings_json",
+        "warning",
+        ".project/settings.json",
+        ".project/settings.json 缺失，首次构建可能由 server 创建"
+      )
+    );
+  }
+  const project = projectJsonExists ? readHealthJson(paths.projectJson, "project.json", issues) : void 0;
+  const resources2 = resourcesJsonExists ? readHealthJson(paths.resourcesJson, "resources.json", issues) : void 0;
+  const settings = settingsJsonExists ? readHealthJson(paths.settingsJson, "settings.json", issues) : void 0;
+  if (project !== void 0 && !isPlainObject3(project)) {
+    issues.push(
+      issue2(
+        "invalid_project_json",
+        "error",
+        ".project/project.json",
+        "project.json 必须是 JSON object"
+      )
+    );
+  } else if (project && isPlainObject3(project)) {
+    validateProjectFields(project, resources2, issues, mode);
+  }
+  if (resources2 !== void 0 && !isPlainObject3(resources2)) {
+    issues.push(
+      issue2(
+        "invalid_resources_json",
+        "error",
+        ".project/resources.json",
+        "resources.json 必须是 JSON object"
+      )
+    );
+  }
+  if (settings !== void 0) {
+    if (!isPlainObject3(settings)) {
+      issues.push(
+        issue2(
+          "invalid_settings_json",
+          "error",
+          ".project/settings.json",
+          "settings.json 必须是 JSON object"
+        )
+      );
+    } else {
+      const settingsIssues = validateMakerProjectSettings(settings);
+      if (settingsIssues.length > 0) {
+        issues.push(
+          issue2(
+            "invalid_project_settings",
+            "error",
+            ".project/settings.json",
+            settingsIssues.join("; ")
+          )
+        );
+      }
+    }
+  }
+  const hasFatalIssues = issues.some((item) => item.severity === "error");
+  const hasCompletePrimaryConfig = projectJsonExists && settingsJsonExists;
+  const status = hasMisplacedConfig ? "misplaced_config" : hasFatalIssues ? "error" : !hasCompletePrimaryConfig ? "not_initialized" : issues.length > 0 ? "warning" : "ready";
+  const canBuild = !issues.some((item) => item.severity === "error" && isBuildBlockingIssue(item));
+  const canGenerateTestQrcode = canGenerateQrcode(project, resources2, settingsJsonExists, issues);
+  return createHealthResult(
+    resolvedProjectRoot,
+    mode,
+    status,
+    paths,
+    issues,
+    canBuild,
+    canGenerateTestQrcode
+  );
+}
+function formatMakerProjectHealthStatus(health) {
+  if (health.status === "ready" && health.issues.length === 0 && health.canGenerateTestQrcode) {
+    return "";
+  }
+  const lines = [
+    "Maker project structure",
+    "",
+    `- status: ${health.status}`,
+    `- can_build: ${health.canBuild ? "yes" : "no"}`,
+    `- can_generate_test_qrcode: ${health.canGenerateTestQrcode ? "yes" : "no"}`
+  ];
+  if (health.issues.length > 0) {
+    lines.push("- issues:");
+    lines.push(
+      ...health.issues.map(
+        (item) => `  - [${item.severity}] ${item.code}: ${item.path} - ${item.message}${item.expectedPath ? ` (expected: ${item.expectedPath})` : ""}`
+      )
+    );
+  }
+  const settingsSection = formatHealthSettingsStatus(health);
+  if (settingsSection) {
+    lines.push("", settingsSection);
+  }
+  const isMissingSettings = health.issues.some((item) => item.code === "missing_settings_json");
+  lines.push(
+    health.canBuild && !health.canGenerateTestQrcode ? isMissingSettings ? "- next_action: 可以继续构建；生成测试二维码前需要 .project/settings.json。" : "- next_action: 可以继续构建；生成测试二维码前请完善 .project/project.json 发布配置。" : health.canBuild ? "- next_action: 可以继续构建；检查器不会自动移动或覆盖文件。" : "- next_action: 修复上面的规范路径或配置问题后再构建；检查器不会自动移动或覆盖文件。"
+  );
+  return lines.join("\n");
+}
+function formatHealthSettingsStatus(health) {
+  const settingsIssue = health.issues.find(
+    (item) => item.code === "invalid_settings_json" || item.code === "invalid_project_settings"
+  );
+  if (!settingsIssue) {
+    return "";
+  }
+  return [
+    "Maker project settings",
+    "",
+    `- status: ${settingsIssue.code}`,
+    `- config: ${health.paths.settingsJson}`,
+    "- impact: 构建可能失败或游戏黑屏；坏配置不应提交到 Maker 远端。",
+    "- issues:",
+    `  - ${settingsIssue.message}`,
+    "- next_action: 恢复 .project/settings.json 的构建关键字段后再构建；保留合法的 @runtime 配置。"
+  ].join("\n");
+}
 function inspectMakerProjectSettings(projectRoot) {
   const resolvedProjectRoot = path15.resolve(projectRoot);
   const settingsJsonPath = path15.join(resolvedProjectRoot, ".project", "settings.json");
@@ -33375,6 +33649,228 @@ function inspectMakerProjectSettings(projectRoot) {
     status: "ready"
   };
 }
+function createHealthResult(projectRoot, mode, status, paths, issues, canBuild, canGenerateTestQrcode) {
+  return {
+    projectRoot,
+    mode,
+    status,
+    canBuild,
+    canGenerateTestQrcode,
+    paths,
+    issues
+  };
+}
+function inspectPath(filePath, expectedType) {
+  try {
+    const stats = fs14.lstatSync(filePath);
+    if (stats.isSymbolicLink()) {
+      return "wrong_type";
+    }
+    if (expectedType === "directory") {
+      return stats.isDirectory() ? "directory" : "wrong_type";
+    }
+    return stats.isFile() ? "file" : "directory";
+  } catch (error2) {
+    if (error2.code === "ENOENT") {
+      return "missing";
+    }
+    return "wrong_type";
+  }
+}
+function addCanonicalFileIssue(state, issuePath, issues, required2) {
+  if (state === "directory" || state === "wrong_type") {
+    issues.push(issue2("invalid_path_type", "error", issuePath, `${issuePath} 必须是普通文件`));
+  } else if (state === "missing" && required2) {
+    issues.push(issue2("missing_required_file", "error", issuePath, `${issuePath} 缺失`));
+  }
+}
+function readHealthJson(filePath, label, issues) {
+  try {
+    return JSON.parse(fs14.readFileSync(filePath, "utf8"));
+  } catch (error2) {
+    const code = label === "project.json" ? "invalid_project_json" : label === "settings.json" ? "invalid_settings_json" : "invalid_resources_json";
+    issues.push(
+      issue2(
+        code,
+        "error",
+        label === "project.json" ? ".project/project.json" : label === "settings.json" ? ".project/settings.json" : ".project/resources.json",
+        `${label} 无法解析为 JSON: ${error2 instanceof Error ? error2.message : String(error2)}`
+      )
+    );
+    return void 0;
+  }
+}
+function hasTapTapPublish(filePath) {
+  try {
+    const value = JSON.parse(fs14.readFileSync(filePath, "utf8"));
+    return isPlainObject3(value) && isPlainObject3(value.taptap_publish);
+  } catch {
+    return false;
+  }
+}
+function hasMakerRootConfigSignature(filePath, name) {
+  try {
+    const value = JSON.parse(fs14.readFileSync(filePath, "utf8"));
+    if (!isPlainObject3(value)) {
+      return false;
+    }
+    const schema = value.$schema;
+    if (isNonEmptyString(schema) && schema.endsWith(name.replace(".json", ".schema.json"))) {
+      return true;
+    }
+    if (name === "project.json") {
+      return isPlainObject3(value.taptap_publish) && isNonEmptyString(value.project_id) && isNonEmptyString(value.version) && (isNonEmptyString(value.entry) || isNonEmptyString(value["entry@client"]) && isNonEmptyString(value["entry@server"]));
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+function isBuildBlockingIssue(item) {
+  return item.code !== "invalid_project_field" && item.code !== "invalid_publish_field";
+}
+function validateProjectFields(project, resources2, issues, mode) {
+  const projectFieldSeverity = mode === "qrcode" ? "error" : "warning";
+  const projectId = project.project_id;
+  if (!isConfiguredString(projectId)) {
+    issues.push(
+      issue2(
+        "invalid_project_field",
+        projectFieldSeverity,
+        ".project/project.json:project_id",
+        mode === "qrcode" ? "project_id 不能为空或使用模板占位符" : "project_id 必须存在且不能为空"
+      )
+    );
+  }
+  const version2 = project.version;
+  if (!isConfiguredString(version2)) {
+    issues.push(
+      issue2(
+        "invalid_project_field",
+        projectFieldSeverity,
+        ".project/project.json:version",
+        mode === "qrcode" ? "version 不能为空或使用模板占位符" : "version 必须存在且不能为空"
+      )
+    );
+  }
+  if (!hasProjectEntry(project, resources2, "qrcode")) {
+    issues.push(
+      issue2(
+        "invalid_project_field",
+        projectFieldSeverity,
+        ".project/project.json:entry",
+        "必须在 project.json 或 resources.json 提供 entry，或完整的客户端/服务端入口"
+      )
+    );
+  }
+  const publish = project.taptap_publish;
+  if (publish === void 0) {
+    issues.push(
+      issue2(
+        "invalid_publish_field",
+        projectFieldSeverity,
+        "taptap_publish",
+        "生成测试二维码前必须存在 taptap_publish 配置"
+      )
+    );
+    return;
+  }
+  if (!isPlainObject3(publish)) {
+    issues.push(
+      issue2(
+        "invalid_publish_field",
+        mode === "qrcode" ? "error" : "warning",
+        "taptap_publish",
+        "taptap_publish 必须是 JSON object"
+      )
+    );
+    return;
+  }
+  const publishFieldSeverity = mode === "qrcode" ? "error" : "warning";
+  const title = publish.title;
+  if (!isConfiguredTitle(title)) {
+    issues.push(
+      issue2(
+        "invalid_publish_field",
+        publishFieldSeverity,
+        "taptap_publish.title",
+        "title 不能为空或使用模板占位符"
+      )
+    );
+  }
+  const category = publish.category;
+  if (!isConfiguredString(category)) {
+    issues.push(
+      issue2(
+        "invalid_publish_field",
+        publishFieldSeverity,
+        "taptap_publish.category",
+        "category 不能为空或使用模板占位符"
+      )
+    );
+  }
+  const orientation = publish.screen_orientation;
+  if (orientation !== "landscape" && orientation !== "portrait") {
+    issues.push(
+      issue2(
+        "invalid_publish_field",
+        publishFieldSeverity,
+        "taptap_publish.screen_orientation",
+        "screen_orientation 必须是 landscape 或 portrait"
+      )
+    );
+  }
+}
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+function isConfiguredString(value) {
+  return isNonEmptyString(value) && !value.trim().startsWith("<") && !/[{}]/u.test(value);
+}
+function isConfiguredTitle(value) {
+  if (!isNonEmptyString(value)) {
+    return false;
+  }
+  const title = value.trim();
+  return !(title.startsWith("<") && title.endsWith(">") || title.startsWith("{") && title.endsWith("}"));
+}
+function canGenerateQrcode(project, resources2, settingsExists, issues) {
+  if (!isPlainObject3(project) || !isPlainObject3(resources2) || !settingsExists || !isConfiguredString(project.project_id) || !isConfiguredString(project.version) || !hasProjectEntry(project, resources2, "qrcode") || !isPlainObject3(project.taptap_publish)) {
+    return false;
+  }
+  const publish = project.taptap_publish;
+  if (!isConfiguredTitle(publish.title) || !isConfiguredString(publish.category)) {
+    return false;
+  }
+  const orientation = publish.screen_orientation;
+  if (orientation !== void 0 && orientation !== "landscape" && orientation !== "portrait") {
+    return false;
+  }
+  return !issues.some((item) => {
+    if (item.severity !== "error") {
+      return false;
+    }
+    if (orientation === void 0 && item.code === "invalid_publish_field" && item.path === "taptap_publish.screen_orientation") {
+      return false;
+    }
+    if (item.path === "taptap_publish" || item.path.startsWith("taptap_publish.")) {
+      return true;
+    }
+    return item.path === ".project" || item.path === ".project/project.json" || item.path.startsWith(".project/project.json:") || item.path === ".project/resources.json" || item.code === "misplaced_config" && item.path === "project.json";
+  });
+}
+function hasProjectEntry(project, resources2, mode = "status") {
+  const resourceConfig = isPlainObject3(resources2) ? resources2 : void 0;
+  const entry = project.entry || (resourceConfig == null ? void 0 : resourceConfig.entry);
+  const isValidEntry = mode === "qrcode" ? isConfiguredString : isNonEmptyString;
+  if (isValidEntry(entry)) {
+    return true;
+  }
+  return isValidEntry(project["entry@client"] || (resourceConfig == null ? void 0 : resourceConfig["entry@client"])) && isValidEntry(project["entry@server"] || (resourceConfig == null ? void 0 : resourceConfig["entry@server"]));
+}
+function issue2(code, severity, issuePath, message) {
+  return { code, severity, path: issuePath, message };
+}
 function formatMakerProjectSettingsStatus(status) {
   var _a3;
   if (status.status === "ready" || status.status === "missing_settings_json") {
@@ -33392,7 +33888,7 @@ function formatMakerProjectSettingsStatus(status) {
   }
   if ((_a3 = status.issues) == null ? void 0 : _a3.length) {
     lines.push("- issues:");
-    lines.push(...status.issues.map((issue2) => `  - ${issue2}`));
+    lines.push(...status.issues.map((issue3) => `  - ${issue3}`));
   }
   lines.push(
     "- next_action: 恢复 .project/settings.json 的构建关键字段后再构建；保留合法的 @runtime 配置。"
@@ -33464,9 +33960,150 @@ function sameStringSet(left, right) {
   return left.length === right.length && right.every((item) => left.includes(item));
 }
 
-// src/maker/server/proxyAssets.ts
+// src/maker/qrcodePreflight.ts
+import { randomUUID } from "node:crypto";
 import fs15 from "node:fs";
 import path16 from "node:path";
+function inspectMakerQrcodePreflight(projectRoot, confirmedOrientation) {
+  const projectJsonPath = path16.join(path16.resolve(projectRoot), ".project", "project.json");
+  let projectJsonText;
+  let project;
+  try {
+    projectJsonText = fs15.readFileSync(projectJsonPath, "utf8");
+    project = JSON.parse(projectJsonText);
+  } catch (error2) {
+    return {
+      ok: false,
+      message: [
+        "Maker QR project configuration is not ready.",
+        `- config: ${projectJsonPath}`,
+        `- error: ${error2 instanceof Error ? error2.message : String(error2)}`,
+        "- next_action: Restore or initialize .project/project.json, then retry."
+      ].join("\n")
+    };
+  }
+  const configuredOrientation = readConfiguredOrientation(project);
+  if (configuredOrientation) {
+    return { ok: true, orientation: configuredOrientation };
+  }
+  if (!isScreenOrientation(confirmedOrientation)) {
+    return {
+      ok: false,
+      message: [
+        "Maker QR orientation is not configured yet.",
+        "- field: taptap_publish.screen_orientation",
+        "- next_action: Ask the user in a separate conversation turn to choose landscape or portrait, then retry with confirmed_screen_orientation.",
+        "- do_not: Do not infer or default the game orientation."
+      ].join("\n")
+    };
+  }
+  if (!isRecord(project) || !isRecord(project.taptap_publish)) {
+    return {
+      ok: false,
+      message: [
+        "Maker QR project publishing configuration is not ready.",
+        "- missing: taptap_publish",
+        "- next_action: Restore or initialize the taptap_publish configuration, then retry."
+      ].join("\n")
+    };
+  }
+  project.taptap_publish.screen_orientation = confirmedOrientation;
+  const tempPath = `${projectJsonPath}.${randomUUID()}.tmp`;
+  try {
+    fs15.writeFileSync(tempPath, `${JSON.stringify(project, null, 2)}
+`, {
+      encoding: "utf8",
+      flag: "wx"
+    });
+    if (fs15.readFileSync(projectJsonPath, "utf8") !== projectJsonText) {
+      throw new Error("Maker QR project configuration changed while saving; retry the operation.");
+    }
+    fs15.renameSync(tempPath, projectJsonPath);
+  } catch (error2) {
+    try {
+      fs15.rmSync(tempPath, { force: true });
+    } catch {
+    }
+    return {
+      ok: false,
+      message: [
+        "Maker QR project orientation could not be saved.",
+        `- config: ${projectJsonPath}`,
+        `- error: ${error2 instanceof Error ? error2.message : String(error2)}`,
+        "- next_action: Fix the project configuration write error, then retry."
+      ].join("\n")
+    };
+  }
+  return { ok: true, orientation: confirmedOrientation };
+}
+function readConfiguredOrientation(project) {
+  if (!isRecord(project) || !isRecord(project.taptap_publish)) {
+    return void 0;
+  }
+  const orientation = project.taptap_publish.screen_orientation;
+  return isScreenOrientation(orientation) ? orientation : void 0;
+}
+function isScreenOrientation(value) {
+  return value === "landscape" || value === "portrait";
+}
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// src/maker/server/proxyAssets.ts
+import fs16 from "node:fs";
+import path17 from "node:path";
+import { randomUUID as randomUUID2 } from "node:crypto";
+
+// src/maker/server/diagnosticRedaction.ts
+function isSensitiveDiagnosticKey(key) {
+  const normalized = key.replace(/[-\s]/gu, "_").toLowerCase();
+  return /^(?:authorization|cookie|pat|token|secret)$/u.test(normalized) || /(?:^|_)(?:access|refresh|id|api|auth|bearer|personal_access)?_?token$/u.test(normalized) || /(?:^|_)(?:client|app|api|mac)?_?secret$/u.test(normalized) || /(?:^|_)(?:api|auth|mac|private)?_?key$/u.test(normalized) || /(?:^|_)pat$/u.test(normalized);
+}
+function sanitizeDiagnosticValue(value) {
+  return sanitizeValue(value, true, /* @__PURE__ */ new WeakSet());
+}
+function sanitizeRemoteDiagnosticValue(value) {
+  return sanitizeValue(value, true, /* @__PURE__ */ new WeakSet());
+}
+function sanitizeValue(value, sanitizeText, visited) {
+  if (typeof value === "string") {
+    return sanitizeText ? sanitizeDiagnosticText(value) : value;
+  }
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  if (visited.has(value)) {
+    return "<circular>";
+  }
+  visited.add(value);
+  if (Array.isArray(value)) {
+    const result2 = value.map((item) => sanitizeValue(item, sanitizeText, visited));
+    visited.delete(value);
+    return result2;
+  }
+  const result = {};
+  for (const [key, nestedValue] of Object.entries(value)) {
+    result[key] = isSensitiveDiagnosticKey(key) ? "<redacted>" : sanitizeValue(nestedValue, sanitizeText, visited);
+  }
+  visited.delete(value);
+  return result;
+}
+function sanitizeDiagnosticText(value) {
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === "object") {
+      return JSON.stringify(sanitizeRemoteDiagnosticValue(parsed), null, 2);
+    }
+  } catch {
+  }
+  return value.replace(/\b(authorization|cookie)\b\s*:\s*[^\r\n]*/giu, "$1: <redacted>").replace(
+    /\b(token|secret|mac[_-]?key|pat)\b\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/giu,
+    "$1=<redacted>"
+  ).replace(/\bBearer\s+[A-Za-z0-9._~+/=-]{16,}(?=$|[\s,;'"()\x5B\x5D{}])/giu, "Bearer <redacted>").replace(/\beyJ[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){2}\b/gu, "<redacted>");
+}
+
+// src/maker/server/proxyAssets.ts
 var IMAGE_ASSET_DIRS = ["assets/image"];
 var VIDEO_ASSET_DIRS = ["assets/video"];
 var AUDIO_ASSET_DIRS = ["assets/audio"];
@@ -33476,7 +34113,12 @@ var IMAGE_REFERENCE_MAX_BYTES = 10 * 1024 * 1024;
 var VIDEO_TASK_IMAGE_REFERENCE_MAX_BYTES = 30 * 1024 * 1024;
 var VIDEO_REFERENCE_MAX_BYTES = 50 * 1024 * 1024;
 var AUDIO_REFERENCE_MAX_BYTES = 15 * 1024 * 1024;
+var AUDIO_DIALOGUE_REFERENCE_MAX_BYTES = 20 * 1024 * 1024;
+var AUDIO_DIALOGUE_INPUT_TOTAL_MAX_BYTES = 28 * 1024 * 1024;
+var AUDIO_CONFIRM_MAX_BYTES = 1 * 1024 * 1024;
+var VOICE_CONFIRMATION_NEXT_STEP_HINT = "Call text_to_dialogue with character_name and text. The confirmed voice mapping is reused automatically; omit reference_audio unless the user requests a one-time override.";
 var DEBUG_FEEDBACK_PATH_HINT = "Use local_dir/local_log_paths/local_screenshot_paths when they are returned. If only local_candidate_* is present, it is a possible project-relative location and must not be treated as a downloaded local file.";
+var CREATE_3D_ASSET_PROXY_TOOL_NAME = "create_3d_asset";
 var DATA_URL_MIME_BY_EXTENSION = {
   image: {
     ".gif": "image/gif",
@@ -33490,9 +34132,19 @@ var DATA_URL_MIME_BY_EXTENSION = {
     ".mp4": "video/mp4"
   },
   audio: {
+    ".aac": "audio/aac",
+    ".m4a": "audio/mp4",
     ".mp3": "audio/mpeg",
+    ".ogg": "audio/ogg",
     ".wav": "audio/wav"
   }
+};
+var AUDIO_MIME_BY_EXTENSION = {
+  ".aac": "audio/aac",
+  ".m4a": "audio/mp4",
+  ".mp3": "audio/mpeg",
+  ".ogg": "audio/ogg",
+  ".wav": "audio/wav"
 };
 var RemoteProxyToolResultError = class extends Error {
   constructor(toolName, result) {
@@ -33509,6 +34161,9 @@ var RemoteProxyToolResultError = class extends Error {
   }
 };
 function prepareRemoteProxyToolArgs(options) {
+  if (options.toolName === "audition_voices_for_character") {
+    return validateVoiceAuditionArgs(options.args);
+  }
   if (options.toolName === "edit_image") {
     return rewriteEditImageAssetArgs(options.targetDir, options.args);
   }
@@ -33521,10 +34176,23 @@ function prepareRemoteProxyToolArgs(options) {
   if (options.toolName === "create_video_task") {
     return rewriteVideoReferenceAssetArgs(options.targetDir, options.args);
   }
-  if (options.toolName === "create_3d_model_task") {
-    return rewrite3dModelAssetArgs(options.targetDir, options.args);
+  if (options.toolName === CREATE_3D_ASSET_PROXY_TOOL_NAME) {
+    return rewriteCreate3dAssetArgs(options.targetDir, options.args);
+  }
+  if (options.toolName === "text_to_dialogue") {
+    return rewriteTextToDialogueArgs(options.targetDir, options.args);
   }
   return options.args;
+}
+function validateVoiceAuditionArgs(args) {
+  const voiceProfile = args.voice_profile;
+  const gender = isRecord2(voiceProfile) ? voiceProfile.gender : void 0;
+  if (gender !== "male" && gender !== "female") {
+    throw new Error(
+      "voice_profile.gender is required for character voice audition and must be male or female. Extract it from character_description or the character settings before retrying."
+    );
+  }
+  return args;
 }
 async function materializeRemoteProxyToolAssets(options) {
   if (isRemoteProxyToolErrorResult(options.result)) {
@@ -33586,8 +34254,12 @@ function shouldMaterializeRemoteProxyTool(toolName) {
     "create_video_task",
     "query_video_task",
     "text_to_music",
-    "create_3d_model_task",
-    "query_3d_model_task",
+    "text_to_sound_effect",
+    "batch_sound_effects",
+    "text_to_dialogue",
+    "audition_voices_for_character",
+    "confirm_character_voice",
+    CREATE_3D_ASSET_PROXY_TOOL_NAME,
     "get_debug_feedbacks"
   ].includes(toolName);
 }
@@ -33598,7 +34270,13 @@ function isRemoteProxyToolErrorResult(result) {
   return Boolean(result.isError);
 }
 function formatRemoteProxyToolResult(result) {
-  return ["remote_result:", indent(formatUnknownForDiagnostics(result))].join("\n");
+  return [
+    "remote_result:",
+    indent(formatUnknownForDiagnostics(sanitizeRemoteProxyToolResult(result)))
+  ].join("\n");
+}
+function sanitizeRemoteProxyToolResult(result) {
+  return sanitizeRemoteDiagnosticValue(result);
 }
 function formatUnknownForDiagnostics(value) {
   try {
@@ -33634,8 +34312,14 @@ async function materializeParsedProxyResult(options) {
   if (options.toolName === "text_to_music") {
     return await materializeMusicResult(options);
   }
-  if (options.toolName === "create_3d_model_task" || options.toolName === "query_3d_model_task") {
-    return await materialize3dModelResult(options, options.toolName);
+  if (options.toolName === "text_to_sound_effect" || options.toolName === "batch_sound_effects" || options.toolName === "text_to_dialogue") {
+    return await materializeAudioFilesResult(options, options.toolName);
+  }
+  if (options.toolName === "confirm_character_voice") {
+    return await materializeVoiceConfirmationResult(options);
+  }
+  if (options.toolName === CREATE_3D_ASSET_PROXY_TOOL_NAME) {
+    return await materializeCreate3dAssetResult(options);
   }
   if (options.toolName === "get_debug_feedbacks") {
     return await materializeDebugFeedbackResult(options);
@@ -33666,7 +34350,7 @@ async function materializeDebugFeedbackResult(options) {
       ...materialized
     });
   }
-  const localCandidateSaveDir = remoteSaveDir ? resolveDebugFeedbackCandidatePath(options.targetDir, remoteSaveDir) : feedbacks.some(hasDebugFeedbackArtifactUrls) ? path16.join(options.targetDir, "logs", "feed_back") : void 0;
+  const localCandidateSaveDir = remoteSaveDir ? resolveDebugFeedbackCandidatePath(options.targetDir, remoteSaveDir) : feedbacks.some(hasDebugFeedbackArtifactUrls) ? path17.join(options.targetDir, "logs", "feed_back") : void 0;
   const filesVerifiedLocally = nextFeedbacks.some(
     (feedback) => numberField2(feedback.artifacts_downloaded) > 0
   );
@@ -33694,7 +34378,7 @@ async function materializeDebugFeedbackArtifacts(options) {
   if (logUrls.length === 0 && screenshotUrls.length === 0 && extraUrls.length === 0) {
     return {};
   }
-  const localDir = path16.join(options.targetDir, "logs", "feed_back", `feedback_${feedbackId}`);
+  const localDir = path17.join(options.targetDir, "logs", "feed_back", `feedback_${feedbackId}`);
   const localLogPaths = [];
   const localScreenshotPaths = [];
   const localDownloadPaths = [];
@@ -33702,7 +34386,7 @@ async function materializeDebugFeedbackArtifacts(options) {
   for (const [index, url2] of logUrls.entries()) {
     const result = await downloadDebugFeedbackArtifact({
       url: url2,
-      directory: path16.join(localDir, "logs"),
+      directory: path17.join(localDir, "logs"),
       fallbackName: `log_${index + 1}.log`,
       fetchImpl: options.fetchImpl
     });
@@ -33715,7 +34399,7 @@ async function materializeDebugFeedbackArtifacts(options) {
   for (const [index, url2] of screenshotUrls.entries()) {
     const result = await downloadDebugFeedbackArtifact({
       url: url2,
-      directory: path16.join(localDir, "screenshots"),
+      directory: path17.join(localDir, "screenshots"),
       fallbackName: `screenshot_${index + 1}.png`,
       fetchImpl: options.fetchImpl
     });
@@ -33728,7 +34412,7 @@ async function materializeDebugFeedbackArtifacts(options) {
   for (const [index, url2] of extraUrls.entries()) {
     const result = await downloadDebugFeedbackArtifact({
       url: url2,
-      directory: path16.join(localDir, "downloads"),
+      directory: path17.join(localDir, "downloads"),
       fallbackName: `artifact_${index + 1}`,
       fetchImpl: options.fetchImpl
     });
@@ -33756,14 +34440,14 @@ async function downloadDebugFeedbackArtifact(options) {
         error: `${options.url}: HTTP ${response.status}`
       };
     }
-    fs15.mkdirSync(options.directory, { recursive: true });
+    fs16.mkdirSync(options.directory, { recursive: true });
     const filePath = allocateDebugFeedbackArtifactPath(
       options.directory,
       options.url,
       options.fallbackName
     );
     const bytes = Buffer.from(await response.arrayBuffer());
-    fs15.writeFileSync(filePath, bytes);
+    fs16.writeFileSync(filePath, bytes);
     return { success: true, path: filePath };
   } catch (error2) {
     return {
@@ -33774,14 +34458,14 @@ async function downloadDebugFeedbackArtifact(options) {
 }
 function allocateDebugFeedbackArtifactPath(directory, url2, fallbackName) {
   const rawName = fileNameFromUrl(url2) || fallbackName;
-  const rawExtension = path16.extname(rawName);
+  const rawExtension = path17.extname(rawName);
   const finalExtension = rawExtension && rawExtension !== "." ? rawExtension.replace(/[^A-Za-z0-9.]/g, "_") : "";
   const rawStem = finalExtension ? rawName.slice(0, -rawExtension.length) : rawName;
   const stem = sanitizeAssetBaseName(rawStem);
   for (let index = 1; index <= 9999; index += 1) {
     const suffix = index === 1 ? "" : `_${index}`;
-    const candidate = path16.join(directory, `${stem}${suffix}${finalExtension}`);
-    if (!fs15.existsSync(candidate)) {
+    const candidate = path17.join(directory, `${stem}${suffix}${finalExtension}`);
+    if (!fs16.existsSync(candidate)) {
       return candidate;
     }
   }
@@ -33790,7 +34474,7 @@ function allocateDebugFeedbackArtifactPath(directory, url2, fallbackName) {
 function fileNameFromUrl(url2) {
   try {
     const pathname = new URL(url2).pathname;
-    const name = decodeURIComponent(path16.basename(pathname));
+    const name = decodeURIComponent(path17.basename(pathname));
     return name && name !== "/" ? name : void 0;
   } catch {
     return void 0;
@@ -33801,18 +34485,18 @@ function hasDebugFeedbackArtifactUrls(feedback) {
 }
 function getDebugFeedbackSaveDir(payload) {
   const summary = payload.summary;
-  return stringField2(payload.save_dir) || (isRecord(summary) ? stringField2(summary.save_dir) : void 0);
+  return stringField2(payload.save_dir) || (isRecord2(summary) ? stringField2(summary.save_dir) : void 0);
 }
 function resolveDebugFeedbackCandidatePath(targetDir, remotePath) {
-  if (path16.isAbsolute(remotePath)) {
+  if (path17.isAbsolute(remotePath)) {
     return void 0;
   }
   const trimmedRemotePath = remotePath.replace(/[\\/]+$/, "");
-  return path16.normalize(path16.join(targetDir, trimmedRemotePath || "."));
+  return path17.normalize(path17.join(targetDir, trimmedRemotePath || "."));
 }
 function replaceDebugFeedbackItems(payload, nextFeedbacks) {
   const summary = payload.summary;
-  if (isRecord(summary) && Array.isArray(summary.feedbacks)) {
+  if (isRecord2(summary) && Array.isArray(summary.feedbacks)) {
     return {
       ...payload,
       summary: {
@@ -33837,14 +34521,14 @@ function replaceDebugFeedbackItems(payload, nextFeedbacks) {
 }
 function getDebugFeedbackItems(payload) {
   const summary = payload.summary;
-  if (isRecord(summary) && Array.isArray(summary.feedbacks)) {
-    return summary.feedbacks.filter(isRecord);
+  if (isRecord2(summary) && Array.isArray(summary.feedbacks)) {
+    return summary.feedbacks.filter(isRecord2);
   }
   if (Array.isArray(payload.feedbacks)) {
-    return payload.feedbacks.filter(isRecord);
+    return payload.feedbacks.filter(isRecord2);
   }
   if (Array.isArray(payload.list)) {
-    return payload.list.filter(isRecord);
+    return payload.list.filter(isRecord2);
   }
   return [];
 }
@@ -33876,7 +34560,7 @@ async function materializeBatchImageResult(options) {
   }
   const results = [];
   for (const item of options.payload.results) {
-    if (!isRecord(item) || item.success !== true) {
+    if (!isRecord2(item) || item.success !== true) {
       results.push(item);
       continue;
     }
@@ -33961,13 +34645,13 @@ function findExistingMaterializedVideo(targetDir, options) {
 function resolveExistingMaterializedAssetPath(targetDir, record2, localPath) {
   const candidates = [];
   const absolutePath = stringField2(record2.absolutePath);
-  if (absolutePath && path16.isAbsolute(absolutePath)) {
+  if (absolutePath && path17.isAbsolute(absolutePath)) {
     candidates.push(absolutePath);
   }
-  candidates.push(path16.join(targetDir, ...localPath.split("/")));
+  candidates.push(path17.join(targetDir, ...localPath.split("/")));
   for (const candidate of candidates) {
     try {
-      if (fs15.statSync(candidate).isFile()) {
+      if (fs16.statSync(candidate).isFile()) {
         return candidate;
       }
     } catch {
@@ -33979,7 +34663,7 @@ async function materializeMusicResult(options) {
   if (options.payload.success !== true) {
     return options.payload;
   }
-  if (!isRecord(options.payload.music)) {
+  if (!isRecord2(options.payload.music)) {
     return options.payload;
   }
   const music = options.payload.music;
@@ -34007,214 +34691,719 @@ async function materializeMusicResult(options) {
     })
   } : options.payload;
 }
-async function materialize3dModelResult(options, toolName) {
-  if (options.payload.phase === 1) {
-    return await materialize3dPreviewResult(options);
+async function materializeAudioFilesResult(options, toolName) {
+  if (!Array.isArray(options.payload.audio_files)) return options.payload;
+  const audioFiles = [];
+  for (const rawItem of options.payload.audio_files) {
+    if (!isRecord2(rawItem)) {
+      audioFiles.push(rawItem);
+      continue;
+    }
+    const item = { ...rawItem };
+    const audioUrl = stringField2(item.audioUrl);
+    const kind = stringField2(item.kind);
+    const expectedKind = toolName === "text_to_dialogue" ? "dialogue" : "sound_effect";
+    const expectedDirectory = expectedKind === "dialogue" ? "assets/audio/voice" : "assets/audio/sfx";
+    const targetDirectory = stringField2(item.targetDirectory);
+    const suggestedFileName = stringField2(item.suggestedFileName);
+    const validationError = validateAudioAssetContract({
+      audioUrl,
+      kind,
+      expectedKind,
+      targetDirectory,
+      expectedDirectory,
+      suggestedFileName,
+      format: stringField2(item.format),
+      mimeType: stringField2(item.mimeType)
+    });
+    if (validationError) {
+      audioFiles.push({
+        ...item,
+        ...audioUrl ? { audioUrl } : {},
+        download: { success: false, error: validationError }
+      });
+      continue;
+    }
+    const extension = audioExtensionForItem(item, suggestedFileName);
+    const materialized = await materializeAudioAsset({
+      targetDir: options.targetDir,
+      targetDirectory: expectedDirectory,
+      fileName: suggestedFileName,
+      url: audioUrl,
+      extension,
+      now: options.now,
+      fetchImpl: options.fetchImpl
+    });
+    audioFiles.push(
+      materialized ? persistMaterializedAsset({
+        targetDir: options.targetDir,
+        toolName,
+        payload: item,
+        materialized,
+        cdnUrl: audioUrl,
+        now: options.now,
+        extraRegistryFields: { assetKind: "audio", kind }
+      }) : item
+    );
   }
-  return await materialize3dFinalResult(options, toolName);
+  return { ...options.payload, audio_files: audioFiles };
 }
-async function materialize3dPreviewResult(options) {
-  if (!isRecord(options.payload.preview_urls)) {
-    return options.payload;
+function validateAudioAssetContract(options) {
+  var _a3, _b;
+  if (!options.audioUrl || !/^https?:\/\//i.test(options.audioUrl)) {
+    return "audioUrl must be an HTTP(S) URL.";
   }
-  let changed = false;
+  if (options.kind !== options.expectedKind) {
+    return `audio_files item kind must be ${options.expectedKind} for this tool.`;
+  }
+  if (options.targetDirectory !== options.expectedDirectory) {
+    return `targetDirectory must be ${options.expectedDirectory}.`;
+  }
+  const fileName = options.suggestedFileName;
+  if (!fileName || fileName === "." || fileName === ".." || fileName.includes("/") || fileName.includes("\\") || fileName.includes("\0")) {
+    return "suggestedFileName must be a safe basename.";
+  }
+  if (path17.basename(fileName) !== fileName || fileName.endsWith(".") || fileName.endsWith(" ")) {
+    return "suggestedFileName must be a safe basename.";
+  }
+  const format = (_a3 = options.format) == null ? void 0 : _a3.toLowerCase();
+  const mimeType = (_b = options.mimeType) == null ? void 0 : _b.toLowerCase();
+  const extension = path17.extname(fileName).toLowerCase();
+  const contract = {
+    mp3: { mimeType: "audio/mpeg", extension: ".mp3" },
+    wav: { mimeType: "audio/wav", extension: ".wav" },
+    pcm: { mimeType: "audio/l16", extension: ".pcm" },
+    ogg_opus: { mimeType: "audio/ogg", extension: ".ogg" }
+  }[format || ""];
+  if (!contract) {
+    return "audio output format is unsupported; format must be one of mp3, wav, pcm, or ogg_opus.";
+  }
+  if (mimeType !== contract.mimeType || extension !== contract.extension) {
+    return `audio output contract mismatch: format ${format} requires mime ${contract.mimeType} and extension ${contract.extension}.`;
+  }
+  return void 0;
+}
+function audioExtensionForItem(item, fileName) {
+  var _a3;
+  const format = (_a3 = stringField2(item.format)) == null ? void 0 : _a3.toLowerCase();
+  const byFormat = {
+    mp3: "mp3",
+    wav: "wav",
+    pcm: "pcm",
+    ogg_opus: "ogg",
+    ogg: "ogg",
+    m4a: "m4a",
+    aac: "aac"
+  };
+  return byFormat[format || ""] || path17.extname(fileName).slice(1).toLowerCase() || "mp3";
+}
+async function materializeAudioAsset(options) {
+  const relativeDir = options.targetDirectory;
+  const directory = path17.join(options.targetDir, ...relativeDir.split("/"));
+  try {
+    fs16.mkdirSync(directory, { recursive: true });
+    assertProjectDirectory(options.targetDir, directory);
+  } catch (error2) {
+    return {
+      download: {
+        success: false,
+        error: `Audio target directory is outside the project: ${error2 instanceof Error ? error2.message : String(error2)}`
+      }
+    };
+  }
+  const baseName = path17.basename(options.fileName, path17.extname(options.fileName));
+  let absolutePath;
+  let relativePath;
+  for (let index = 1; index <= 9999; index += 1) {
+    const suffix = index === 1 ? "" : `_${index}`;
+    const candidateName = `${baseName}${suffix}.${options.extension}`;
+    const candidate = path17.join(directory, candidateName);
+    if (!fs16.existsSync(candidate)) {
+      absolutePath = candidate;
+      relativePath = path17.posix.join(relativeDir, candidateName);
+      break;
+    }
+  }
+  if (!absolutePath || !relativePath) {
+    return { download: { success: false, error: "Unable to allocate a unique audio asset path." } };
+  }
+  try {
+    const response = await options.fetchImpl(options.url);
+    if (!response.ok) {
+      return {
+        download: { success: false, error: `Asset download failed: HTTP ${response.status}` }
+      };
+    }
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length === 0) {
+      return { download: { success: false, error: "Asset download failed: empty response." } };
+    }
+    fs16.writeFileSync(absolutePath, bytes, { flag: "wx" });
+    return { localPath: relativePath, absolutePath, download: { success: true } };
+  } catch (error2) {
+    return {
+      download: {
+        success: false,
+        error: `Asset download failed: ${error2 instanceof Error ? error2.message : String(error2)}`
+      }
+    };
+  }
+}
+async function materializeVoiceConfirmationResult(options) {
+  if (options.payload.success !== true || !isRecord2(options.payload.mapping)) {
+    return withoutVoiceConfirmationNextStepHint(options.payload);
+  }
+  const payload = withoutVoiceConfirmationNextStepHint(options.payload);
+  const successfulPayload = withVoiceConfirmationNextStepHint(options.payload);
+  const mapping = payload.mapping;
+  const provider = stringField2(mapping.provider);
+  const characterName = stringField2(mapping.characterName) || stringField2(payload.characterName);
+  if (!characterName || provider === "elevenlabs") {
+    if (provider !== "elevenlabs" || !characterName) return payload;
+    try {
+      mergeVoiceMappingFile({
+        targetDir: options.targetDir,
+        provider: "elevenlabs",
+        characterName,
+        mapping,
+        now: options.now
+      });
+      return successfulPayload;
+    } catch (error2) {
+      const message = `ElevenLabs voice mapping persistence failed: ${error2 instanceof Error ? error2.message : String(error2)}`;
+      return {
+        ...payload,
+        localPersistenceError: message,
+        mappingPersistenceError: message
+      };
+    }
+  }
+  if (provider !== "doubao" || !isRecord2(payload.referenceAudio)) {
+    return payload;
+  }
+  const referenceAudio = payload.referenceAudio;
+  const audioUrl = stringField2(referenceAudio.audioUrl);
+  const targetPath = stringField2(referenceAudio.targetPath);
+  const pathError = validateDoubaoReferenceTarget(targetPath);
+  if (!audioUrl || pathError) {
+    return {
+      ...payload,
+      referenceAudio: {
+        ...referenceAudio,
+        download: { success: false, error: pathError || "referenceAudio.audioUrl is required." }
+      }
+    };
+  }
+  let bytes;
+  try {
+    const response = await options.fetchImpl(audioUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    bytes = Buffer.from(await response.arrayBuffer());
+  } catch (error2) {
+    return {
+      ...payload,
+      referenceAudio: {
+        ...referenceAudio,
+        download: {
+          success: false,
+          error: `Reference audio download failed: ${error2 instanceof Error ? error2.message : String(error2)}`
+        }
+      }
+    };
+  }
+  if (bytes.length === 0 || bytes.length > AUDIO_CONFIRM_MAX_BYTES || !isStructurallyValidMp3(bytes)) {
+    return {
+      ...payload,
+      referenceAudio: {
+        ...referenceAudio,
+        download: {
+          success: false,
+          error: "Reference audio must be a non-empty valid MP3 no larger than 1 MiB."
+        }
+      }
+    };
+  }
+  try {
+    mergeVoiceMappingFile({
+      targetDir: options.targetDir,
+      provider: "doubao",
+      characterName,
+      mapping,
+      now: options.now,
+      referenceAudio: { targetPath, bytes }
+    });
+    return {
+      ...successfulPayload,
+      referenceAudio: {
+        ...referenceAudio,
+        localPath: targetPath,
+        absolutePath: path17.join(options.targetDir, ...targetPath.split("/")),
+        download: { success: true }
+      }
+    };
+  } catch (error2) {
+    return {
+      ...payload,
+      referenceAudio: {
+        ...referenceAudio,
+        download: {
+          success: false,
+          error: `Voice mapping transaction failed: ${error2 instanceof Error ? error2.message : String(error2)}`
+        }
+      }
+    };
+  }
+}
+function withVoiceConfirmationNextStepHint(payload) {
+  return typeof payload.next_step_hint === "string" && payload.next_step_hint.trim() ? payload : { ...payload, next_step_hint: VOICE_CONFIRMATION_NEXT_STEP_HINT };
+}
+function withoutVoiceConfirmationNextStepHint(payload) {
+  if (!Object.prototype.hasOwnProperty.call(payload, "next_step_hint")) return payload;
+  const nextPayload = { ...payload };
+  delete nextPayload.next_step_hint;
+  return nextPayload;
+}
+function validateDoubaoReferenceTarget(targetPath) {
+  if (!targetPath) return "referenceAudio.targetPath is required.";
+  if (!/^assets\/audio\/voice-reference\/[^/]+\.mp3$/.test(targetPath)) {
+    return "referenceAudio.targetPath must be assets/audio/voice-reference/<basename>.mp3.";
+  }
+  const base = path17.posix.basename(targetPath, ".mp3");
+  if (!base || base === "." || base === ".." || base.includes("\\") || base.includes("\0")) {
+    return "referenceAudio.targetPath contains an unsafe basename.";
+  }
+  return void 0;
+}
+function isStructurallyValidMp3(bytes) {
+  const firstOffset = mp3AudioOffset(bytes);
+  if (firstOffset === void 0) return false;
+  const first = parseMp3Frame(bytes, firstOffset);
+  if (!first) return false;
+  const second = parseMp3Frame(bytes, firstOffset + first.length);
+  return Boolean(
+    second && second.version === first.version && second.sampleRate === first.sampleRate
+  );
+}
+function mp3AudioOffset(bytes) {
+  if (bytes.subarray(0, 3).toString("ascii") !== "ID3") return 0;
+  if (bytes.length < 10 || bytes[3] < 2 || bytes[3] > 4) return void 0;
+  const sizeBytes = bytes.subarray(6, 10);
+  if (sizeBytes.some((value) => (value & 128) !== 0)) return void 0;
+  const size = sizeBytes[0] << 21 | sizeBytes[1] << 14 | sizeBytes[2] << 7 | sizeBytes[3];
+  const offset = 10 + size + (bytes[3] === 4 && (bytes[5] & 16) !== 0 ? 10 : 0);
+  return offset <= bytes.length ? offset : void 0;
+}
+function parseMp3Frame(bytes, offset) {
+  if (offset + 4 > bytes.length || bytes[offset] !== 255 || (bytes[offset + 1] & 224) !== 224) {
+    return void 0;
+  }
+  const versionBits = bytes[offset + 1] >> 3 & 3;
+  const version2 = versionBits === 3 ? 1 : versionBits === 2 ? 2 : versionBits === 0 ? 2.5 : void 0;
+  if (!version2 || (bytes[offset + 1] >> 1 & 3) !== 1) return void 0;
+  const bitrateIndex = bytes[offset + 2] >> 4 & 15;
+  const rateIndex = bytes[offset + 2] >> 2 & 3;
+  if (bitrateIndex === 0 || bitrateIndex === 15 || rateIndex === 3) return void 0;
+  const mpeg1Rates = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
+  const mpeg2Rates = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
+  const bitrate = (version2 === 1 ? mpeg1Rates : mpeg2Rates)[bitrateIndex];
+  const baseSampleRate = [44100, 48e3, 32e3][rateIndex];
+  const sampleRate = version2 === 1 ? baseSampleRate : version2 === 2 ? baseSampleRate / 2 : baseSampleRate / 4;
+  const padding = bytes[offset + 2] >> 1 & 1;
+  const length = Math.floor((version2 === 1 ? 144 : 72) * bitrate * 1e3 / sampleRate) + padding;
+  return length > 4 && offset + length <= bytes.length ? { length, version: version2, sampleRate } : void 0;
+}
+function mergeVoiceMappingFile(options) {
+  const configPath = path17.join(
+    options.targetDir,
+    ".project",
+    options.provider === "doubao" ? "audio-voice-mapping.json" : "elevenlabs-voice-mapping.json"
+  );
+  const referencePath = options.referenceAudio ? path17.join(options.targetDir, ...options.referenceAudio.targetPath.split("/")) : void 0;
+  const configDirectory = path17.dirname(configPath);
+  const referenceDirectory = referencePath ? path17.dirname(referencePath) : void 0;
+  fs16.mkdirSync(configDirectory, { recursive: true });
+  assertProjectDirectory(options.targetDir, configDirectory);
+  assertFileIsNotSymlink(configPath);
+  if (referenceDirectory) {
+    fs16.mkdirSync(referenceDirectory, { recursive: true });
+    assertProjectDirectory(options.targetDir, referenceDirectory);
+    assertFileIsNotSymlink(referencePath);
+  }
+  const oldConfig = snapshotFile(configPath);
+  const oldReference = referencePath ? snapshotFile(referencePath) : void 0;
+  const existing = readJsonFile2(configPath);
+  const characters = isRecord2(existing == null ? void 0 : existing.characters) ? { ...existing.characters } : {};
+  const oldCharacter = isRecord2(characters[options.characterName]) ? characters[options.characterName] : {};
+  const createdAt = stringField2(oldCharacter.created_at) || options.now.toISOString();
+  const character = {
+    ...oldCharacter,
+    ...Object.fromEntries(
+      Object.entries(options.mapping).filter(([key]) => key !== "characterName")
+    ),
+    provider: options.provider,
+    language: stringField2(options.mapping.language) || stringField2(oldCharacter.language) || stringField2(existing == null ? void 0 : existing.default_language) || "cmn",
+    stability: typeof options.mapping.stability === "number" ? options.mapping.stability : typeof oldCharacter.stability === "number" ? oldCharacter.stability : typeof (existing == null ? void 0 : existing.default_stability) === "number" ? existing.default_stability : 0.5,
+    created_at: createdAt,
+    last_used: options.now.toISOString()
+  };
+  characters[options.characterName] = character;
+  const nextConfig = {
+    ...existing,
+    version: options.provider === "doubao" ? 4 : "1.0",
+    provider: options.provider,
+    characters
+  };
+  if (options.provider === "doubao") {
+    nextConfig.default_language = stringField2(existing == null ? void 0 : existing.default_language) || "cmn";
+    nextConfig.default_stability = typeof (existing == null ? void 0 : existing.default_stability) === "number" ? existing.default_stability : 0.5;
+    nextConfig.special_voices = isRecord2(existing == null ? void 0 : existing.special_voices) ? existing.special_voices : {};
+  } else {
+    delete nextConfig.default_language;
+    delete nextConfig.default_stability;
+    delete nextConfig.special_voices;
+  }
+  const configBytes = Buffer.from(`${JSON.stringify(nextConfig, null, 2)}
+`, "utf8");
+  const transactionId = randomUUID2();
+  const configTemp = `${configPath}.${transactionId}.tmp`;
+  const referenceTemp = referencePath ? `${referencePath}.${transactionId}.tmp` : void 0;
+  try {
+    if (referenceTemp && options.referenceAudio) {
+      fs16.writeFileSync(referenceTemp, options.referenceAudio.bytes, { flag: "wx" });
+      fs16.renameSync(referenceTemp, referencePath);
+    }
+    fs16.writeFileSync(configTemp, configBytes, { flag: "wx" });
+    fs16.renameSync(configTemp, configPath);
+  } catch (error2) {
+    try {
+      if (fs16.existsSync(configTemp)) fs16.rmSync(configTemp, { force: true });
+      if (referenceTemp && fs16.existsSync(referenceTemp)) fs16.rmSync(referenceTemp, { force: true });
+      restoreFile(configPath, oldConfig);
+      if (referencePath) restoreFile(referencePath, oldReference);
+    } catch {
+    }
+    throw error2;
+  }
+}
+function snapshotFile(filePath) {
+  try {
+    assertFileIsNotSymlink(filePath);
+    return { exists: true, bytes: fs16.readFileSync(filePath) };
+  } catch {
+    if (isSymlink(filePath)) {
+      throw new Error(`refusing to read symlinked file: ${filePath}`);
+    }
+    return { exists: false };
+  }
+}
+function restoreFile(filePath, snapshot) {
+  assertFileIsNotSymlink(filePath);
+  if (snapshot.exists && snapshot.bytes) {
+    fs16.mkdirSync(path17.dirname(filePath), { recursive: true });
+    fs16.writeFileSync(filePath, snapshot.bytes);
+  } else {
+    fs16.rmSync(filePath, { force: true });
+  }
+}
+function readJsonFile2(filePath) {
+  assertFileIsNotSymlink(filePath);
+  try {
+    const parsed = JSON.parse(fs16.readFileSync(filePath, "utf8"));
+    return isRecord2(parsed) ? parsed : void 0;
+  } catch {
+    return void 0;
+  }
+}
+async function materializeCreate3dAssetResult(options) {
+  var _a3;
+  const payload = isRecord2(options.payload.preview) ? await materializeCreate3dAssetPreviewResult(options) : options.payload;
+  const modelFile = Array.isArray(payload.model_files) ? payload.model_files.find(isRecord2) : void 0;
+  if (!modelFile) {
+    return payload;
+  }
+  const assetId = stringField2(modelFile.assetId) || stringField2(payload.asset_id) || stringField2(payload.task_id) || "3d_asset";
+  const remoteUrl = stringField2(modelFile.modelUrl);
+  const format = (_a3 = stringField2(modelFile.format)) == null ? void 0 : _a3.toLowerCase();
+  const materialization = stringField2(modelFile.materialization);
+  if (!remoteUrl || !format || !materialization) {
+    return {
+      ...payload,
+      local_delivery: create3dAssetDeliveryFailure(
+        assetId,
+        remoteUrl,
+        format,
+        materialization,
+        "Invalid create_3d_asset model_files entry."
+      )
+    };
+  }
+  const existing = findExistingCreate3dAssetDelivery({
+    targetDir: options.targetDir,
+    assetId,
+    remoteUrl
+  });
+  if (existing) {
+    return {
+      ...payload,
+      local_delivery: create3dAssetLocalDelivery({
+        assetId,
+        remoteUrl,
+        format,
+        materialization,
+        materialized: existing,
+        reused: true
+      })
+    };
+  }
+  const materialized = await materializeCreate3dAssetModelFile({
+    ...options,
+    assetId,
+    modelFile,
+    remoteUrl,
+    format,
+    materialization
+  });
+  if ("localPath" in materialized) {
+    upsertGeneratedAssetRecord(options.targetDir, materialized.localPath, {
+      tool: CREATE_3D_ASSET_PROXY_TOOL_NAME,
+      name: assetId,
+      assetKind: "model",
+      assetId,
+      taskId: stringField2(payload.task_id),
+      cdnUrl: remoteUrl,
+      previewUrl: remoteUrl,
+      localPath: materialized.localPath,
+      absolutePath: materialized.absolutePath,
+      createdAt: options.now.toISOString(),
+      modelCdnUrl: remoteUrl
+    });
+  }
+  return {
+    ...payload,
+    local_delivery: create3dAssetLocalDelivery({
+      assetId,
+      remoteUrl,
+      format,
+      materialization,
+      materialized,
+      reused: false
+    })
+  };
+}
+async function materializeCreate3dAssetPreviewResult(options) {
+  const preview = options.payload.preview;
+  const assetId = stringField2(options.payload.asset_id) || "3d_asset";
   const previewAssets = {};
-  const taskId = get3dTaskId(options.payload);
-  const mode = stringField2(options.payload.mode);
   for (const view of THREE_D_MODEL_VIEWS) {
-    const url2 = stringField2(options.payload.preview_urls[view]);
+    const url2 = stringField2(preview[view]);
     const materialized = await materializeAsset({
       targetDir: options.targetDir,
       url: url2,
-      baseName: `${taskId || "3d_model"}_${view}`,
-      relativeDir: "assets/image",
+      baseName: `${assetId}_${view}`,
+      relativeDir: IMAGE_ASSET_DIRS[0],
       extension: extensionFromUrl(url2) || "png",
       now: options.now,
       fetchImpl: options.fetchImpl
     });
-    if (!materialized) {
-      continue;
-    }
-    changed = true;
+    if (!materialized) continue;
     previewAssets[view] = { ...materialized, cdnUrl: url2 };
     if ("localPath" in materialized && url2) {
       upsertGeneratedAssetRecord(options.targetDir, materialized.localPath, {
-        tool: "create_3d_model_task",
-        name: `${taskId || "3d_model"}_${view}`,
+        tool: CREATE_3D_ASSET_PROXY_TOOL_NAME,
+        name: `${assetId}_${view}`,
+        assetId,
         cdnUrl: url2,
         previewUrl: url2,
         localPath: materialized.localPath,
         absolutePath: materialized.absolutePath,
         createdAt: options.now.toISOString(),
-        taskId,
-        mode,
-        phase: 1,
         view
       });
     }
   }
+  return Object.keys(previewAssets).length > 0 ? { ...options.payload, preview_assets: previewAssets } : options.payload;
+}
+async function materializeCreate3dAssetModelFile(options) {
+  var _a3;
+  const targetDirectory = stringField2(options.modelFile.targetDirectory);
+  const suggestedFileName = stringField2(options.modelFile.suggestedFileName);
+  const targetAbsolutePath = targetDirectory ? resolveProjectRelativePath(options.targetDir, targetDirectory) : void 0;
+  const modelAssetRoot = path17.resolve(options.targetDir, MODEL_ASSET_DIRS[0]);
+  if (!targetDirectory || !targetAbsolutePath || !isKnownAssetPath(targetDirectory, MODEL_ASSET_DIRS) || !isPathWithinDirectory(modelAssetRoot, targetAbsolutePath) || !suggestedFileName || path17.posix.basename(suggestedFileName) !== suggestedFileName || suggestedFileName.includes("\\")) {
+    return {
+      download: { success: false, error: "Invalid create_3d_asset local target path." }
+    };
+  }
+  if (options.materialization === "copy") {
+    return await materializeAssetAtPath({
+      url: options.remoteUrl,
+      relativePath: path17.posix.join(targetDirectory, suggestedFileName),
+      targetDir: options.targetDir,
+      fetchImpl: options.fetchImpl
+    });
+  }
+  if (options.materialization !== "extract") {
+    return {
+      download: {
+        success: false,
+        error: `Unsupported create_3d_asset materialization: ${options.materialization}`
+      }
+    };
+  }
+  const archive = await materializeAsset({
+    targetDir: options.targetDir,
+    url: options.remoteUrl,
+    baseName: options.assetId,
+    relativeDir: ".maker/assets/downloads",
+    extension: path17.extname(suggestedFileName).replace(/^\./, "") || "zip",
+    now: options.now,
+    fetchImpl: options.fetchImpl
+  });
+  if (!archive || !("localPath" in archive)) {
+    return archive ?? {
+      download: { success: false, error: "Missing create_3d_asset model archive." }
+    };
+  }
+  try {
+    fs16.mkdirSync(targetAbsolutePath, { recursive: true });
+    extractZip(archive.absolutePath, targetAbsolutePath, "3D model asset");
+    const entrypointExtension = ((_a3 = stringField2(options.modelFile.entrypointExtension)) == null ? void 0 : _a3.toLowerCase()) || ".mdl";
+    const entrypoint = findFileByExtension(targetAbsolutePath, entrypointExtension);
+    if (!entrypoint) {
+      throw new Error(`3D model archive contains no ${entrypointExtension} entrypoint.`);
+    }
+    const localPath = path17.relative(options.targetDir, entrypoint).split(path17.sep).join("/");
+    return {
+      localPath,
+      absolutePath: entrypoint,
+      download: archive.download
+    };
+  } catch (error2) {
+    return {
+      download: {
+        success: false,
+        error: `3D model asset extraction failed: ${error2 instanceof Error ? error2.message : String(error2)}`
+      }
+    };
+  } finally {
+    fs16.rmSync(archive.absolutePath, { force: true });
+  }
+}
+async function materializeAssetAtPath(options) {
+  const absolutePath = resolveProjectRelativePath(options.targetDir, options.relativePath);
+  if (!absolutePath) {
+    return { download: { success: false, error: "Asset target path escapes the project." } };
+  }
+  try {
+    const response = await options.fetchImpl(options.url);
+    if (!response.ok) {
+      return {
+        download: { success: false, error: `Asset download failed: HTTP ${response.status}` }
+      };
+    }
+    fs16.mkdirSync(path17.dirname(absolutePath), { recursive: true });
+    fs16.writeFileSync(absolutePath, Buffer.from(await response.arrayBuffer()));
+    return { localPath: options.relativePath, absolutePath, download: { success: true } };
+  } catch (error2) {
+    return {
+      download: {
+        success: false,
+        error: `Asset download failed: ${error2 instanceof Error ? error2.message : String(error2)}`
+      }
+    };
+  }
+}
+function findFileByExtension(directory, extension) {
+  const entries = fs16.readdirSync(directory, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name));
+  for (const entry of entries) {
+    const absolutePath = path17.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      const nested = findFileByExtension(absolutePath, extension);
+      if (nested) return nested;
+    } else if (entry.isFile() && entry.name.toLowerCase().endsWith(extension)) {
+      return absolutePath;
+    }
+  }
+  return void 0;
+}
+function findExistingCreate3dAssetDelivery(options) {
+  const registry2 = readGeneratedAssetRegistry(options.targetDir);
+  const match = Object.entries(registry2).find(([, record3]) => {
+    return record3.tool === CREATE_3D_ASSET_PROXY_TOOL_NAME && record3.assetId === options.assetId && record3.cdnUrl === options.remoteUrl && typeof record3.absolutePath === "string" && fs16.existsSync(record3.absolutePath);
+  });
+  if (!match) {
+    return void 0;
+  }
+  const [localPath, record2] = match;
   return {
-    ...options.payload,
-    ...changed ? { preview_assets: previewAssets } : {},
-    ...create3dPreviewReviewGuidance()
+    localPath,
+    absolutePath: record2.absolutePath,
+    download: { success: true }
   };
 }
-function create3dPreviewReviewGuidance() {
+function create3dAssetLocalDelivery(options) {
+  if (!("localPath" in options.materialized)) {
+    return {
+      status: "failed",
+      asset_id: options.assetId,
+      model: {
+        remote_url: options.remoteUrl,
+        format: options.format,
+        materialization: options.materialization,
+        download: options.materialized.download
+      }
+    };
+  }
   return {
-    workflow_state: "awaiting_user_review",
-    user_review_required: true,
-    next_action: "Show the four-view previews to the user and ask whether they approve them or want changes.",
-    approval_next_step: "If the user approves, continue the original 3D model generation flow by calling create_3d_model_task again with the approved four-view images.",
-    revision_next_step: "If the user requests changes, call create_3d_model_task again with the requested changes to regenerate the four-view previews before model generation.",
-    agent_instruction: "Do not stop after phase 1. The 3D model is not complete until the user approves the four-view previews and final model generation finishes."
+    status: "success",
+    asset_id: options.assetId,
+    model: {
+      remote_url: options.remoteUrl,
+      local_path: options.materialized.localPath,
+      absolute_path: options.materialized.absolutePath,
+      format: options.format,
+      materialization: options.materialization,
+      reused: options.reused,
+      download: options.materialized.download
+    }
   };
 }
-async function materialize3dFinalResult(options, toolName) {
-  if (options.payload.status !== "success") {
-    return options.payload;
-  }
-  let changed = false;
-  const nextPayload = { ...options.payload };
-  const taskId = get3dTaskId(options.payload);
-  const modelCdnUrl = stringField2(options.payload.model_cdn_url);
-  const renderedImageUrl = stringField2(options.payload.rendered_image_url);
-  const mdlConversionError = stringField2(options.payload.mdl_conversion_error);
-  const modelMaterialized = await materializeAsset({
-    targetDir: options.targetDir,
-    url: modelCdnUrl,
-    baseName: taskId || "3d_model",
-    relativeDir: MODEL_ASSET_DIRS[0],
-    extension: extensionFromUrl(modelCdnUrl) || "glb",
-    now: options.now,
-    fetchImpl: options.fetchImpl
-  });
-  if (modelMaterialized) {
-    changed = true;
-    nextPayload.modelDownload = modelMaterialized.download;
-    if ("localPath" in modelMaterialized) {
-      nextPayload.modelLocalPath = modelMaterialized.localPath;
-      nextPayload.modelAbsolutePath = modelMaterialized.absolutePath;
-      if (modelCdnUrl) {
-        upsertGeneratedAssetRecord(options.targetDir, modelMaterialized.localPath, {
-          tool: toolName,
-          name: taskId,
-          assetKind: "model",
-          cdnUrl: modelCdnUrl,
-          previewUrl: renderedImageUrl || modelCdnUrl,
-          localPath: modelMaterialized.localPath,
-          absolutePath: modelMaterialized.absolutePath,
-          createdAt: options.now.toISOString(),
-          taskId,
-          modelCdnUrl,
-          renderedImageUrl,
-          mdlConversionError
-        });
-      }
+function create3dAssetDeliveryFailure(assetId, remoteUrl, format, materialization, error2) {
+  return {
+    status: "failed",
+    asset_id: assetId,
+    model: {
+      remote_url: remoteUrl,
+      format,
+      materialization,
+      download: { success: false, error: error2 }
     }
-  }
-  const mdlUrl = stringField2(options.payload.mdl_cdn_url);
-  const mdlMaterialized = await materializeAsset({
-    targetDir: options.targetDir,
-    url: mdlUrl,
-    baseName: taskId || "3d_model",
-    relativeDir: MODEL_ASSET_DIRS[0],
-    extension: extensionFromUrl(mdlUrl) || "zip",
-    now: options.now,
-    fetchImpl: options.fetchImpl
-  });
-  if (mdlMaterialized) {
-    changed = true;
-    nextPayload.mdlDownload = mdlMaterialized.download;
-    if ("localPath" in mdlMaterialized) {
-      nextPayload.mdlLocalPath = mdlMaterialized.localPath;
-      nextPayload.mdlAbsolutePath = mdlMaterialized.absolutePath;
-      let mdlExtractError;
-      try {
-        extractZip(
-          mdlMaterialized.absolutePath,
-          path16.join(options.targetDir, "assets"),
-          "3D model asset"
-        );
-        nextPayload.mdlExtracted = true;
-        nextPayload.mdlExtractedTo = "assets";
-      } catch (error2) {
-        mdlExtractError = `3D model asset extraction failed: ${error2 instanceof Error ? error2.message : String(error2)}`;
-        nextPayload.mdlExtracted = false;
-        nextPayload.mdlExtractError = mdlExtractError;
-      }
-      if (mdlUrl) {
-        upsertGeneratedAssetRecord(options.targetDir, mdlMaterialized.localPath, {
-          tool: toolName,
-          name: taskId,
-          assetKind: "mdl_zip",
-          cdnUrl: mdlUrl,
-          previewUrl: renderedImageUrl || mdlUrl,
-          localPath: mdlMaterialized.localPath,
-          absolutePath: mdlMaterialized.absolutePath,
-          createdAt: options.now.toISOString(),
-          taskId,
-          modelCdnUrl,
-          renderedImageUrl,
-          mdlConversionError,
-          mdlExtractError
-        });
-      }
-    }
-  }
-  const renderedImageMaterialized = await materializeAsset({
-    targetDir: options.targetDir,
-    url: renderedImageUrl,
-    baseName: `${taskId || "3d_model"}_render`,
-    relativeDir: "assets/image",
-    extension: extensionFromUrl(renderedImageUrl) || "png",
-    now: options.now,
-    fetchImpl: options.fetchImpl
-  });
-  if (renderedImageMaterialized) {
-    changed = true;
-    nextPayload.renderedImageDownload = renderedImageMaterialized.download;
-    if ("localPath" in renderedImageMaterialized) {
-      nextPayload.renderedImageLocalPath = renderedImageMaterialized.localPath;
-      nextPayload.renderedImageAbsolutePath = renderedImageMaterialized.absolutePath;
-      if (renderedImageUrl) {
-        upsertGeneratedAssetRecord(options.targetDir, renderedImageMaterialized.localPath, {
-          tool: toolName,
-          name: `${taskId || "3d_model"}_render`,
-          assetKind: "render",
-          cdnUrl: renderedImageUrl,
-          previewUrl: renderedImageUrl,
-          localPath: renderedImageMaterialized.localPath,
-          absolutePath: renderedImageMaterialized.absolutePath,
-          createdAt: options.now.toISOString(),
-          taskId,
-          modelCdnUrl,
-          renderedImageUrl,
-          mdlConversionError
-        });
-      }
-    }
-  }
-  return changed ? nextPayload : options.payload;
-}
-function get3dTaskId(payload) {
-  return stringField2(payload.task_id) || stringField2(payload.taskId);
+  };
 }
 function persistMaterializedAsset(options) {
   const nextPayload = { ...options.payload, ...options.materialized };
   if (!("localPath" in options.materialized) || !options.cdnUrl) {
     return nextPayload;
   }
-  upsertGeneratedAssetRecord(options.targetDir, options.materialized.localPath, {
-    tool: options.toolName,
-    name: stringField2(options.payload.name) || stringField2(options.payload.title),
-    prompt: stringField2(options.payload.prompt),
-    cdnUrl: options.cdnUrl,
-    previewUrl: options.cdnUrl,
-    localPath: options.materialized.localPath,
-    absolutePath: options.materialized.absolutePath,
-    createdAt: options.now.toISOString(),
-    ...options.extraRegistryFields
-  });
+  try {
+    upsertGeneratedAssetRecord(options.targetDir, options.materialized.localPath, {
+      tool: options.toolName,
+      name: stringField2(options.payload.name) || stringField2(options.payload.title),
+      prompt: stringField2(options.payload.prompt),
+      cdnUrl: options.cdnUrl,
+      previewUrl: options.cdnUrl,
+      localPath: options.materialized.localPath,
+      absolutePath: options.materialized.absolutePath,
+      createdAt: options.now.toISOString(),
+      ...options.extraRegistryFields
+    });
+  } catch (error2) {
+    return {
+      ...nextPayload,
+      registryError: `Generated asset registry persistence failed: ${error2 instanceof Error ? error2.message : String(error2)}`,
+      localPersistenceError: `Generated asset registry persistence failed: ${error2 instanceof Error ? error2.message : String(error2)}`
+    };
+  }
   return nextPayload;
 }
 async function materializeAsset(options) {
@@ -34239,8 +35428,8 @@ async function materializeAsset(options) {
       };
     }
     const bytes = Buffer.from(await response.arrayBuffer());
-    fs15.mkdirSync(path16.dirname(absolutePath), { recursive: true });
-    fs15.writeFileSync(absolutePath, bytes);
+    fs16.mkdirSync(path17.dirname(absolutePath), { recursive: true });
+    fs16.writeFileSync(absolutePath, bytes);
     return { localPath: relativePath, absolutePath, download: { success: true } };
   } catch (error2) {
     return {
@@ -34254,12 +35443,12 @@ async function materializeAsset(options) {
 function createUniqueAssetPath(options) {
   const stem = `${sanitizeAssetBaseName(options.baseName)}_${formatAssetTimestamp(options.now)}`;
   for (let index = 1; index <= 9999; index += 1) {
-    const relativePath = path16.posix.join(
+    const relativePath = path17.posix.join(
       options.relativeDir,
       `${stem}${index === 1 ? "" : `_${index}`}.${options.extension}`
     );
-    const absolutePath = path16.join(options.targetDir, ...relativePath.split("/"));
-    if (!fs15.existsSync(absolutePath)) {
+    const absolutePath = path17.join(options.targetDir, ...relativePath.split("/"));
+    if (!fs16.existsSync(absolutePath)) {
       return { relativePath, absolutePath };
     }
   }
@@ -34313,7 +35502,7 @@ function normalizeBatchImageReferenceAssetArgs(targetDir, args) {
   return {
     ...args,
     images: args.images.map(
-      (item) => isRecord(item) ? normalizeImageReferenceAssetArgs(targetDir, item) : item
+      (item) => isRecord2(item) ? normalizeImageReferenceAssetArgs(targetDir, item) : item
     )
   };
 }
@@ -34338,56 +35527,242 @@ function rewriteVideoReferenceAssetArgs(targetDir, args) {
     })
   };
 }
-function rewrite3dModelAssetArgs(targetDir, args) {
+function rewriteCreate3dAssetArgs(targetDir, args) {
+  if (!isRecord2(args.payload) || !isRecord2(args.payload.images)) {
+    return args;
+  }
   const registry2 = readGeneratedAssetRegistry(targetDir);
   const imageOptions = {
     assetDirs: IMAGE_ASSET_DIRS,
     mediaKind: "image",
     maxBytes: IMAGE_REFERENCE_MAX_BYTES
   };
+  const images = args.payload.images;
   return {
     ...args,
-    image: rewriteGeneratedAssetReference(targetDir, args.image, registry2, imageOptions),
-    front_image: rewriteGeneratedAssetReference(
-      targetDir,
-      args.front_image,
-      registry2,
-      imageOptions
-    ),
-    left_image: rewriteGeneratedAssetReference(targetDir, args.left_image, registry2, imageOptions),
-    back_image: rewriteGeneratedAssetReference(targetDir, args.back_image, registry2, imageOptions),
-    right_image: rewriteGeneratedAssetReference(
-      targetDir,
-      args.right_image,
-      registry2,
-      imageOptions
-    ),
-    confirmed_image_paths: rewrite3dConfirmedImagePaths(
-      targetDir,
-      args.confirmed_image_paths,
-      registry2,
-      imageOptions
-    )
+    payload: {
+      ...args.payload,
+      images: {
+        ...images,
+        front: rewriteGeneratedAssetReference(targetDir, images.front, registry2, imageOptions),
+        left: rewriteGeneratedAssetReference(targetDir, images.left, registry2, imageOptions),
+        back: rewriteGeneratedAssetReference(targetDir, images.back, registry2, imageOptions),
+        right: rewriteGeneratedAssetReference(targetDir, images.right, registry2, imageOptions)
+      }
+    }
   };
 }
-function rewrite3dConfirmedImagePaths(targetDir, value, registry2, options) {
-  if (!isRecord(value)) {
-    return value;
+function rewriteTextToDialogueArgs(targetDir, args) {
+  if (!Array.isArray(args.inputs)) {
+    return args;
   }
+  const registry2 = readGeneratedAssetRegistry(targetDir);
+  const localElevenLabsMapping = readLocalElevenLabsVoiceMapping(targetDir);
+  const localDoubaoMapping = args.inputs.some(
+    (value) => isRecord2(value) && normalizeOptionalDialogueReference(value.reference_audio) === void 0 && normalizeOptionalDialogueReference(value.reference_audio_path) === void 0
+  ) ? readLocalDoubaoVoiceMapping(targetDir) : void 0;
+  let referenceAudioInputBytes = 0;
   return {
-    ...value,
-    front: rewriteGeneratedAssetReference(targetDir, value.front, registry2, options),
-    left: rewriteGeneratedAssetReference(targetDir, value.left, registry2, options),
-    back: rewriteGeneratedAssetReference(targetDir, value.back, registry2, options),
-    right: rewriteGeneratedAssetReference(targetDir, value.right, registry2, options)
+    ...args,
+    inputs: args.inputs.map((value, index) => {
+      if (!isRecord2(value)) {
+        return value;
+      }
+      let canonicalReference = normalizeOptionalDialogueReference(value.reference_audio);
+      const legacyReference = normalizeOptionalDialogueReference(value.reference_audio_path);
+      if (canonicalReference !== void 0 && legacyReference !== void 0) {
+        throw new Error(
+          `inputs[${index}].reference_audio and reference_audio_path are mutually exclusive.`
+        );
+      }
+      const normalizedValue = { ...value };
+      delete normalizedValue.reference_audio;
+      delete normalizedValue.reference_audio_path;
+      delete normalizedValue._local_voice_id;
+      const localVoiceId = resolveLocalElevenLabsVoiceId(
+        value.character_name,
+        localElevenLabsMapping
+      );
+      if (localVoiceId) {
+        normalizedValue._local_voice_id = localVoiceId;
+      }
+      if (canonicalReference === void 0 && legacyReference === void 0) {
+        canonicalReference = resolveLocalDoubaoMappingReference({
+          targetDir,
+          characterName: value.character_name,
+          mapping: localDoubaoMapping,
+          registry: registry2,
+          index
+        });
+      }
+      if (canonicalReference === void 0) canonicalReference = legacyReference;
+      if (canonicalReference === void 0) return normalizedValue;
+      const referenceAudio = normalizeDialogueReference(
+        targetDir,
+        canonicalReference,
+        registry2,
+        index
+      );
+      referenceAudioInputBytes += Buffer.byteLength(referenceAudio, "utf8");
+      if (referenceAudioInputBytes > AUDIO_DIALOGUE_INPUT_TOTAL_MAX_BYTES) {
+        throw new Error(
+          `reference_audio input total must not exceed ${AUDIO_DIALOGUE_INPUT_TOTAL_MAX_BYTES / 1024 / 1024} MiB.`
+        );
+      }
+      return {
+        ...normalizedValue,
+        reference_audio: referenceAudio
+      };
+    })
   };
+}
+async function prepareRemoteProxyToolArgsAsync(options) {
+  return prepareRemoteProxyToolArgs(options);
+}
+function readLocalDoubaoVoiceMapping(targetDir) {
+  const mappingPath = path17.join(targetDir, ".project", "audio-voice-mapping.json");
+  if (!fs16.existsSync(mappingPath)) return void 0;
+  assertProjectDirectory(targetDir, path17.dirname(mappingPath));
+  const mapping = readJsonFile2(mappingPath);
+  return (mapping == null ? void 0 : mapping.provider) === "doubao" ? mapping : void 0;
+}
+function readLocalElevenLabsVoiceMapping(targetDir) {
+  const mappingPath = path17.join(targetDir, ".project", "elevenlabs-voice-mapping.json");
+  if (!fs16.existsSync(mappingPath)) return void 0;
+  assertProjectDirectory(targetDir, path17.dirname(mappingPath));
+  const mapping = readJsonFile2(mappingPath);
+  return (mapping == null ? void 0 : mapping.provider) === "elevenlabs" ? mapping : void 0;
+}
+function resolveLocalElevenLabsVoiceId(characterName, mapping) {
+  if (typeof characterName !== "string" || !mapping) return void 0;
+  const characters = mapping.characters;
+  if (!isRecord2(characters)) return void 0;
+  const character = characters[characterName];
+  if (!isRecord2(character) || character.provider !== "elevenlabs") return void 0;
+  return stringField2(character.voice_id);
+}
+function resolveLocalDoubaoMappingReference(options) {
+  if (typeof options.characterName !== "string" || !options.mapping) return void 0;
+  const characters = options.mapping.characters;
+  if (!isRecord2(characters)) return void 0;
+  const character = characters[options.characterName];
+  if (!isRecord2(character) || character.provider !== "doubao") return void 0;
+  const referencePath = stringField2(character.reference_audio_path);
+  if (!referencePath) return void 0;
+  try {
+    const reference = normalizeDialogueReference(
+      options.targetDir,
+      referencePath,
+      options.registry,
+      options.index
+    );
+    return reference.toLowerCase().startsWith("data:") ? reference : void 0;
+  } catch (error2) {
+    const reason = error2 instanceof Error ? error2.message : String(error2);
+    throw new Error(
+      `Local Doubao voice mapping for character "${options.characterName}" references unavailable audio "${referencePath}". Re-run confirm_character_voice to restore it. ${reason}`
+    );
+  }
+}
+function normalizeOptionalDialogueReference(value) {
+  if (value === void 0 || value === null) return void 0;
+  if (typeof value === "string") {
+    const normalized = value.trim();
+    if (normalized === "" || /^data:audio\/[^,]*,\s*$/i.test(normalized)) return void 0;
+  }
+  return value;
+}
+function normalizeDialogueReference(targetDir, value, registry2, index) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`inputs[${index}].reference_audio must be a non-empty string.`);
+  }
+  const trimmed = value.trim();
+  if (trimmed.toLowerCase().startsWith("data:")) {
+    validateAudioDataUrl(trimmed);
+    return trimmed;
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  const projectReference = normalizeDialogueProjectReference(targetDir, trimmed, registry2, index);
+  return localDialogueAudioReferenceToDataUrl({
+    targetDir,
+    value: projectReference,
+    localPath: projectReference
+  });
+}
+function localDialogueAudioReferenceToDataUrl(options) {
+  const absolutePath = resolveLocalAssetAbsolutePath(options.targetDir, options);
+  if (!absolutePath) {
+    throw new Error(`local reference audio file was not found: ${options.value}`);
+  }
+  const projectRoot = fs16.realpathSync(path17.resolve(options.targetDir));
+  const realFile = fs16.realpathSync(absolutePath);
+  const relative = path17.relative(projectRoot, realFile);
+  if (relative === ".." || relative.startsWith(`..${path17.sep}`) || path17.isAbsolute(relative)) {
+    throw new Error("local dialogue reference resolves outside the project target directory");
+  }
+  const stat = fs16.statSync(realFile);
+  if (!stat.isFile()) {
+    throw new Error(`local reference audio path is not a file: ${options.value}`);
+  }
+  if (stat.size > AUDIO_DIALOGUE_REFERENCE_MAX_BYTES) {
+    throw new Error("local reference audio file must be no larger than 20 MiB.");
+  }
+  const mime = dataUrlMimeForPath(realFile, "audio");
+  if (!mime) {
+    throw new Error("local reference audio format is unsupported.");
+  }
+  return `data:${mime};base64,${fs16.readFileSync(realFile).toString("base64")}`;
+}
+function normalizeDialogueProjectReference(targetDir, value, registry2, index) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`inputs[${index}].reference_audio must be a non-empty project audio path.`);
+  }
+  let normalized = value.trim().replace(/^workspace\//, "");
+  if (path17.isAbsolute(normalized)) {
+    const relative = path17.relative(path17.resolve(targetDir), path17.resolve(normalized));
+    if (relative === ".." || relative.startsWith(`..${path17.sep}`) || path17.isAbsolute(relative)) {
+      throw new Error(`inputs[${index}].reference_audio must stay inside project assets/audio.`);
+    }
+    normalized = relative.split(path17.sep).join("/");
+  }
+  const localPath = resolveLocalAssetReference(targetDir, normalized, registry2, AUDIO_ASSET_DIRS);
+  if (localPath) {
+    normalized = localPath;
+  }
+  const segments = normalized.split("/");
+  const extension = path17.extname(normalized).toLowerCase();
+  if (segments.some((segment) => segment === "" || segment === "." || segment === "..") || !isKnownAssetPath(normalized, AUDIO_ASSET_DIRS) || !AUDIO_MIME_BY_EXTENSION[extension]) {
+    throw new Error(`inputs[${index}].reference_audio must be an audio path under assets/audio.`);
+  }
+  return normalized;
+}
+function validateAudioDataUrl(value) {
+  const match = /^data:([a-z0-9.+-]+\/[a-z0-9.+-]+)((?:;[a-z0-9.+-]+=[^;,]*)*);base64,([\s\S]+)$/i.exec(value);
+  if (!match || !Object.values(AUDIO_MIME_BY_EXTENSION).includes(match[1].toLowerCase())) {
+    throw new Error("reference_audio must be a valid audio data URL, not bare base64.");
+  }
+  const cleaned = match[3].replace(/\s/g, "");
+  if (cleaned.length === 0 || cleaned.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(cleaned)) {
+    throw new Error("reference_audio must be a valid audio data URL, not bare base64.");
+  }
+  const padding = cleaned.endsWith("==") ? 2 : cleaned.endsWith("=") ? 1 : 0;
+  const estimatedBytes = cleaned.length / 4 * 3 - padding;
+  if (estimatedBytes > AUDIO_DIALOGUE_REFERENCE_MAX_BYTES) {
+    throw new Error("reference_audio data URL must be no larger than 20 MiB.");
+  }
+  const bytes = Buffer.from(cleaned, "base64");
+  if (bytes.length === 0 || bytes.length > AUDIO_DIALOGUE_REFERENCE_MAX_BYTES) {
+    throw new Error("reference_audio data URL must be no larger than 20 MiB.");
+  }
 }
 function rewriteUrlObjectArray(targetDir, value, registry2, options) {
   if (!Array.isArray(value)) {
     return value;
   }
   return value.map(
-    (item) => isRecord(item) ? {
+    (item) => isRecord2(item) ? {
       ...item,
       url: rewriteGeneratedAssetReference(targetDir, item.url, registry2, options)
     } : item
@@ -34437,7 +35812,7 @@ function findRegistryAssetByName(value, registry2, assetDirs) {
     if (!isKnownAssetPath(localPath, assetDirs)) {
       return false;
     }
-    const basename = path16.posix.basename(localPath);
+    const basename = path17.posix.basename(localPath);
     const stem = basename.replace(/\.[^.]+$/, "");
     return basename === value || stem === value || record2.name === value || record2.taskId === value;
   });
@@ -34450,13 +35825,13 @@ function findRegistryAssetByName(value, registry2, assetDirs) {
 }
 function findLocalAssetByName(targetDir, value, assetDirs) {
   var _a3;
-  const hasExtension = Boolean(path16.extname(value));
+  const hasExtension = Boolean(path17.extname(value));
   const candidates = [];
   for (const assetDir of assetDirs) {
-    const absoluteDir = path16.join(targetDir, ...assetDir.split("/"));
+    const absoluteDir = path17.join(targetDir, ...assetDir.split("/"));
     let entries;
     try {
-      entries = fs15.readdirSync(absoluteDir);
+      entries = fs16.readdirSync(absoluteDir);
     } catch {
       continue;
     }
@@ -34465,11 +35840,11 @@ function findLocalAssetByName(targetDir, value, assetDirs) {
       if (hasExtension ? entry !== value : stem !== value && !stem.startsWith(`${value}_`)) {
         continue;
       }
-      const absolutePath = path16.join(absoluteDir, entry);
+      const absolutePath = path17.join(absoluteDir, entry);
       try {
         candidates.push({
-          localPath: path16.posix.join(assetDir, entry),
-          mtimeMs: fs15.statSync(absolutePath).mtimeMs
+          localPath: path17.posix.join(assetDir, entry),
+          mtimeMs: fs16.statSync(absolutePath).mtimeMs
         });
       } catch {
       }
@@ -34479,7 +35854,7 @@ function findLocalAssetByName(targetDir, value, assetDirs) {
   return (_a3 = candidates[0]) == null ? void 0 : _a3.localPath;
 }
 function isKnownAssetPath(relativePath, assetDirs) {
-  if (relativePath.startsWith("../") || path16.isAbsolute(relativePath)) {
+  if (relativePath.startsWith("../") || path17.isAbsolute(relativePath)) {
     return false;
   }
   return assetDirs.some(
@@ -34503,14 +35878,14 @@ function localAssetReferenceToDataUrl(options) {
   }
   let stat;
   try {
-    stat = fs15.statSync(absolutePath);
+    stat = fs16.statSync(absolutePath);
   } catch {
     return void 0;
   }
   if (!stat.isFile() || stat.size > options.maxBytes) {
     return void 0;
   }
-  const bytes = fs15.readFileSync(absolutePath);
+  const bytes = fs16.readFileSync(absolutePath);
   return `data:${mime};base64,${bytes.toString("base64")}`;
 }
 function resolveLocalAssetAbsolutePath(targetDir, options) {
@@ -34521,7 +35896,7 @@ function resolveLocalAssetAbsolutePath(targetDir, options) {
       candidates.push(localPath);
     }
   }
-  if (path16.isAbsolute(options.value)) {
+  if (path17.isAbsolute(options.value)) {
     candidates.push(options.value);
   } else {
     const localPath = resolveProjectRelativePath(targetDir, options.value);
@@ -34530,56 +35905,84 @@ function resolveLocalAssetAbsolutePath(targetDir, options) {
     }
   }
   for (const candidate of candidates) {
-    if (fs15.existsSync(candidate)) {
+    if (fs16.existsSync(candidate)) {
       return candidate;
     }
   }
   return void 0;
 }
 function resolveProjectRelativePath(targetDir, value) {
-  const root = path16.resolve(targetDir);
-  const absolutePath = path16.resolve(root, value);
-  const relativePath = path16.relative(root, absolutePath);
-  const escapesRoot = relativePath === ".." || relativePath.startsWith(`..${path16.sep}`) || path16.isAbsolute(relativePath);
+  const root = path17.resolve(targetDir);
+  const absolutePath = path17.resolve(root, value);
+  const relativePath = path17.relative(root, absolutePath);
+  const escapesRoot = relativePath === ".." || relativePath.startsWith(`..${path17.sep}`) || path17.isAbsolute(relativePath);
   if (!escapesRoot) {
     return absolutePath;
   }
   return void 0;
 }
+function assertProjectDirectory(targetDir, directory) {
+  const projectRoot = fs16.realpathSync(path17.resolve(targetDir));
+  const realDirectory = fs16.realpathSync(directory);
+  const relative = path17.relative(projectRoot, realDirectory);
+  if (relative === ".." || relative.startsWith(`..${path17.sep}`) || path17.isAbsolute(relative)) {
+    throw new Error("resolved directory escapes the project target directory");
+  }
+}
+function isPathWithinDirectory(rootDir, candidatePath) {
+  const relativePath = path17.relative(path17.resolve(rootDir), path17.resolve(candidatePath));
+  return relativePath === "" || relativePath !== ".." && !relativePath.startsWith(`..${path17.sep}`) && !path17.isAbsolute(relativePath);
+}
 function dataUrlMimeForPath(filePath, mediaKind) {
-  return DATA_URL_MIME_BY_EXTENSION[mediaKind][path16.extname(filePath).toLowerCase()];
+  return DATA_URL_MIME_BY_EXTENSION[mediaKind][path17.extname(filePath).toLowerCase()];
 }
 function upsertGeneratedAssetRecord(targetDir, localPath, record2) {
+  const registryPath = getGeneratedAssetRegistryPath(targetDir);
+  const registryDirectory = path17.dirname(registryPath);
+  fs16.mkdirSync(registryDirectory, { recursive: true });
+  assertProjectDirectory(targetDir, registryDirectory);
+  assertFileIsNotSymlink(registryPath);
   const registry2 = readGeneratedAssetRegistry(targetDir);
   registry2[localPath] = record2;
-  const registryPath = getGeneratedAssetRegistryPath(targetDir);
-  fs15.mkdirSync(path16.dirname(registryPath), { recursive: true });
-  fs15.writeFileSync(registryPath, `${JSON.stringify(registry2, null, 2)}
+  fs16.writeFileSync(registryPath, `${JSON.stringify(registry2, null, 2)}
 `, "utf8");
 }
 function readGeneratedAssetRegistry(targetDir) {
   const registryPath = getGeneratedAssetRegistryPath(targetDir);
-  if (!fs15.existsSync(registryPath)) {
+  assertFileIsNotSymlink(registryPath);
+  if (!fs16.existsSync(registryPath)) {
     return {};
   }
   try {
-    const parsed = JSON.parse(fs15.readFileSync(registryPath, "utf8"));
-    return isRecord(parsed) ? parsed : {};
+    const parsed = JSON.parse(fs16.readFileSync(registryPath, "utf8"));
+    return isRecord2(parsed) ? parsed : {};
   } catch {
     return {};
   }
 }
 function getGeneratedAssetRegistryPath(targetDir) {
-  return path16.join(targetDir, ".maker", "assets", "generated-assets.json");
+  return path17.join(targetDir, ".maker", "assets", "generated-assets.json");
+}
+function isSymlink(filePath) {
+  try {
+    return fs16.lstatSync(filePath).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+function assertFileIsNotSymlink(filePath) {
+  if (isSymlink(filePath)) {
+    throw new Error(`refusing to access symlinked file: ${filePath}`);
+  }
 }
 function normalizeAssetRegistryKey(targetDir, value) {
   if (/^https?:\/\//i.test(value) || value.startsWith("data:")) {
     return void 0;
   }
-  const relative = path16.isAbsolute(value) ? path16.relative(targetDir, value) : value;
-  return relative.split(path16.sep).join("/");
+  const relative = path17.isAbsolute(value) ? path17.relative(targetDir, value) : value;
+  return relative.split(path17.sep).join("/");
 }
-function isRecord(value) {
+function isRecord2(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function stringField2(value) {
@@ -34616,11 +36019,135 @@ function extensionFromUrl(url2) {
   }
   try {
     const pathname = new URL(url2).pathname;
-    const extension = path16.extname(pathname).replace(/^\./, "").toLowerCase();
+    const extension = path17.extname(pathname).replace(/^\./, "").toLowerCase();
     return extension || void 0;
   } catch {
     return void 0;
   }
+}
+
+// src/maker/server/toolDescriptions.ts
+var MAKER_STATUS_LITE_PUBLIC_DESCRIPTION = [
+  "Compatibility tool for clients that cannot read the maker://status resource; prefer the resource when it is available.",
+  "Use it when starting or resuming Maker work, or when the current project context and readiness are uncertain.",
+  "Pass target_dir when the project cannot be resolved from MCP Roots or the server working directory; if multiple Maker projects remain ambiguous, ask the user instead of guessing.",
+  "By default the check may perform remote Git, package, dev-kit, proxy, and authentication probes. skip_remote_sync skips only remote Git and dev-kit freshness checks; it is not an offline or read-only mode.",
+  "Follow the returned next_action and next_step."
+].join(" ");
+var MAKER_BUILD_CURRENT_DIRECTORY_PUBLIC_DESCRIPTION = [
+  "Submit and remotely build the current bound Maker project. First read maker://status or maker_status_lite and resolve exactly one bound Maker project.",
+  "Use this tool for explicit Maker build, preview, submit, or push requests. Code tests and lint do not trigger this remote workflow unless the user also explicitly asks to build, run, or preview the Maker game.",
+  "Normal mode commits local changes when needed, pushes existing or new commits, and then starts the remote build; a clean workspace creates the required wake-up commit.",
+  "Unsafe remote-sync or branch states stop before commit and push. A push failure stops before build, while a build failure after a successful push means the code is already on Maker remote; follow the structured result for recovery.",
+  "After a successful build, read runtime_logs.local_file for gameplay diagnostics and runtime_logs.state_file for watcher health when those fields are returned.",
+  "Do not combine Maker submission with generic branch, PR/MR, or separate commit/push workflows.",
+  "Set confirm_remote_build_without_submit=true only after the user explicitly requests building the already committed remote version without submitting local changes."
+].join(" ");
+var MAKER_REMOTE_PROXY_PUBLIC_DESCRIPTIONS = {
+  generate_image: [
+    "Generate one new image asset for a Maker game. Use batch_generate_images for multiple new images and edit_image to modify an existing image.",
+    "Optional reference images may guide style or content; supported sources, generation controls, and final target_size requirements are defined by the input schema.",
+    "Keep each reference image supplied through local paths or data URLs at 10 MiB or less.",
+    "The local proxy attempts to materialize successful results into the Maker project and retain remote mapping; use returned workspace/local paths when present."
+  ].join(" "),
+  batch_generate_images: [
+    "Generate two or more new image assets in parallel in one call. Use generate_image for one new image and edit_image to modify an existing image.",
+    "Each image request uses the fields and constraints defined by the input schema.",
+    "Keep each reference image supplied through local paths or data URLs at 10 MiB or less. A batch may partially succeed; preserve successful images and report failed items with their returned errors.",
+    "The local proxy attempts to materialize successful results into the Maker project and retain remote mapping; use returned workspace/local paths when present."
+  ].join(" "),
+  edit_image: [
+    "Modify an existing image from text instructions. Use generate_image for one new image and batch_generate_images for multiple new images.",
+    "The required original image accepts a local Maker project path, an HTTP(S) URL, or an image data URL. Additional reference images and output controls are defined by the input schema.",
+    "Keep each local-path or data URL image at 10 MiB or less.",
+    "The local proxy attempts to materialize successful results into the Maker project and retain remote mapping; use returned workspace/local paths when present."
+  ].join(" "),
+  create_video_task: [
+    "Create a video generation task. The remote service normally performs server-side polling and waits for the final result in this call.",
+    "If the wait budget expires, the result returns a task_id; continue other work and use query_video_task no sooner than 120 seconds later.",
+    "Mode-specific inputs and limits are defined by the input schema. Image, video, and audio references may use local project files, HTTP(S) URLs, or data URLs supported by the schema.",
+    "Keep image references at 30 MiB or less, video references at 50 MiB or less, and audio references at 15 MiB or less.",
+    "The local proxy attempts to materialize successful video results into the Maker project; prefer returned workspace paths when present, unless the user needs an external share URL."
+  ].join(" "),
+  query_video_task: [
+    "Query video task status by task_id after create_video_task returns a pending task or reports a concurrency limit.",
+    "If the task is still pending or running, continue other work and query again no sooner than 120 seconds later; do not poll continuously.",
+    "Querying a completed task releases its task quota. The local proxy attempts to materialize successful video and last-frame results into the Maker project.",
+    "Prefer workspace_video_path and workspace_last_frame_path when present; mention CDN URLs only when the user needs an external share link."
+  ].join(" "),
+  text_to_music: [
+    "Generate AI music for a Maker game, including background music or vocal tracks; do not use this tool for sound effects.",
+    "The remote call polls server-side every 20 seconds and may wait up to 50 minutes. If generation is still running when the call times out, the result includes the task ID for operational tracking.",
+    "Simple and custom generation controls are defined by the input schema.",
+    "The local proxy attempts to materialize successful audio and metadata into the Maker project and record them for later Maker references; use returned local paths when present."
+  ].join(" "),
+  text_to_sound_effect: [
+    "Generate one game sound effect from a Chinese or English description.",
+    "For the current Seed Audio provider, each call produces one output of at most 120 seconds. Split longer audio across multiple generations because this tool does not stitch outputs.",
+    "duration_seconds is an approximate target and the actual duration may differ.",
+    "The local proxy attempts to materialize successful audio in the provider original format under assets/audio/sfx and record it for later Maker references; use returned local paths when present."
+  ].join(" "),
+  batch_sound_effects: [
+    "Generate multiple game sound effects in one batch.",
+    "For the current Seed Audio provider, each item is an independent output of at most 120 seconds. Split longer audio across items or calls because this tool does not stitch outputs.",
+    "The result preserves per-item failures while the local proxy attempts to materialize successful audio in the provider original format under assets/audio/sfx and record it for later Maker references; use returned local paths when present."
+  ].join(" "),
+  text_to_dialogue: [
+    "Generate final character dialogue audio for a Maker game.",
+    "Each input needs a confirmed voice mapping or a reference_audio override. When neither is available, call audition_voices_for_character and then confirm_character_voice before retrying.",
+    "When reference_audio is omitted, the local proxy automatically reuses a confirmed local Doubao reference; the legacy provider still requires its confirmed voice mapping. Supported reference inputs and line-specific delivery controls are defined by the input schema.",
+    "For Doubao, each input produces at most 120 seconds of audio. Split longer dialogue across inputs or calls because this tool does not stitch outputs.",
+    "The local proxy attempts to materialize successful dialogue under assets/audio/voice; use returned local paths when present."
+  ].join(" "),
+  audition_voices_for_character: [
+    "Create temporary voice previews for one game character.",
+    "Before calling, inspect the available character definition and relevant project context, then prepare a representative audition line that matches the character personality and speaking style.",
+    "voice_profile.gender is required and must be passed explicitly as male or female.",
+    "Doubao returns exactly three previews; the legacy provider follows candidate_count. Show every returned preview to the user and wait for an explicit choice before calling confirm_character_voice.",
+    "Complete audition and confirmation for one character before starting another in the same project; do not run them in parallel.",
+    "Preview files are temporary and are not saved as final game assets."
+  ].join(" "),
+  confirm_character_voice: [
+    "Confirm a voice selection and persist the character voice mapping for later text_to_dialogue calls.",
+    "Call this tool only after audition_voices_for_character and only after the user explicitly selects a candidate or explicitly accepts the recommended candidate.",
+    "Omit selected_index only after the user explicitly accepts the recommendation; absence of a user choice is not acceptance.",
+    "Process one character at a time and do not call this tool in parallel for the same project."
+  ].join(" "),
+  create_3d_asset: [
+    'Manage the complete Maker 3D asset lifecycle. Use action="start" to begin, action="query" to check progress, action="get_options" to inspect step options, action="continue" after review, and action="post_process" for supported follow-up operations.',
+    "Use direct generation when no review checkpoint is needed, and reviewed generation when the user needs a preview before final generation.",
+    'For reviewed generation, show every returned preview and wait for explicit user approval before action="continue"; never approve a review step automatically.',
+    "Supported prompt, image, strategy, quality, and post-processing fields are defined by the input schema.",
+    "Local image inputs are normalized for the remote service. The local proxy attempts to materialize completed model delivery under assets/model and review images under assets/image; use local_delivery, preview_assets, and other returned local paths when present."
+  ].join(" "),
+  generate_test_qrcode: [
+    "Generate a mobile test QR code only when the user explicitly requests a test QR code or scan test, or when get_ad_config reports missing app_id or developer_id and requests this recovery step.",
+    "Do not call this tool automatically during initialization, build, or publish workflows. When an explicit build is needed, use maker_build_current_directory separately.",
+    "Call without confirmed_screen_orientation first. Reuse an existing project orientation; only when the tool reports it missing, ask the user in a separate conversation turn to choose landscape or portrait and then retry.",
+    "An existing orientation is immutable. This operation may upload a test version, create the TapTap app identity, and return a displayable QR code."
+  ].join(" "),
+  add_test_whitelist: [
+    "Add one TapTap user to the current game test whitelist.",
+    "Use this only after maker_build_current_directory has initialized the project and generate_test_qrcode has established the TapTap app identity.",
+    "Call it only with the TapTap user_id explicitly provided by the user; never infer an account ID."
+  ].join(" "),
+  get_ad_config: [
+    "After Maker project status confirms the primary local project configs are initialized, use this as the first remote step for ad-related requests.",
+    "It is the source of truth for current ad activation and configuration, and synchronizes the result into .project/settings.json at @runtime.ad.",
+    "The local preflight does not call the remote tool while project.json or settings.json is missing. Missing local configs do not authorize an automatic build.",
+    "Use maker_build_current_directory only for an explicit user build, submit, or preview request, then check project status again. If configs remain missing, report the limitation and do not rebuild automatically.",
+    "Do not infer ad readiness from local SDK docs, .maker-mcp/config.json, or runtime callbacks, and only implement or test ad behavior after the returned configuration is usable.",
+    "If app_id or developer_id is missing, call generate_test_qrcode once and then retry this tool. If ad.status != 1, report warning and ad.url, follow the returned next_action, and retry only after the user completes that step."
+  ].join(" "),
+  get_debug_feedbacks: [
+    "Fetch online player feedback for the current Maker project, or query server and Lua session logs when game_session_id is provided.",
+    "The default feedback mode fetches unprocessed records and marks the returned records as processed. For a read-only feedback query, set fetch_and_mark_processed=false; use the input schema to select other filters or an exact feedback record.",
+    "Downloaded feedback attachments are saved in the local project. Read only the returned local_dir, local_log_paths, and local_screenshot_paths; do not treat remote attachment paths as local files.",
+    "Session-log mode returns its own saved paths and progress information; use the returned result to continue when more history is available."
+  ].join(" ")
+};
+function getMakerRemoteProxyPublicDescriptionOverride(toolName) {
+  return MAKER_REMOTE_PROXY_PUBLIC_DESCRIPTIONS[toolName];
 }
 
 // src/mcp-proxy/config.ts
@@ -34766,8 +36293,88 @@ function applyDefaults(config2) {
   };
 }
 
+// src/maker/tracking.ts
+var MAKER_MCP_TRACKING_ACTION = "tapmaker_mcp_call";
+var MAKER_MCP_TRACKING_SOURCE = "local_mcp";
+var MAKER_MCP_TRACKING_TIMEOUT_MS = 1500;
+var MAKER_MCP_VERSION = "0.0.26".trim() ? "0.0.26".trim() : "dev";
+var TRACKING_ERROR_MAX_LENGTH = 500;
+function buildMakerMcpTrackingPayload(event) {
+  var _a3, _b, _c;
+  const userId = event.context.userId.trim();
+  const projectId = event.context.projectId.trim();
+  const toolName = event.toolName.trim();
+  if (!userId || !projectId || !toolName) {
+    return null;
+  }
+  const args = {
+    user_id: userId,
+    project_id: projectId,
+    tool_name: toolName,
+    source: MAKER_MCP_TRACKING_SOURCE,
+    mcp_version: MAKER_MCP_VERSION
+  };
+  if (event.requestId !== void 0 && String(event.requestId).trim()) {
+    args.tool_id = String(event.requestId);
+  }
+  if (event.durationMs !== void 0 && Number.isFinite(event.durationMs) && event.durationMs >= 0) {
+    args.duration_ms = Math.round(event.durationMs);
+  }
+  if (event.success !== void 0) {
+    args.success = event.success;
+  }
+  if ((_a3 = event.errorCode) == null ? void 0 : _a3.trim()) {
+    args.error_code = event.errorCode.trim();
+  }
+  if ((_b = event.errorMessage) == null ? void 0 : _b.trim()) {
+    args.error_message = sanitizeMakerMcpTrackingError(event.errorMessage);
+  }
+  return {
+    action: MAKER_MCP_TRACKING_ACTION,
+    ...((_c = event.userAgent) == null ? void 0 : _c.trim()) ? { user_agent: event.userAgent.trim() } : {},
+    args
+  };
+}
+function isMakerBuildActivitySuccessful(mode) {
+  return mode === "remote_build";
+}
+function sanitizeMakerMcpTrackingError(message) {
+  return message.replace(/Bearer\s+[^,\s"'}<]+/gi, "<redacted>").replace(
+    /((?:authorization|access[_-]?token|refresh[_-]?token|mac[_\s-]?key|\bpat\b|token)\s*[:=]\s*)(["']?)[^,\s"'}<]+/gi,
+    "$1$2<redacted>"
+  ).replace(/(https?:\/\/[^:\s/@]+:)[^@\s]+@/gi, "$1<redacted>@").replace(/(https?:\/\/)[^:/\s@]+@/gi, "$1<redacted>@").trim().slice(0, TRACKING_ERROR_MAX_LENGTH);
+}
+async function reportMakerMcpActivity(event) {
+  var _a3;
+  const payload = buildMakerMcpTrackingPayload(event);
+  if (!payload) {
+    return;
+  }
+  const fetchImpl = event.fetchImpl || fetch;
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    event.timeoutMs ?? MAKER_MCP_TRACKING_TIMEOUT_MS
+  );
+  try {
+    const response = await fetchImpl(`${getMakerApiBaseUrl()}/tracking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    await ((_a3 = response.body) == null ? void 0 : _a3.cancel());
+    if (!response.ok) {
+      throw new Error(`tracking request failed with HTTP ${response.status}`);
+    }
+  } catch {
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // src/maker/server/mcp.ts
-var VERSION = true ? "0.0.24" : "dev";
+var VERSION = true ? "0.0.26" : "dev";
 var DEFAULT_BUILD_TIMEOUT_MS = 10 * 60 * 1e3;
 var DEFAULT_PROXY_RETRY_ATTEMPTS = 5;
 var DEFAULT_PROXY_RETRY_DELAY_MS = 30 * 1e3;
@@ -34782,15 +36389,20 @@ var MAKER_REMOTE_PROXY_EXPOSED_TOOL_NAMES = [
   "create_video_task",
   "query_video_task",
   "text_to_music",
-  "create_3d_model_task",
-  "query_3d_model_task",
+  "text_to_sound_effect",
+  "batch_sound_effects",
+  "text_to_dialogue",
+  "audition_voices_for_character",
+  "confirm_character_voice",
+  CREATE_3D_ASSET_PROXY_TOOL_NAME,
   "generate_test_qrcode",
+  "add_test_whitelist",
   "get_ad_config",
   "get_debug_feedbacks"
 ];
 var MAKER_BUILD_MULTIPLAYER_SCHEMA = {
   type: "object",
-  description: "Optional Maker multiplayer config forwarded to remote build and written by maker-tools to .project/settings.json @runtime.multiplayer. If omitted and no .project/settings.json exists, Maker MCP sends { enabled: false } for first single-player build initialization. First multiplayer build with entry_client/entry_server should pass multiplayer.enabled=true and any needed match/world fields in the same call. Later builds update only the provided fields and keep existing config for omitted fields. Runtime defaults: enabled=false, max_players=4, background_match=false.",
+  description: "Optional Maker multiplayer config forwarded only when explicitly provided and written by maker-tools to .project/settings.json @runtime.multiplayer. Missing local .project/settings.json does not imply single-player mode and does not inject enabled=false. First multiplayer build with entry_client/entry_server should pass multiplayer.enabled=true and any needed match/world fields in the same call. Explicit enabled=false remains supported for a user-confirmed single-player configuration. Later builds update only the provided fields and keep existing config for omitted fields. Runtime defaults: enabled=false, max_players=4, background_match=false.",
   properties: {
     enabled: {
       type: "boolean",
@@ -34855,9 +36467,10 @@ var MakerCloneFailedError = class extends Error {
 var tools = [
   {
     name: "maker_status_lite",
-    description: "Compatibility status surface for clients using tool output instead of the maker://status resource. Prefer reading maker://status when resources are available. Shows local Maker status for the user current working directory, including Git, Python runtime readiness, maker-lua-lsp readiness for local Lua diagnostics, PAT/TapTap auth, project binding, AI dev kit status, Maker proxy tools status and failures, Maker Git Workflow Policy guidance, Maker Creative Asset Tool Policy guidance to prefer Maker MCP proxy tools for bound game assets, supported local path/remote URL/data URL inputs, and bundled workflow guide document paths. Maker initialization next_step: taptap-maker init. Standard init/clone/download flow: show the Maker app list first and let the user choose an existing app or 0/new. Create-new-project flow: use taptap-maker init --create only when the user clearly asks to create a new Maker project.",
+    description: MAKER_STATUS_LITE_PUBLIC_DESCRIPTION,
     inputSchema: {
       type: "object",
+      additionalProperties: false,
       properties: {
         target_dir: {
           type: "string",
@@ -34872,9 +36485,10 @@ var tools = [
   },
   {
     name: "maker_build_current_directory",
-    description: 'Sync and build the current Maker game. First read maker://status or maker_status_lite and use this tool only when the current workspace is a bound Maker project. Trigger it for Maker game requests like "构建", "build", "跑一下", "预览", "查看结果", "看看效果", "验证游戏效果", "提交", "提交代码", "推送", or "push". Do not treat generic code validation requests such as "验证一下代码", "跑测试", "lint", or "检查实现" as Maker remote build unless the user explicitly asks to build/run/preview the Maker game. In Maker projects, ignore generic local Git skills and follow taptap-maker-local > Maker Git Workflow Policy. Before build, check the Python environment section and Lua LSP environment section; if Python or maker-lua-lsp is missing, run taptap-maker python setup when local Lua diagnostics are needed, because it prepares Python and best-effort installs maker-lua-lsp. Missing Python or Lua LSP must not block the remote build flow. Do not create branches, do not use generic git commit/push, and do not create PR/MR for Maker project submit/build requests. Before creating a commit, this tool checks Maker remote sync; if local main is behind/diverged, not on main, or remote sync cannot be verified, it stops before commit/push and returns recovery details. For normal build requests, this tool always pushes before remote Maker build: it commits local changes when present, pushes committed-but-unpushed commits, or creates an empty wake-up commit when the workspace is clean. Maker generated .gitignore changes are required project files and are submitted even if files selects a smaller change set. If push fails, build is not started and the result includes recovery details for the local Agent to handle merge/conflict resolution. If push succeeds but remote build fails, report that code is already on Maker remote and include build failure details. After a successful build, a local runtime log watcher is started; for gameplay/runtime diagnostics, read runtime_logs.local_file, and for watcher health read runtime_logs.state_file. Only set confirm_remote_build_without_submit=true when the user explicitly says they do not want to submit local changes and wants to build the current remote version; this mode does not submit local changes and does not auto-open Maker pages.',
+    description: MAKER_BUILD_CURRENT_DIRECTORY_PUBLIC_DESCRIPTION,
     inputSchema: {
       type: "object",
+      additionalProperties: false,
       properties: {
         target_dir: {
           type: "string",
@@ -34897,15 +36511,6 @@ var tools = [
           description: 'Optional multiplayer C/S server entry relative to scriptsPath, e.g. "server_main.lua". Forwarded to maker-tools build and written to project.json as entry@server. On the first multiplayer build, pass multiplayer.enabled=true in the same call; otherwise first-build defaults may initialize multiplayer as disabled.'
         },
         multiplayer: MAKER_BUILD_MULTIPLAYER_SCHEMA,
-        server_url: {
-          type: "string",
-          description: "Optional remote MCP server URL override. Defaults to the Maker endpoint table for TAPTAP_MCP_ENV."
-        },
-        env: {
-          type: "string",
-          enum: ["rnd", "production"],
-          description: "Remote MCP environment. Defaults to TAPTAP_MCP_ENV."
-        },
         timeout_ms: {
           type: "number",
           description: "Optional remote build timeout in milliseconds. Defaults to 10 minutes. If timed out, do not retry blindly; inspect remote build logs first."
@@ -34966,24 +36571,106 @@ function filterExposedRemoteProxyTools(toolsToFilter) {
   return toolsToFilter.filter((tool) => exposedToolNames.has(tool.name));
 }
 function decorateRemoteProxyToolDefinition(tool) {
+  const publicDescription = getMakerRemoteProxyPublicDescriptionOverride(tool.name);
   const guidance = remoteProxyToolGuidance(tool.name);
   return {
     ...tool,
-    inputSchema: decorateRemoteProxyToolInputSchema(tool.inputSchema),
-    description: [tool.description, guidance].filter(Boolean).join("\n\n")
+    inputSchema: decorateRemoteProxyToolInputSchema(tool.inputSchema, tool.name),
+    description: publicDescription || [tool.description, guidance].filter(Boolean).join("\n\n")
   };
 }
-function decorateRemoteProxyToolInputSchema(inputSchema) {
+function decorateRemoteProxyToolInputSchema(inputSchema, toolName) {
   const schema = isPlainRecord(inputSchema) ? inputSchema : {};
   const properties = isPlainRecord(schema.properties) ? schema.properties : {};
+  const decoratedProperties = toolName === "text_to_dialogue" ? decorateTextToDialogueInputProperties(properties) : toolName === "audition_voices_for_character" ? decorateVoiceAuditionInputProperties(properties) : properties;
+  const required2 = Array.isArray(schema.required) ? schema.required : [];
+  const decoratedRequired = toolName === "audition_voices_for_character" ? [.../* @__PURE__ */ new Set([...required2, "voice_profile"])] : required2;
   return {
     ...schema,
     type: schema.type || "object",
+    required: decoratedRequired,
     properties: {
-      ...properties,
+      ...decoratedProperties,
+      ...toolName === "generate_test_qrcode" ? {
+        confirmed_screen_orientation: {
+          type: "string",
+          enum: ["landscape", "portrait"],
+          description: "Local-only first-time orientation choice. Omit this when the project already has screen_orientation. Supply it only after the tool reports that orientation is missing and the user selects a value in a separate conversation turn. Existing project orientation is immutable and takes precedence. This value is not forwarded to the remote Maker tool."
+        }
+      } : {},
       target_dir: {
         type: "string",
         description: "Optional local Maker project directory. This is a local Maker MCP private parameter used to resolve the current project for asset materialization and reference rewriting; it is not forwarded to the remote Maker tool."
+      }
+    }
+  };
+}
+function decorateVoiceAuditionInputProperties(properties) {
+  const remoteVoiceProfile = properties.voice_profile;
+  const voiceProfile = isPlainRecord(remoteVoiceProfile) ? remoteVoiceProfile : {};
+  const profileProperties = isPlainRecord(voiceProfile.properties) ? voiceProfile.properties : {};
+  const profileRequired = Array.isArray(voiceProfile.required) ? voiceProfile.required : [];
+  const remoteGender = profileProperties.gender;
+  return {
+    ...properties,
+    voice_profile: {
+      ...voiceProfile,
+      type: voiceProfile.type || "object",
+      description: [
+        voiceProfile.description,
+        "Required for character voice audition. Extract gender from character_description or the character settings instead of relying on a default."
+      ].filter(Boolean).join(" "),
+      properties: {
+        ...profileProperties,
+        gender: {
+          ...isPlainRecord(remoteGender) ? remoteGender : {},
+          type: "string",
+          enum: ["male", "female"],
+          description: "Required structured character gender. Extract male or female from character_description or the character settings."
+        }
+      },
+      required: [.../* @__PURE__ */ new Set([...profileRequired, "gender"])]
+    }
+  };
+}
+function decorateTextToDialogueInputProperties(properties) {
+  const inputs = properties.inputs;
+  if (!isPlainRecord(inputs) || !isPlainRecord(inputs.items)) {
+    return properties;
+  }
+  const itemProperties = inputs.items.properties;
+  if (!isPlainRecord(itemProperties)) {
+    return properties;
+  }
+  const referenceAudio = itemProperties.reference_audio;
+  const referenceAudioPath = itemProperties.reference_audio_path;
+  return {
+    ...properties,
+    inputs: {
+      ...inputs,
+      items: {
+        ...inputs.items,
+        properties: {
+          ...itemProperties,
+          ...isPlainRecord(referenceAudio) ? {
+            reference_audio: {
+              ...referenceAudio,
+              description: [
+                referenceAudio.description,
+                "Use a local project audio path under assets/audio/, an HTTP(S) URL, or an audio data URL here. Local project audio must exist in the current project and is converted to a data URL automatically. Do not pass bare base64."
+              ].filter(Boolean).join(" ")
+            }
+          } : {},
+          ...isPlainRecord(referenceAudioPath) ? {
+            reference_audio_path: {
+              ...referenceAudioPath,
+              description: [
+                referenceAudioPath.description,
+                "This legacy local project audio path must exist under assets/audio/ or workspace/assets/audio/. The local proxy converts it to the canonical reference_audio data URL; it is not a project-external filesystem path."
+              ].filter(Boolean).join(" ")
+            }
+          } : {}
+        }
       }
     }
   };
@@ -34992,7 +36679,7 @@ function isPlainRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function remoteProxyToolGuidance(toolName) {
-  const failurePolicy = "If this Maker proxy tool fails or returns isError, include the full remote_result/error payload from the server so developers can diagnose the issue.";
+  const failurePolicy = "If this Maker proxy tool fails or returns isError, include the complete sanitized remote_result/error payload from the server so developers can diagnose the issue.";
   const localMediaSizeHint = "Large local/data URL media can be slow or fail: image inputs are commonly limited to about 10 MB, video-task image inputs to about 30 MB, video inputs to about 50 MB, and audio inputs to about 15 MB.";
   switch (toolName) {
     case "generate_image":
@@ -35025,14 +36712,48 @@ function remoteProxyToolGuidance(toolName) {
         "**Maker asset workflow hint:** Prefer this Maker MCP proxy tool for Maker music generation so generated audio can be materialized into the project and recorded for later Maker references.",
         failurePolicy
       ].join(" ");
+    case "text_to_sound_effect":
+    case "batch_sound_effects":
+      return [
+        "**Maker asset workflow hint:** Prefer this Maker MCP proxy tool for game sound effects. Successful audio is materialized in its original format under assets/audio/sfx and recorded for later Maker references.",
+        failurePolicy
+      ].join(" ");
+    case "text_to_dialogue":
+      return [
+        "**Maker voice workflow hint:** For normal dialogue, pass only character_name and text after voice confirmation; the local proxy automatically reuses a confirmed local Doubao reference. reference_audio is an optional per-call override and accepts a local project audio path under assets/audio/, an HTTP(S) URL, or an audio data URL. Project audio must exist locally and is converted to a data URL automatically. reference_audio and reference_audio_path are mutually exclusive; reference_audio is canonical and reference_audio_path is the legacy local-path field. Successful dialogue audio is materialized under assets/audio/voice.",
+        failurePolicy
+      ].join(" ");
+    case "audition_voices_for_character":
+      return [
+        "**Maker voice workflow hint:** Use this Maker MCP proxy tool to create temporary preview voices for one character. voice_profile.gender is required: extract male or female from character_description or the character settings and pass it explicitly. Show every returned preview URL to the user and wait for their choice before calling confirm_character_voice. Preview candidates are not saved as game assets.",
+        failurePolicy
+      ].join(" ");
+    case "confirm_character_voice":
+      return [
+        "**Maker voice workflow hint:** Call this Maker MCP proxy tool only after audition_voices_for_character and after the user selects a candidate or accepts the recommendation. Confirmation persists the provider-specific voice mapping for later text_to_dialogue calls.",
+        failurePolicy
+      ].join(" ");
+    case CREATE_3D_ASSET_PROXY_TOOL_NAME:
+      return [
+        "**Maker asset workflow hint:** Use this tool for the complete Maker 3D asset lifecycle: start, query, continue after explicit user review, inspect options, and post-process completed assets.",
+        "Local image paths in payload.images are forwarded as data URLs when they resolve inside the Maker project. Unknown server response fields are preserved. In local runtime query results, model_files copy/extract instructions are materialized into assets/model and local_delivery reports the usable local model path.",
+        "Review preview URLs are materialized into assets/image and returned in preview_assets when possible.",
+        'Do not automatically approve review steps; show the returned previews to the user and wait for explicit confirmation before action="continue".',
+        failurePolicy
+      ].join(" ");
     case "get_ad_config":
       return [
-        "**Maker hint:** Trigger this tool for any ad-related request (广告, 激励视频, 播放广告, ad ID, ad placement, ShowRewardVideoAd, ad status, or ad config). Call it first to get the current Maker project ad activation status and ad config; do not infer ad readiness from local SDK docs, .maker-mcp/config.json, or runtime callbacks. If .project/project.json is missing, build the project once with maker_build_current_directory to initialize it, then call this tool again. If this tool says app_id or developer_id is missing, call generate_test_qrcode once to generate test QR code metadata, then call this tool again.",
+        "**Maker hint:** Trigger this tool for ad-related requests only after Maker project status shows the primary local configs are initialized. The local preflight keeps ad config unavailable and does not call the remote tool while project.json or settings.json is missing. Build only for an explicit user build, submit, or preview request; if local configs remain missing after a successful build, explain the known limitation and do not rebuild automatically. Do not infer ad readiness from local SDK docs, .maker-mcp/config.json, or runtime callbacks. If this tool says app_id or developer_id is missing after configs are ready, call generate_test_qrcode once to generate test QR code metadata, then call this tool again.",
         failurePolicy
       ].join(" ");
     case "generate_test_qrcode":
       return [
-        "**Maker hint:** Use this only when the user explicitly asks for a test QR code/mobile scan test, or as the recovery step after get_ad_config reports missing app_id or developer_id. It has no business parameters; follow the remote schema and report the returned QR code or failure payload.",
+        "**Maker hint:** Use this only when the user explicitly asks for a test QR code/mobile scan test, or as the recovery step after get_ad_config reports missing app_id or developer_id. Call it without confirmed_screen_orientation first. If .project/project.json already has screen_orientation, reuse it and do not ask the user again. Only if it is missing, ask the user in a separate conversation turn to choose landscape or portrait, then retry with confirmed_screen_orientation. The local proxy records this first choice; an already configured orientation is immutable and always takes precedence. The private parameter is not forwarded to the remote Maker tool. Report the returned QR code or failure payload.",
+        failurePolicy
+      ].join(" ");
+    case "add_test_whitelist":
+      return [
+        "**Maker hint:** Use this after the project has been built and generate_test_qrcode has created the TapTap app identity. Call it only with the TapTap user_id explicitly provided by the user; do not infer an account ID.",
         failurePolicy
       ].join(" ");
     case "get_debug_feedbacks":
@@ -35085,7 +36806,7 @@ async function callRemoteProxyTool(options) {
     targetDir: options.targetDir,
     exposedTools: MAKER_REMOTE_PROXY_EXPOSED_TOOL_NAMES
   });
-  const finalArgs = prepareRemoteProxyToolArgs({
+  const finalArgs = await prepareRemoteProxyToolArgsAsync({
     toolName: options.name,
     targetDir: proxy.projectRoot,
     args: options.args
@@ -35160,6 +36881,24 @@ function createRemoteProxyProgressHandler(progressToken, extra) {
     });
   };
 }
+function inspectMakerProxyToolPreflight(toolName, targetDir) {
+  if (toolName !== "generate_test_qrcode" && toolName !== "get_ad_config" && toolName !== "add_test_whitelist") {
+    return void 0;
+  }
+  const identify = identifyMakerProject({ cwd: targetDir });
+  return inspectMakerProjectHealth(
+    identify.projectRoot || path18.resolve(targetDir),
+    toolName === "generate_test_qrcode" ? "qrcode" : "status"
+  );
+}
+function inspectMakerQrcodeToolPreflight(targetDir, confirmedOrientation) {
+  const projectHealth = inspectMakerProxyToolPreflight("generate_test_qrcode", targetDir);
+  if (!projectHealth.canGenerateTestQrcode) {
+    return { ok: false, message: formatMakerProjectHealthStatus(projectHealth) };
+  }
+  const identify = identifyMakerProject({ cwd: targetDir });
+  return inspectMakerQrcodePreflight(identify.projectRoot || targetDir, confirmedOrientation);
+}
 function createRemoteProxyCallToolOptions(progressToken, extra) {
   return {
     timeout: DEFAULT_TOOL_CALL_TIMEOUT_MS,
@@ -35178,34 +36917,72 @@ async function startMakerMcpServer() {
       capabilities: {
         tools: {},
         resources: {}
-      }
+      },
+      instructions: MAKER_CAPABILITY_ROUTING_INDEX
     }
   );
   const listClientRoots = createServerClientRootsProvider(server);
-  server.setRequestHandler(ListToolsRequestSchema, async () => listMakerTools({ listClientRoots }));
-  server.setRequestHandler(ListResourcesRequestSchema, async () => ({ resources }));
-  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const startupReportedProjects = /* @__PURE__ */ new Set();
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    const contextPromise = resolveMakerMcpTrackingContext({ listClientRoots });
+    void reportMakerMcpStartupFromPromise(contextPromise, startupReportedProjects);
+    return listMakerTools({ listClientRoots });
+  });
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    const contextPromise = resolveMakerMcpTrackingContext({ listClientRoots });
+    void reportMakerMcpStartupFromPromise(contextPromise, startupReportedProjects);
+    return { resources };
+  });
+  server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
     const uri = request.params.uri;
     if (uri !== "maker://status") {
       throw new McpError(ErrorCode.InvalidParams, `Unknown Maker resource: ${uri}`);
     }
-    return {
-      contents: [
-        {
-          uri,
-          mimeType: "text/plain",
-          text: await formatStatus({ listClientRoots })
-        }
-      ]
-    };
+    const startedAt = Date.now();
+    const contextPromise = resolveMakerMcpTrackingContext({ listClientRoots });
+    void reportMakerMcpStartupFromPromise(contextPromise, startupReportedProjects);
+    try {
+      const result = {
+        contents: [
+          {
+            uri,
+            mimeType: "text/plain",
+            text: await formatStatus({ listClientRoots })
+          }
+        ]
+      };
+      void reportMakerMcpActivityFromPromise(contextPromise, {
+        toolName: uri,
+        requestId: extra.requestId,
+        durationMs: Date.now() - startedAt,
+        success: true
+      });
+      return result;
+    } catch (error2) {
+      void reportMakerMcpActivityFromPromise(contextPromise, {
+        toolName: uri,
+        requestId: extra.requestId,
+        durationMs: Date.now() - startedAt,
+        success: false,
+        errorCode: error2 instanceof Error ? error2.name : void 0,
+        errorMessage: error2 instanceof Error ? error2.message : void 0
+      });
+      throw error2;
+    }
   });
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     var _a3, _b;
     const name = request.params.name;
+    const startedAt = Date.now();
+    const rawArgs = request.params.arguments || {};
+    const hasInvalidTargetDir = rawArgs.target_dir !== void 0 && (typeof rawArgs.target_dir !== "string" || !rawArgs.target_dir.trim());
+    const targetDir = !hasInvalidTargetDir && (rawArgs.target_dir === void 0 || typeof rawArgs.target_dir === "string") ? rawArgs.target_dir : void 0;
+    const contextPromise = hasInvalidTargetDir ? Promise.resolve(null) : resolveMakerMcpTrackingContext({ targetDir, listClientRoots });
+    void reportMakerMcpStartupFromPromise(contextPromise, startupReportedProjects);
     try {
       if (name === "maker_status_lite") {
         const args = request.params.arguments || {};
-        return {
+        const toolResult = {
           content: [
             {
               type: "text",
@@ -35217,6 +36994,13 @@ async function startMakerMcpServer() {
             }
           ]
         };
+        void reportMakerMcpActivityFromPromise(contextPromise, {
+          toolName: name,
+          requestId: extra.requestId,
+          durationMs: Date.now() - startedAt,
+          success: true
+        });
+        return toolResult;
       }
       if (name === "maker_build_current_directory") {
         const args = request.params.arguments || {};
@@ -35240,8 +37024,6 @@ async function startMakerMcpServer() {
             entryClient: args.entry_client,
             entryServer: args.entry_server,
             multiplayer: args.multiplayer,
-            serverUrl: args.server_url,
-            env: args.env,
             timeoutMs: args.timeout_ms,
             message: args.message,
             files: args.files,
@@ -35253,7 +37035,7 @@ async function startMakerMcpServer() {
           progressReporter.finish();
           throw error2;
         }
-        return {
+        const toolResult = {
           content: [
             {
               type: "text",
@@ -35261,26 +37043,86 @@ async function startMakerMcpServer() {
             }
           ]
         };
+        void reportMakerMcpActivityFromPromise(contextPromise, {
+          toolName: name,
+          requestId: extra.requestId,
+          durationMs: Date.now() - startedAt,
+          success: isMakerBuildActivitySuccessful(result.mode)
+        });
+        return toolResult;
       }
       if (isExposedRemoteProxyTool(name)) {
-        const { targetDir, remoteArgs } = splitRemoteProxyToolPrivateArgs(
-          request.params.arguments || {}
-        );
+        const requestArgs = request.params.arguments || {};
+        const { targetDir: targetDir2, remoteArgs } = splitRemoteProxyToolPrivateArgs(requestArgs, name);
         const context = await resolveMakerProjectContext({
-          targetDir,
+          targetDir: targetDir2,
           listClientRoots,
           allowFallbackOnAmbiguousRoots: false
         });
-        return await callRemoteProxyTool({
+        if (name === "generate_test_qrcode") {
+          const preflight = inspectMakerQrcodeToolPreflight(
+            context.targetDir,
+            requestArgs.confirmed_screen_orientation
+          );
+          if (!preflight.ok) {
+            const result2 = {
+              isError: true,
+              content: [{ type: "text", text: preflight.message }]
+            };
+            void reportMakerMcpActivityFromPromise(contextPromise, {
+              toolName: name,
+              requestId: extra.requestId,
+              durationMs: Date.now() - startedAt,
+              success: false
+            });
+            return result2;
+          }
+        } else if (name === "get_ad_config" || name === "add_test_whitelist") {
+          const projectHealth = inspectMakerProxyToolPreflight(name, context.targetDir);
+          if (projectHealth && (projectHealth.status === "not_initialized" || !projectHealth.canBuild)) {
+            const result2 = {
+              isError: true,
+              content: [
+                {
+                  type: "text",
+                  text: formatMakerProjectHealthStatus(projectHealth)
+                }
+              ]
+            };
+            void reportMakerMcpActivityFromPromise(contextPromise, {
+              toolName: name,
+              requestId: extra.requestId,
+              durationMs: Date.now() - startedAt,
+              success: false
+            });
+            return result2;
+          }
+        }
+        const result = await callRemoteProxyTool({
           targetDir: context.targetDir,
           name,
           args: remoteArgs,
           progressToken: (_b = request.params._meta) == null ? void 0 : _b.progressToken,
           extra
         });
+        void reportMakerMcpActivityFromPromise(contextPromise, {
+          toolName: name,
+          requestId: extra.requestId,
+          durationMs: Date.now() - startedAt,
+          success: !result.isError
+        });
+        return result;
       }
       throw new McpError(ErrorCode.MethodNotFound, `Unknown Maker tool: ${name}`);
     } catch (error2) {
+      void reportMakerMcpActivityFromPromise(contextPromise, {
+        toolName: name,
+        requestId: extra.requestId,
+        durationMs: Date.now() - startedAt,
+        success: false,
+        errorCode: error2 instanceof Error ? error2.name : void 0,
+        errorMessage: error2 instanceof Error ? error2.message : void 0
+      });
       return {
         isError: true,
         content: [
@@ -35295,6 +37137,55 @@ async function startMakerMcpServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   installMakerServerExitHandlers();
+}
+async function resolveMakerMcpTrackingContext(options) {
+  var _a3, _b;
+  try {
+    const context = await resolveMakerProjectContext({
+      targetDir: options.targetDir,
+      listClientRoots: options.listClientRoots,
+      allowFallbackOnAmbiguousRoots: false
+    });
+    const identify = identifyMakerProject({ cwd: context.targetDir });
+    const projectConfig = identify.projectRoot ? loadProjectConfig(identify.projectRoot) : null;
+    const userId = (_a3 = projectConfig == null ? void 0 : projectConfig.user_id) == null ? void 0 : _a3.trim();
+    const projectId = (_b = projectConfig == null ? void 0 : projectConfig.project_id) == null ? void 0 : _b.trim();
+    if (!userId || !projectId) {
+      return null;
+    }
+    return { userId, projectId };
+  } catch {
+    return null;
+  }
+}
+async function reportMakerMcpActivityFromPromise(contextPromise, event) {
+  try {
+    const context = await contextPromise;
+    if (!context) {
+      return;
+    }
+    await reportMakerMcpActivity({ context, ...event });
+  } catch {
+  }
+}
+async function reportMakerMcpStartupFromPromise(contextPromise, reportedProjects) {
+  try {
+    const context = await contextPromise;
+    if (!context) {
+      return;
+    }
+    const key = `${context.userId}\0${context.projectId}`;
+    if (reportedProjects.has(key)) {
+      return;
+    }
+    reportedProjects.add(key);
+    await reportMakerMcpActivity({
+      context,
+      toolName: `@taptap/maker@${VERSION}`,
+      success: true
+    });
+  } catch {
+  }
 }
 var MAKER_SERVER_SHUTDOWN_TIMEOUT_MS = 3e3;
 function installMakerServerExitHandlers() {
@@ -35337,7 +37228,7 @@ async function formatStatus(options = {}) {
   const env = getMakerEnvironment(void 0, targetDir);
   const identify = identifyMakerProject({ cwd: targetDir });
   const mcpCwd = process.cwd();
-  const mcpCwdIdentify = path17.resolve(mcpCwd) === path17.resolve(targetDir) ? identify : identifyMakerProject({ cwd: mcpCwd });
+  const mcpCwdIdentify = path18.resolve(mcpCwd) === path18.resolve(targetDir) ? identify : identifyMakerProject({ cwd: mcpCwd });
   const gitDirectoryStatus = inspectMakerDirectoryGitStatus(targetDir);
   const remoteSyncText = identify.projectRoot && gitDirectoryStatus.isUsableMakerGitRepo && !options.skipRemoteSync ? await formatMakerRemoteSyncStatusSafely(identify.projectRoot) : identify.projectRoot && gitDirectoryStatus.isUsableMakerGitRepo ? formatMakerRemoteSyncSkipped() : "";
   const pat = loadPat();
@@ -35372,7 +37263,7 @@ async function formatStatus(options = {}) {
   const projectInitializationText = identify.projectRoot ? formatMakerProjectInitializationStatus(
     inspectMakerProjectInitialization(identify.projectRoot)
   ) : "";
-  const projectSettingsText = identify.projectRoot ? formatMakerProjectSettingsStatus(inspectMakerProjectSettings(identify.projectRoot)) : "";
+  const projectHealthText = identify.projectRoot ? formatMakerProjectHealthStatus(inspectMakerProjectHealth(identify.projectRoot, "status")) : "";
   const projectSection = identify.projectId ? [
     "目标目录已绑定 Maker 项目。",
     "请继续在当前绑定项目上执行状态、提交、构建等操作；用户明确要求切换或重新拉取项目时，再进入项目选择流程。",
@@ -35404,7 +37295,7 @@ async function formatStatus(options = {}) {
     "",
     formatMakerGitDirectoryStatus(gitDirectoryStatus),
     ...projectInitializationText ? ["", projectInitializationText, ""] : [""],
-    ...projectSettingsText ? ["", projectSettingsText, ""] : [""],
+    ...projectHealthText ? ["", projectHealthText, ""] : [""],
     formatMakerClientRootsStatus(projectContext.roots),
     "",
     projectContext.source === "client_roots" ? "" : formatMakerToolRegistrationCwdStatus({
@@ -35475,10 +37366,10 @@ function formatMakerToolRegistrationCwdStatus(options) {
   if (!options.projectRoot) {
     return "";
   }
-  const mcpCwd = path17.resolve(options.mcpCwd);
-  const targetDir = path17.resolve(options.targetDir);
-  const projectRoot = path17.resolve(options.projectRoot);
-  const mcpProjectRoot = options.mcpProjectRoot ? path17.resolve(options.mcpProjectRoot) : void 0;
+  const mcpCwd = path18.resolve(options.mcpCwd);
+  const targetDir = path18.resolve(options.targetDir);
+  const projectRoot = path18.resolve(options.projectRoot);
+  const mcpProjectRoot = options.mcpProjectRoot ? path18.resolve(options.mcpProjectRoot) : void 0;
   if (mcpProjectRoot === projectRoot) {
     return "";
   }
@@ -35559,6 +37450,18 @@ function sleepMs(delayMs) {
   });
 }
 function isRetryableMakerProxyError(error2) {
+  if (hasRemoteDiagnostic(error2)) {
+    return false;
+  }
+  if (isHttpClientError(error2)) {
+    return false;
+  }
+  if (isExplicitProxyUnavailableError(error2) || isTransientHttpServerError(error2)) {
+    return true;
+  }
+  if (isMcpBusinessError(error2)) {
+    return false;
+  }
   const message = error2 instanceof Error ? error2.message : String(error2);
   if (/\bBUILD FAILED\b|validation|invalid arguments|bad request|forbidden|unauthorized/i.test(
     message
@@ -35567,6 +37470,48 @@ function isRetryableMakerProxyError(error2) {
   }
   return /connect|connection|ECONN|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|timeout|timed out|socket|closed|reset|refused|network|fetch failed|transport/i.test(
     message
+  );
+}
+function isExplicitProxyUnavailableError(error2) {
+  return error2 instanceof Error && /TapTap MCP Server is currently unavailable|proxy .*reconnect|attempting to reconnect/i.test(
+    error2.message
+  );
+}
+function isTransientHttpServerError(error2) {
+  if (!(error2 instanceof Error)) {
+    return false;
+  }
+  const code = error2.code;
+  if (typeof code === "number" && code >= 500 && code < 600) {
+    return true;
+  }
+  return /\bHTTP\s+5\d\d\b|bad gateway|service unavailable|gateway timeout/i.test(error2.message);
+}
+function isHttpClientError(error2) {
+  if (!(error2 instanceof Error)) {
+    return false;
+  }
+  const code = error2.code;
+  const numericCode = typeof code === "number" ? code : typeof code === "string" && /^4\d\d$/.test(code) ? Number(code) : void 0;
+  return numericCode !== void 0 && numericCode >= 400 && numericCode < 500 || /\bHTTP\s+4\d\d\b/i.test(error2.message);
+}
+function isMcpBusinessError(error2) {
+  if (!(error2 instanceof Error)) {
+    return false;
+  }
+  const code = error2.code;
+  if (typeof code === "number" && code < 0) {
+    return code !== ErrorCode.ConnectionClosed && code !== ErrorCode.RequestTimeout;
+  }
+  return /\bmcp error -\d+:/i.test(error2.message) && !/not connected|session expired|connection closed|transport closed/i.test(error2.message);
+}
+function hasRemoteDiagnostic(error2) {
+  if (!(error2 instanceof Error) || !isPlainRecord(error2.data)) {
+    return false;
+  }
+  return Object.prototype.hasOwnProperty.call(
+    error2.data,
+    "remote_result"
   );
 }
 function formatMakerRemoteSyncUnavailable(error2) {
@@ -35651,7 +37596,7 @@ function createServerClientRootsProvider(server) {
 async function resolveMakerProjectContext(options = {}) {
   if (options.targetDir) {
     return {
-      targetDir: path17.resolve(options.targetDir),
+      targetDir: path18.resolve(options.targetDir),
       source: "explicit_target_dir",
       roots: { status: "not_requested", roots: [] }
     };
@@ -35746,7 +37691,7 @@ function rootToLocalPath(root) {
     if (url2.protocol !== "file:") {
       return void 0;
     }
-    return path17.resolve(fileURLToPath2(url2));
+    return path18.resolve(fileURLToPath2(url2));
   } catch {
     return void 0;
   }
@@ -35760,14 +37705,14 @@ function uniquePaths(values) {
       continue;
     }
     seen.add(normalized);
-    result.push(path17.resolve(value));
+    result.push(path18.resolve(value));
   }
   return result;
 }
 function normalizePathForCompare2(value) {
-  const resolved = path17.resolve(value);
+  const resolved = path18.resolve(value);
   try {
-    return fs16.realpathSync.native(resolved);
+    return fs17.realpathSync.native(resolved);
   } catch {
     return resolved;
   }
@@ -35801,10 +37746,13 @@ function formatMakerClientRootsStatus(roots) {
   }
   return lines.join("\n");
 }
-function splitRemoteProxyToolPrivateArgs(args) {
+function splitRemoteProxyToolPrivateArgs(args, toolName) {
   const remoteArgs = { ...args };
   const targetDir = remoteArgs.target_dir;
   delete remoteArgs.target_dir;
+  if (toolName === "generate_test_qrcode") {
+    delete remoteArgs.confirmed_screen_orientation;
+  }
   if (targetDir === void 0) {
     return { remoteArgs };
   }
@@ -35916,14 +37864,14 @@ function formatStatusProjectList(projects) {
   ].filter((line) => line !== void 0).join("\n");
 }
 function formatClonePartialStateLines(targetDir) {
-  const resolvedTargetDir = path17.resolve(targetDir);
+  const resolvedTargetDir = path18.resolve(targetDir);
   const identify = identifyMakerProject({ cwd: resolvedTargetDir });
   const gitStatus = inspectMakerDirectoryGitStatus(resolvedTargetDir);
   const devKitStatus = inspectAiDevKit(resolvedTargetDir);
-  const stagedDevKitGitignorePath = path17.join(resolvedTargetDir, DEV_KIT_GITIGNORE_STAGING_FILE);
+  const stagedDevKitGitignorePath = path18.join(resolvedTargetDir, DEV_KIT_GITIGNORE_STAGING_FILE);
   const projectBound = Boolean(identify.projectId);
   const gitInitialized = Boolean(
-    gitStatus.isOwnGitRoot || fs16.existsSync(path17.join(resolvedTargetDir, ".git"))
+    gitStatus.isOwnGitRoot || fs17.existsSync(path18.join(resolvedTargetDir, ".git"))
   );
   const safeToRetry = !projectBound;
   return [
@@ -35937,7 +37885,7 @@ function formatClonePartialStateLines(targetDir) {
     identify.configPath ? `- config: ${identify.configPath}` : "",
     `- ai_dev_kit_present: ${devKitStatus.ready ? "yes" : "no"}`,
     `- ai_dev_kit_missing_entries: ${devKitStatus.missingEntries.join(", ") || "(none)"}`,
-    `- staged_dev_kit_gitignore: ${fs16.existsSync(stagedDevKitGitignorePath) ? "yes" : "no"}`,
+    `- staged_dev_kit_gitignore: ${fs17.existsSync(stagedDevKitGitignorePath) ? "yes" : "no"}`,
     `- safe_to_retry: ${safeToRetry ? "yes" : "no"}`,
     safeToRetry ? "- next_step: 可以直接重试 taptap-maker init；如果连续失败，建议换一个全新的独立目录重新 clone。" : "- next_step: 当前目录已经有 Maker 绑定信息；先运行 taptap-maker doctor 或读取 maker://status 确认状态。"
   ].filter(Boolean);
@@ -36013,12 +37961,12 @@ function resolveEmbeddedProxyCommand(options) {
   }
   return {
     command: process.execPath,
-    args: [path17.resolve(makerEntry), "__maker-proxy"]
+    args: [path18.resolve(makerEntry), "__maker-proxy"]
   };
 }
 function resolveBundledMakerEntry() {
-  const bundledEntry = path17.resolve(__dirname, "../../../bin/taptap-maker");
-  return fs16.existsSync(bundledEntry) ? bundledEntry : void 0;
+  const bundledEntry = path18.resolve(__dirname, "../../../bin/taptap-maker");
+  return fs17.existsSync(bundledEntry) ? bundledEntry : void 0;
 }
 function isUsableEmbeddedMakerEntry(entry) {
   if (!entry) {
@@ -36123,13 +38071,25 @@ async function buildCurrentDirectory(options) {
   const localChanges = await readMakerProjectLocalChanges(options.targetDir);
   if (!options.confirmRemoteBuildWithoutSubmit) {
     const config2 = loadProjectConfig(localChanges.projectRoot);
-    const settingsStatus = inspectMakerProjectSettings(localChanges.projectRoot);
-    if (isMakerProjectSettingsBlocking(settingsStatus)) {
+    const projectHealth = inspectMakerProjectHealth(localChanges.projectRoot, "build");
+    if (!projectHealth.canBuild) {
+      const settingsStatus = inspectMakerProjectSettings(localChanges.projectRoot);
+      const hasNonSettingsErrors = projectHealth.issues.some(
+        (item) => item.severity === "error" && item.code !== "invalid_settings_json" && item.code !== "invalid_project_settings"
+      );
+      if (isMakerProjectSettingsBlocking(settingsStatus) && !hasNonSettingsErrors) {
+        return {
+          mode: "settings_invalid_before_build",
+          projectRoot: localChanges.projectRoot,
+          projectId: (config2 == null ? void 0 : config2.project_id) || "unknown",
+          settingsStatus
+        };
+      }
       return {
-        mode: "settings_invalid_before_build",
+        mode: "project_invalid_before_build",
         projectRoot: localChanges.projectRoot,
         projectId: (config2 == null ? void 0 : config2.project_id) || "unknown",
-        settingsStatus
+        projectHealth
       };
     }
     (_a3 = options.onProgress) == null ? void 0 : _a3.call(options, {
@@ -36353,18 +38313,18 @@ async function attachRuntimeLogWatch(buildResult, startWatch) {
   }
 }
 async function startRuntimeLogWatch(buildResult) {
-  const runtimeDir = path17.join(buildResult.projectRoot, ".maker", "logs", "runtime");
-  fs16.mkdirSync(runtimeDir, { recursive: true });
-  const stdoutLog = path17.join(runtimeDir, "watcher.out.log");
-  const stderrLog = path17.join(runtimeDir, "watcher.err.log");
-  const pidFile = path17.join(runtimeDir, "watcher.pid");
+  const runtimeDir = path18.join(buildResult.projectRoot, ".maker", "logs", "runtime");
+  fs17.mkdirSync(runtimeDir, { recursive: true });
+  const stdoutLog = path18.join(runtimeDir, "watcher.out.log");
+  const stderrLog = path18.join(runtimeDir, "watcher.err.log");
+  const pidFile = path18.join(runtimeDir, "watcher.pid");
   const previous = stopExistingRuntimeLogWatcher(pidFile);
-  const outFd = fs16.openSync(stdoutLog, "a");
-  const errFd = fs16.openSync(stderrLog, "a");
+  const outFd = fs17.openSync(stdoutLog, "a");
+  const errFd = fs17.openSync(stderrLog, "a");
   const command = formatRuntimeLogWatchCommand(buildResult);
   if (previous.previousStopError) {
-    fs16.closeSync(outFd);
-    fs16.closeSync(errFd);
+    fs17.closeSync(outFd);
+    fs17.closeSync(errFd);
     return {
       started: false,
       command: command.text,
@@ -36427,18 +38387,18 @@ async function startRuntimeLogWatch(buildResult) {
       ...previous
     };
   } finally {
-    fs16.closeSync(outFd);
-    fs16.closeSync(errFd);
+    fs17.closeSync(outFd);
+    fs17.closeSync(errFd);
   }
 }
 function stopExistingRuntimeLogWatcher(pidFile, options = {}) {
-  if (!fs16.existsSync(pidFile)) {
+  if (!fs17.existsSync(pidFile)) {
     return {};
   }
   const pidState = readRuntimeLogWatcherPidState(pidFile);
   const pid = pidState == null ? void 0 : pidState.pid;
   if (!Number.isInteger(pid) || pid <= 0) {
-    fs16.rmSync(pidFile, { force: true });
+    fs17.rmSync(pidFile, { force: true });
     return {};
   }
   try {
@@ -36446,7 +38406,7 @@ function stopExistingRuntimeLogWatcher(pidFile, options = {}) {
     const processCommand = (options.getProcessCommand || getProcessCommand)(pid);
     const verifiedCommand = getVerifiedRuntimeLogWatcherCommand(processCommand, pidState);
     if (!verifiedCommand) {
-      fs16.rmSync(pidFile, { force: true });
+      fs17.rmSync(pidFile, { force: true });
       return {
         previousPid: pid,
         previousStopped: false,
@@ -36456,7 +38416,7 @@ function stopExistingRuntimeLogWatcher(pidFile, options = {}) {
     process.kill(pid, "SIGTERM");
     const stopped = (options.waitForExit || waitForProcessExit)(pid, WATCHER_STOP_TIMEOUT_MS);
     if (stopped) {
-      fs16.rmSync(pidFile, { force: true });
+      fs17.rmSync(pidFile, { force: true });
       return { previousPid: pid, previousStopped: true };
     }
     return {
@@ -36465,7 +38425,7 @@ function stopExistingRuntimeLogWatcher(pidFile, options = {}) {
       previousStopError: `process ${pid} did not exit after SIGTERM within ${WATCHER_STOP_TIMEOUT_MS}ms`
     };
   } catch (error2) {
-    fs16.rmSync(pidFile, { force: true });
+    fs17.rmSync(pidFile, { force: true });
     const code = error2 && typeof error2 === "object" && "code" in error2 ? String(error2.code) : "";
     if (code === "ESRCH") {
       return { previousPid: pid, previousStopped: false };
@@ -36478,7 +38438,7 @@ function stopExistingRuntimeLogWatcher(pidFile, options = {}) {
   }
 }
 function readRuntimeLogWatcherPidState(pidFile) {
-  const raw = fs16.readFileSync(pidFile, "utf8").trim();
+  const raw = fs17.readFileSync(pidFile, "utf8").trim();
   if (!raw) {
     return null;
   }
@@ -36494,7 +38454,7 @@ function readRuntimeLogWatcherPidState(pidFile) {
   }
 }
 function writeRuntimeLogWatcherPidFile(pidFile, state) {
-  fs16.writeFileSync(pidFile, `${JSON.stringify(state, null, 2)}
+  fs17.writeFileSync(pidFile, `${JSON.stringify(state, null, 2)}
 `, "utf8");
 }
 function getProcessCommand(pid) {
@@ -36580,10 +38540,10 @@ function formatRuntimeLogWatchCommand(buildResult) {
   };
 }
 function resolveMakerCliEntry() {
-  return process.argv[1] || path17.resolve(process.cwd(), "dist", "maker.js");
+  return process.argv[1] || path18.resolve(process.cwd(), "dist", "maker.js");
 }
 function getRuntimeLogFilePath(projectRoot) {
-  return path17.join(projectRoot, ".maker", "logs", "runtime", "runtime.log");
+  return path18.join(projectRoot, ".maker", "logs", "runtime", "runtime.log");
 }
 async function refreshMakerPreview(buildResult) {
   const makerEnv = buildResult.env === "rnd" || buildResult.env === "production" ? buildResult.env : void 0;
@@ -36717,7 +38677,7 @@ function createBuildArgs(projectRoot, options) {
   if (options.scriptsPath) {
     buildArgs.scriptsPath = options.scriptsPath;
   }
-  if (!options.entry && !options.scriptsPath && !options.entryClient && !options.entryServer && !options.multiplayer && fs16.existsSync(path17.join(projectRoot, "scripts", "main.lua"))) {
+  if (!options.entry && !options.scriptsPath && !options.entryClient && !options.entryServer && !options.multiplayer && fs17.existsSync(path18.join(projectRoot, "scripts", "main.lua"))) {
     buildArgs.entry = "main.lua";
     buildArgs.scriptsPath = "scripts";
   }
@@ -36729,8 +38689,6 @@ function createBuildArgs(projectRoot, options) {
   }
   if (options.multiplayer) {
     buildArgs.multiplayer = options.multiplayer;
-  } else if (!options.entryClient && !options.entryServer && !fs16.existsSync(path17.join(projectRoot, ".project", "settings.json"))) {
-    buildArgs.multiplayer = { enabled: false };
   }
   return buildArgs;
 }
@@ -36750,11 +38708,12 @@ function mergeStringEnv(...sources) {
 }
 function formatRemoteToolResult(result) {
   if (!result || typeof result !== "object") {
-    return String(result);
+    return String(sanitizeRemoteDiagnosticValue(result));
   }
-  const content = result.content;
+  const sanitizedResult = sanitizeRemoteDiagnosticValue(result);
+  const content = sanitizedResult.content;
   if (!Array.isArray(content)) {
-    return JSON.stringify(result, null, 2);
+    return JSON.stringify(sanitizedResult, null, 2);
   }
   return content.map((item) => {
     if (item.type === "text" && typeof item.text === "string") {
@@ -36772,8 +38731,6 @@ function formatBuildResult(result, progressSummary) {
       `- project_id: ${result.projectId}`,
       `- maker_url: ${result.buildResult.makerUrl || formatMakerAppWebUrl(result.buildResult.projectId, result.buildResult.env)}`,
       `- project_path: ${result.buildResult.projectPath}`,
-      `- server_url: ${result.buildResult.serverUrl}`,
-      `- env: ${result.buildResult.env}`,
       `- timeout_ms: ${result.buildResult.timeoutMs}`,
       `- build_args: ${JSON.stringify(result.buildResult.buildArgs)}`,
       ...formatProgressSummary(progressSummary),
@@ -36781,7 +38738,7 @@ function formatBuildResult(result, progressSummary) {
       ...formatMakerBuildFailureLines(result.buildFailure),
       "",
       "remote_result:",
-      indent2(result.buildResult.resultText)
+      indent2(String(sanitizeRemoteDiagnosticValue(result.buildResult.resultText)))
     ].filter(Boolean).join("\n");
   }
   if (result.mode === "submit_failed_before_build") {
@@ -36819,6 +38776,17 @@ function formatBuildResult(result, progressSummary) {
       formatMakerProjectSettingsStatus(result.settingsStatus)
     ].filter(Boolean).join("\n");
   }
+  if (result.mode === "project_invalid_before_build") {
+    return [
+      "✗ Maker project structure is invalid; submit and remote build were not started",
+      "",
+      `- project_root: ${result.projectRoot}`,
+      `- project_id: ${result.projectId}`,
+      ...formatProgressSummary(progressSummary),
+      "",
+      formatMakerProjectHealthStatus(result.projectHealth)
+    ].filter(Boolean).join("\n");
+  }
   if (result.mode === "build_failed_after_submit") {
     return [
       "✗ Maker project submitted, but remote Maker build failed",
@@ -36854,9 +38822,7 @@ function formatBuildResult(result, progressSummary) {
     `- project_root: ${result.projectRoot}`,
     `- project_id: ${result.projectId}`,
     `- maker_url: ${result.makerUrl || formatMakerAppWebUrl(result.projectId, result.env)}`,
-    `- project_path: ${result.projectPath}`,
-    `- server_url: ${result.serverUrl}`,
-    `- env: ${result.env}`
+    `- project_path: ${result.projectPath}`
   ];
   lines.push(
     `- timeout_ms: ${result.timeoutMs}`,
@@ -36870,7 +38836,7 @@ function formatBuildResult(result, progressSummary) {
   if (submitLines.length > 0) {
     lines.push(...submitLines);
   }
-  lines.push("remote_result:", indent2(result.resultText));
+  lines.push("remote_result:", indent2(String(sanitizeRemoteDiagnosticValue(result.resultText))));
   return lines.join("\n");
 }
 function formatPreviewRefreshLines(result) {
@@ -36902,11 +38868,11 @@ function formatRuntimeLogWatchNextActionLines(result) {
     ((_a3 = result.runtimeLogWatch) == null ? void 0 : _a3.pid) ? `- watch_pid: ${result.runtimeLogWatch.pid}` : "",
     `- watch_command: ${command}`,
     ((_b = result.runtimeLogWatch) == null ? void 0 : _b.command) ? `- actual_watch_command: ${result.runtimeLogWatch.command}` : "",
-    `- local_file: ${path17.join(result.projectRoot, ".maker", "logs", "runtime", "runtime.log")}`,
+    `- local_file: ${path18.join(result.projectRoot, ".maker", "logs", "runtime", "runtime.log")}`,
     ((_c = result.runtimeLogWatch) == null ? void 0 : _c.stdoutLog) ? `- watcher_stdout: ${result.runtimeLogWatch.stdoutLog}` : "",
     ((_d = result.runtimeLogWatch) == null ? void 0 : _d.stderrLog) ? `- watcher_stderr: ${result.runtimeLogWatch.stderrLog}` : "",
     ((_e = result.runtimeLogWatch) == null ? void 0 : _e.pidFile) ? `- watcher_pid_file: ${result.runtimeLogWatch.pidFile}` : "",
-    `- state_file: ${path17.join(result.projectRoot, ".maker", "logs", "runtime", "state.json")}`,
+    `- state_file: ${path18.join(result.projectRoot, ".maker", "logs", "runtime", "state.json")}`,
     ((_f = result.runtimeLogWatch) == null ? void 0 : _f.previousPid) ? `- previous_watch_pid: ${result.runtimeLogWatch.previousPid}` : "",
     ((_g = result.runtimeLogWatch) == null ? void 0 : _g.previousStopped) !== void 0 ? `- previous_watch_stopped: ${result.runtimeLogWatch.previousStopped ? "yes" : "no"}` : "",
     ((_h = result.runtimeLogWatch) == null ? void 0 : _h.previousStopError) ? `- previous_watch_stop_error: ${result.runtimeLogWatch.previousStopError}` : "",
@@ -36949,11 +38915,11 @@ function formatMakerBuildFailureLines(failure) {
   return [
     "build_failure:",
     `- error_name: ${failure.name}`,
-    `- message: ${failure.message}`,
+    `- message: ${String(sanitizeRemoteDiagnosticValue(failure.message))}`,
     Object.keys(details).length > 0 ? `- error_details:
 ${indent2(formatDiagnosticJson(details))}` : "",
     failure.stack ? `- stack:
-${indent2(failure.stack)}` : ""
+${indent2(String(sanitizeRemoteDiagnosticValue(failure.stack)))}` : ""
   ].filter(Boolean);
 }
 function buildFailureDiagnosticFields(failure) {
@@ -37017,17 +38983,41 @@ function formatToolException(toolName, error2) {
     ].join("\n");
   }
   if (error2 instanceof RemoteProxyToolResultError) {
+    const displayResult = sanitizeRemoteProxyToolResult(
+      flattenNestedMcpErrorPrefixes(error2.result)
+    );
+    const remoteMessage = extractRemoteProxyErrorMessage(displayResult);
     return [
       "✗ Maker MCP proxy tool failed",
       "",
       `- tool: ${toolName}`,
       "- reason: remote_proxy_tool_result_error",
       `- error_name: ${error2.name}`,
-      `- message: ${firstLine(error2.message)}`,
+      `- message: ${remoteMessage ?? firstLine(error2.message)}`,
       "",
-      formatRemoteProxyToolResult(error2.result),
+      formatRemoteProxyToolResult(displayResult),
       "",
-      "next_action: 远端 proxy tool 已返回失败结果；请把 remote_result 原样反馈给开发者，方便排查 server 返回内容。"
+      "next_action: 远端 proxy tool 已返回失败结果；请把完整、已脱敏的 remote_result 反馈给开发者，方便排查 server 返回内容。"
+    ].join("\n");
+  }
+  if (isExposedRemoteProxyTool(toolName)) {
+    const sanitizedMessage = sanitizeRemoteDiagnosticValue(
+      stripNestedMcpErrorPrefixes(message)
+    );
+    const sanitizedStack = stack ? sanitizeRemoteDiagnosticValue(stack) : void 0;
+    return [
+      "✗ Maker MCP proxy tool failed",
+      "",
+      `- tool: ${toolName}`,
+      "- reason: remote_proxy_tool_call_error",
+      `- error_name: ${error2 instanceof Error ? error2.name : typeof error2}`,
+      `- message: ${sanitizedMessage}`,
+      ...formatUnknownExceptionDetailLines(error2),
+      "",
+      "debug:",
+      sanitizedStack ? indent2(sanitizedStack) : indent2(sanitizedMessage),
+      "",
+      "next_action: 请根据上面的简化 message 判断失败原因；参数或能力不支持时不要重复调用，并保留 error_details/debug 反馈给开发者。"
     ].join("\n");
   }
   return [
@@ -37043,6 +39033,68 @@ function formatToolException(toolName, error2) {
     "",
     "next_action: 请把上面的完整错误反馈给开发者；如果本地已有 commit 但 push 未完成，不要重复 commit，直接重试 maker_build_current_directory。"
   ].join("\n");
+}
+function stripNestedMcpErrorPrefixes(message) {
+  const prefix = /^MCP error -?\d+:\s*/i;
+  let concise = message.trim();
+  while (prefix.test(concise)) {
+    concise = concise.replace(prefix, "");
+  }
+  return concise || message;
+}
+function flattenNestedMcpErrorPrefixes(value) {
+  if (typeof value === "string") {
+    return stripNestedMcpErrorPrefixes(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => flattenNestedMcpErrorPrefixes(item));
+  }
+  if (isPlainRecord(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [
+        key,
+        flattenNestedMcpErrorPrefixes(nestedValue)
+      ])
+    );
+  }
+  return value;
+}
+function extractRemoteProxyErrorMessage(result) {
+  if (!isPlainRecord(result) || !Array.isArray(result.content)) {
+    return void 0;
+  }
+  for (const item of result.content) {
+    if (!isPlainRecord(item) || typeof item.text !== "string") {
+      continue;
+    }
+    const text = item.text.trim();
+    if (!text) {
+      continue;
+    }
+    try {
+      const parsed = JSON.parse(text);
+      const structuredMessage = extractStructuredErrorMessage(parsed);
+      if (structuredMessage) {
+        return firstLine(structuredMessage);
+      }
+      return void 0;
+    } catch {
+      return firstLine(text);
+    }
+  }
+  return void 0;
+}
+function extractStructuredErrorMessage(value) {
+  if (!isPlainRecord(value)) {
+    return void 0;
+  }
+  for (const key of ["message", "error", "detail"]) {
+    const candidate = value[key];
+    if (typeof candidate === "string" && candidate.trim()) {
+      return stripNestedMcpErrorPrefixes(candidate);
+    }
+  }
+  return void 0;
 }
 function firstLine(value) {
   return value.split("\n")[0] || value;
@@ -37067,22 +39119,6 @@ function errorOwnDiagnosticFields(error2) {
   }
   return details;
 }
-function sanitizeDiagnosticValue(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeDiagnosticValue(item));
-  }
-  if (value && typeof value === "object") {
-    const result = {};
-    for (const [key, nestedValue] of Object.entries(value)) {
-      result[key] = isSensitiveDiagnosticKey(key) ? "<redacted>" : sanitizeDiagnosticValue(nestedValue);
-    }
-    return result;
-  }
-  return value;
-}
-function isSensitiveDiagnosticKey(key) {
-  return /token|secret|mac[_-]?key|authorization|cookie|(^|[_-])pat($|[_-])/i.test(key);
-}
 function formatDiagnosticJson(value) {
   try {
     return JSON.stringify(value, null, 2);
@@ -37097,9 +39133,9 @@ function indent2(value) {
 // src/maker/cli/commands.ts
 import { spawnSync as spawnSync7 } from "node:child_process";
 import crypto3 from "node:crypto";
-import fs17 from "node:fs";
+import fs18 from "node:fs";
 import os4 from "node:os";
-import path18 from "node:path";
+import path19 from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
@@ -37245,7 +39281,7 @@ function formatError2(error2) {
 }
 
 // src/maker/cli/commands.ts
-var VERSION2 = true ? "0.0.24" : "dev";
+var VERSION2 = true ? "0.0.26" : "dev";
 var DEFAULT_MCP_NAME = "taptap-maker";
 var MAKER_NPM_PACKAGE = "@taptap/maker";
 var TWO_PART_COMMANDS = /* @__PURE__ */ new Set(["pat", "mcp", "dev-kit", "logs", "python", "lua-lsp", "agents"]);
@@ -37380,7 +39416,7 @@ function toOptionKey(value) {
 }
 async function runInit(parsed, ctx) {
   rejectPackageOption(parsed);
-  const targetDir = path18.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const env = makerEnvOption(parsed);
   const skipConfirm = booleanOption(parsed, "skip_confirm");
   const skipMcpInstall = booleanOption(parsed, "skip_mcp_install");
@@ -37473,7 +39509,7 @@ async function runInit(parsed, ctx) {
 }
 async function runDoctor(parsed, ctx) {
   var _a3, _b;
-  const targetDir = path18.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const env = makerEnvOption(parsed);
   const git = checkGitEnvironment();
   const python = checkMakerPythonEnvironment();
@@ -37567,9 +39603,9 @@ async function runDoctor(parsed, ctx) {
   );
 }
 function inspectMakerMcpToolsAvailability(options) {
-  const aiPwd = path18.resolve(process.cwd());
+  const aiPwd = path19.resolve(process.cwd());
   const aiPwdIdentify = identifyMakerProject({ cwd: aiPwd });
-  const makerProjectDir = options.makerProjectDir ? path18.resolve(options.makerProjectDir) : void 0;
+  const makerProjectDir = options.makerProjectDir ? path19.resolve(options.makerProjectDir) : void 0;
   if (!makerProjectDir) {
     return {
       tools_visibility: "refresh_ai_client_if_missing",
@@ -37611,9 +39647,9 @@ function samePath2(left, right) {
   return normalizePathForCompare3(left) === normalizePathForCompare3(right);
 }
 function normalizePathForCompare3(value) {
-  const resolved = path18.resolve(value);
+  const resolved = path19.resolve(value);
   try {
-    return fs17.realpathSync.native(resolved);
+    return fs18.realpathSync.native(resolved);
   } catch {
     return resolved;
   }
@@ -37931,7 +39967,7 @@ async function runPatSet(parsed, ctx) {
 }
 async function resolvePatSet(parsed, ctx) {
   if (booleanOption(parsed, "pat_stdin") || booleanOption(parsed, "pat_from_stdin")) {
-    const pat = fs17.readFileSync(0, "utf8").trim();
+    const pat = fs18.readFileSync(0, "utf8").trim();
     if (!pat) {
       throw new Error("No PAT found on stdin.");
     }
@@ -37961,7 +39997,7 @@ async function runMcpInstall(parsed, ctx) {
     env: makerEnvOption(parsed),
     pkg: MAKER_NPM_PACKAGE,
     mcpName: stringOption(parsed, "name") || DEFAULT_MCP_NAME,
-    cwd: explicitTargetDir ? path18.resolve(explicitTargetDir) : void 0
+    cwd: explicitTargetDir ? path19.resolve(explicitTargetDir) : void 0
   });
   if (ctx.json) {
     writeJson(results);
@@ -38020,7 +40056,7 @@ ${indent3(payload.stderr)}` : "",
   );
 }
 async function runAgentsUpdate(parsed, ctx) {
-  const targetDir = path18.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const result = updateMakerAgentsPolicy(targetDir);
   if (ctx.json) {
     writeJson(result);
@@ -38039,7 +40075,7 @@ async function runAgentsUpdate(parsed, ctx) {
 async function runUpgrade(parsed, ctx) {
   rejectPackageOption(parsed);
   const explicitTargetDir = stringOption(parsed, "target_dir");
-  const targetDir = path18.resolve(explicitTargetDir || process.cwd());
+  const targetDir = path19.resolve(explicitTargetDir || process.cwd());
   const env = makerEnvOption(parsed);
   const ides = parseIdeList(stringOption(parsed, "ide") || stringOption(parsed, "ides") || "");
   const installResults = installMcpConfigs({
@@ -38124,7 +40160,7 @@ function getMcpVerifyNextSteps(mode, commandText) {
   ];
 }
 async function runDevKitUpdate(parsed, ctx) {
-  const targetDir = path18.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const result = await installAiDevKit({
     targetDir,
     preserveExisting: false,
@@ -38136,7 +40172,7 @@ async function runDevKitUpdate(parsed, ctx) {
   emitDevKitSkillInstallerFailure(ctx, result.skillInstaller, "AI skills install failed");
 }
 async function runLogsWatch(parsed, ctx) {
-  const targetDir = path18.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const intervalMs = parseDurationMs(stringOption(parsed, "interval") || "5s");
   const timeoutMs = numberOption(parsed, "timeout_ms") ?? DEFAULT_TOOL_CALL_TIMEOUT_MS;
   const maxPolls = numberOption(parsed, "max_polls");
@@ -38146,9 +40182,9 @@ async function runLogsWatch(parsed, ctx) {
     serverUrl: stringOption(parsed, "server_url"),
     env: makerEnvOption(parsed)
   });
-  const runtimeDir = path18.join(proxy.projectRoot, ".maker", "logs", "runtime");
-  const runtimeLog = path18.join(runtimeDir, "runtime.log");
-  const pidFile = path18.join(runtimeDir, "watcher.pid");
+  const runtimeDir = path19.join(proxy.projectRoot, ".maker", "logs", "runtime");
+  const runtimeLog = path19.join(runtimeDir, "runtime.log");
+  const pidFile = path19.join(runtimeDir, "watcher.pid");
   const replacedWatcher = registerRuntimeLogWatcherProcess(pidFile);
   const runtimeLogClient = createRemoteRuntimeLogClient(proxy, timeoutMs);
   emit(ctx, "logs_watch_start", "Maker runtime log watcher started", {
@@ -38193,10 +40229,10 @@ async function runLogsWatch(parsed, ctx) {
   }
 }
 function registerRuntimeLogWatcherProcess(pidFile) {
-  fs17.mkdirSync(path18.dirname(pidFile), { recursive: true });
+  fs18.mkdirSync(path19.dirname(pidFile), { recursive: true });
   const existingPid = readPidFile(pidFile);
   const previous = existingPid && existingPid !== process.pid ? stopExistingRuntimeLogWatcher(pidFile) : {};
-  fs17.writeFileSync(
+  fs18.writeFileSync(
     pidFile,
     `${JSON.stringify(
       {
@@ -38214,10 +40250,10 @@ function registerRuntimeLogWatcherProcess(pidFile) {
   return previous;
 }
 function readPidFile(pidFile) {
-  if (!fs17.existsSync(pidFile)) {
+  if (!fs18.existsSync(pidFile)) {
     return void 0;
   }
-  const raw = fs17.readFileSync(pidFile, "utf8").trim();
+  const raw = fs18.readFileSync(pidFile, "utf8").trim();
   let pid = Number(raw);
   if (!Number.isInteger(pid) || pid <= 0) {
     try {
@@ -38237,7 +40273,7 @@ function installRuntimeLogWatcherPidCleanup(pidFile) {
     }
     cleaned = true;
     if (readPidFile(pidFile) === process.pid) {
-      fs17.rmSync(pidFile, { force: true });
+      fs18.rmSync(pidFile, { force: true });
     }
   };
   process.once("exit", cleanup);
@@ -38388,7 +40424,7 @@ async function prepareDevKit(targetDir, ctx, options = {}) {
         onStart: (event) => emitSkillInstallerStart(ctx, event)
       });
       writeDevKitStagedGitignore(
-        path18.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
+        path19.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
         listPresentDevKitManagedEntries(targetDir)
       );
       if (options.finalizeGitignore) {
@@ -38405,7 +40441,7 @@ async function prepareDevKit(targetDir, ctx, options = {}) {
       );
     } catch (error2) {
       writeDevKitStagedGitignore(
-        path18.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
+        path19.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
         listPresentDevKitManagedEntries(targetDir)
       );
       if (options.finalizeGitignore) {
@@ -38495,12 +40531,12 @@ function installMcpConfig(ide, options) {
 }
 function installMcpConfigUnsafe(ide, options) {
   if (ide === "codex") {
-    const configPath = path18.join(os4.homedir(), ".codex", "config.toml");
+    const configPath = path19.join(os4.homedir(), ".codex", "config.toml");
     const write = mergeCodexMcpConfig(configPath, withClientIde(options, "codex"));
     return [createMcpInstallResult(ide, "Codex", configPath, write)];
   }
   if (ide === "cursor") {
-    const configPath = path18.join(os4.homedir(), ".cursor", "mcp.json");
+    const configPath = path19.join(os4.homedir(), ".cursor", "mcp.json");
     const write = mergeJsonMcpConfig(configPath, withClientIde(options, "cursor"));
     return [createMcpInstallResult(ide, "Cursor", configPath, write)];
   }
@@ -38518,7 +40554,7 @@ function installMcpConfigUnsafe(ide, options) {
         ];
       }
     }
-    const configPath = path18.join(os4.homedir(), ".claude.json");
+    const configPath = path19.join(os4.homedir(), ".claude.json");
     const write = mergeJsonMcpConfig(configPath, claudeOptions);
     return [createMcpInstallResult(ide, "Claude fallback", configPath, write)];
   }
@@ -38532,7 +40568,7 @@ function installMcpConfigUnsafe(ide, options) {
   }
   if (ide === "opencode") {
     const configPath = getOpenCodeMcpConfigPath();
-    if (!fs17.existsSync(configPath)) {
+    if (!fs18.existsSync(configPath)) {
       return [{ ide, ok: false, message: "Skipped OpenCode: no supported config file found" }];
     }
     const write = mergeOpenCodeMcpConfig(configPath, withClientIde(options, "opencode"));
@@ -38600,7 +40636,7 @@ function getDefaultMcpInstallIdes() {
   if (getTraeMcpInstallPaths().length > 0) {
     ides.push("trae");
   }
-  if (fs17.existsSync(getOpenCodeMcpConfigPath())) {
+  if (fs18.existsSync(getOpenCodeMcpConfigPath())) {
     ides.push("opencode");
   }
   if (getWorkBuddyMcpInstallPaths().length > 0) {
@@ -38617,7 +40653,7 @@ function getExistingTraeUserConfigPaths(paths) {
   const seen = /* @__PURE__ */ new Set();
   return paths.filter((configPath) => {
     const key = normalizeConfigPathKey(configPath);
-    if (seen.has(key) || !fs17.existsSync(path18.dirname(configPath))) {
+    if (seen.has(key) || !fs18.existsSync(path19.dirname(configPath))) {
       return false;
     }
     seen.add(key);
@@ -38628,7 +40664,7 @@ function getExistingConfigPaths(paths) {
   const seen = /* @__PURE__ */ new Set();
   return paths.filter((configPath) => {
     const key = normalizeConfigPathKey(configPath);
-    if (seen.has(key) || !fs17.existsSync(configPath)) {
+    if (seen.has(key) || !fs18.existsSync(configPath)) {
       return false;
     }
     seen.add(key);
@@ -38636,65 +40672,65 @@ function getExistingConfigPaths(paths) {
   });
 }
 function normalizeConfigPathKey(configPath) {
-  const resolved = path18.resolve(configPath);
+  const resolved = path19.resolve(configPath);
   return process.platform === "win32" || process.platform === "darwin" ? resolved.toLowerCase() : resolved;
 }
 function getTraeSoloMcpConfigPaths() {
   if (process.platform === "win32") {
-    const roaming = process.env.APPDATA || path18.join(os4.homedir(), "AppData", "Roaming");
+    const roaming = process.env.APPDATA || path19.join(os4.homedir(), "AppData", "Roaming");
     return [
-      path18.join(roaming, "TRAE SOLO", "User", "mcp.json"),
-      path18.join(roaming, "TRAE SOLO CN", "User", "mcp.json")
+      path19.join(roaming, "TRAE SOLO", "User", "mcp.json"),
+      path19.join(roaming, "TRAE SOLO CN", "User", "mcp.json")
     ];
   }
-  const appSupport = path18.join(os4.homedir(), "Library", "Application Support");
+  const appSupport = path19.join(os4.homedir(), "Library", "Application Support");
   return [
-    path18.join(appSupport, "TRAE SOLO CN", "User", "mcp.json"),
-    path18.join(appSupport, "TRAE SOLO", "User", "mcp.json")
+    path19.join(appSupport, "TRAE SOLO CN", "User", "mcp.json"),
+    path19.join(appSupport, "TRAE SOLO", "User", "mcp.json")
   ];
 }
 function getTraeUnverifiedMcpConfigPaths() {
   if (process.platform === "win32") {
-    const roaming = process.env.APPDATA || path18.join(os4.homedir(), "AppData", "Roaming");
+    const roaming = process.env.APPDATA || path19.join(os4.homedir(), "AppData", "Roaming");
     return [
-      path18.join(roaming, "Trae", "User", "mcp.json"),
-      path18.join(roaming, "TRAE", "User", "mcp.json"),
-      path18.join(roaming, "Trae CN", "User", "mcp.json")
+      path19.join(roaming, "Trae", "User", "mcp.json"),
+      path19.join(roaming, "TRAE", "User", "mcp.json"),
+      path19.join(roaming, "Trae CN", "User", "mcp.json")
     ];
   }
-  const appSupport = path18.join(os4.homedir(), "Library", "Application Support");
+  const appSupport = path19.join(os4.homedir(), "Library", "Application Support");
   return [
-    path18.join(appSupport, "Trae", "User", "mcp.json"),
-    path18.join(appSupport, "TRAE", "User", "mcp.json"),
-    path18.join(appSupport, "Trae CN", "User", "mcp.json")
+    path19.join(appSupport, "Trae", "User", "mcp.json"),
+    path19.join(appSupport, "TRAE", "User", "mcp.json"),
+    path19.join(appSupport, "Trae CN", "User", "mcp.json")
   ];
 }
 function getOpenCodeMcpConfigPath() {
-  return path18.join(os4.homedir(), ".config", "opencode", "opencode.jsonc");
+  return path19.join(os4.homedir(), ".config", "opencode", "opencode.jsonc");
 }
 function getWorkBuddyHome() {
-  return path18.join(os4.homedir(), ".workbuddy");
+  return path19.join(os4.homedir(), ".workbuddy");
 }
 function shouldShowWorkBuddyTrustInspection() {
-  return fs17.existsSync(getWorkBuddyHome());
+  return fs18.existsSync(getWorkBuddyHome());
 }
 function getWorkBuddyMcpInstallPaths(options = {}) {
-  const primary = path18.join(getWorkBuddyHome(), "mcp.json");
-  if (fs17.existsSync(primary) || options.createPrimary) {
+  const primary = path19.join(getWorkBuddyHome(), "mcp.json");
+  if (fs18.existsSync(primary) || options.createPrimary) {
     return [primary];
   }
-  const legacy = path18.join(getWorkBuddyHome(), ".mcp.json");
-  if (fs17.existsSync(legacy)) {
+  const legacy = path19.join(getWorkBuddyHome(), ".mcp.json");
+  if (fs18.existsSync(legacy)) {
     return [legacy];
   }
   return [];
 }
 function inspectWorkBuddyTrustState(mcpName) {
   const workbuddyHome = getWorkBuddyHome();
-  const connectorsDir = path18.join(workbuddyHome, "connectors");
+  const connectorsDir = path19.join(workbuddyHome, "connectors");
   const accounts = [];
   const stateFiles = [];
-  if (!fs17.existsSync(connectorsDir)) {
+  if (!fs18.existsSync(connectorsDir)) {
     return {
       status: "not_found",
       mcp_name: mcpName,
@@ -38704,12 +40740,12 @@ function inspectWorkBuddyTrustState(mcpName) {
       accounts
     };
   }
-  for (const entry of fs17.readdirSync(connectorsDir, { withFileTypes: true })) {
+  for (const entry of fs18.readdirSync(connectorsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
       continue;
     }
-    const statePath = path18.join(connectorsDir, entry.name, "connector-states.json");
-    if (!fs17.existsSync(statePath)) {
+    const statePath = path19.join(connectorsDir, entry.name, "connector-states.json");
+    if (!fs18.existsSync(statePath)) {
       continue;
     }
     stateFiles.push(statePath);
@@ -38784,7 +40820,7 @@ function mergeJsonMcpConfig(configPath, options) {
   );
 }
 function mergeOpenCodeMcpConfig(configPath, options) {
-  const rawContent = fs17.readFileSync(configPath, "utf8");
+  const rawContent = fs18.readFileSync(configPath, "utf8");
   const rewroteJsonc = normalizeJsonConfigContent(rawContent, { jsonc: true }) !== rawContent;
   const existing = readJsonObject(configPath, { jsonc: true });
   const mcp = asObject(existing.mcp);
@@ -38811,7 +40847,7 @@ function mergeOpenCodeMcpConfig(configPath, options) {
   return { ...write, rewroteJsonc: write.changed && rewroteJsonc };
 }
 function mergeCodexMcpConfig(configPath, options) {
-  const existing = fs17.existsSync(configPath) ? fs17.readFileSync(configPath, "utf8") : "";
+  const existing = fs18.existsSync(configPath) ? fs18.readFileSync(configPath, "utf8") : "";
   const sectionPattern = createCodexMcpSectionPattern(options.mcpName);
   const withoutOld = existing.replace(sectionPattern, "").trimEnd();
   const launch = getNpxCliCommand(options.pkg);
@@ -38981,10 +41017,10 @@ function rejectPackageOption(parsed) {
   }
 }
 function readJsonObject(filePath, options = {}) {
-  if (!fs17.existsSync(filePath)) {
+  if (!fs18.existsSync(filePath)) {
     return {};
   }
-  const raw = fs17.readFileSync(filePath, "utf8");
+  const raw = fs18.readFileSync(filePath, "utf8");
   try {
     const normalized = normalizeJsonConfigContent(raw, options);
     const parsed = JSON.parse(normalized);
@@ -39004,25 +41040,25 @@ function asObject(value) {
   return {};
 }
 function writeConfigWithTapTapBackupIfChanged(filePath, nextContent, validate) {
-  const existed = fs17.existsSync(filePath);
-  const previousContent = existed ? fs17.readFileSync(filePath, "utf8") : void 0;
+  const existed = fs18.existsSync(filePath);
+  const previousContent = existed ? fs18.readFileSync(filePath, "utf8") : void 0;
   if (previousContent === nextContent) {
     return { changed: false };
   }
   const backupPath = existed ? `${filePath}.taptap-maker.bak.latest` : void 0;
-  fs17.mkdirSync(path18.dirname(filePath), { recursive: true });
+  fs18.mkdirSync(path19.dirname(filePath), { recursive: true });
   if (previousContent !== void 0 && backupPath) {
-    fs17.writeFileSync(backupPath, previousContent, "utf8");
+    fs18.writeFileSync(backupPath, previousContent, "utf8");
   }
   try {
-    fs17.writeFileSync(filePath, nextContent, "utf8");
-    validate == null ? void 0 : validate(fs17.readFileSync(filePath, "utf8"));
+    fs18.writeFileSync(filePath, nextContent, "utf8");
+    validate == null ? void 0 : validate(fs18.readFileSync(filePath, "utf8"));
     return { changed: true, backupPath };
   } catch (error2) {
     if (previousContent !== void 0) {
-      fs17.writeFileSync(filePath, previousContent, "utf8");
+      fs18.writeFileSync(filePath, previousContent, "utf8");
     } else {
-      fs17.rmSync(filePath, { force: true });
+      fs18.rmSync(filePath, { force: true });
     }
     throw error2;
   }
@@ -39169,10 +41205,10 @@ function formatMcpInstallMessage(label, configPath, write) {
   ].filter(Boolean).join("\n");
 }
 function saveInitState(targetDir, state) {
-  fs17.mkdirSync(getMakerHome(), { recursive: true });
-  const key = crypto3.createHash("sha256").update(path18.resolve(targetDir)).digest("hex").slice(0, 16);
-  fs17.writeFileSync(
-    path18.join(getMakerHome(), `init-state-${key}.json`),
+  fs18.mkdirSync(getMakerHome(), { recursive: true });
+  const key = crypto3.createHash("sha256").update(path19.resolve(targetDir)).digest("hex").slice(0, 16);
+  fs18.writeFileSync(
+    path19.join(getMakerHome(), `init-state-${key}.json`),
     `${JSON.stringify({ ...state, updated_at: (/* @__PURE__ */ new Date()).toISOString() }, null, 2)}
 `,
     "utf8"
@@ -39320,7 +41356,7 @@ function makerEnvOption(parsed) {
     return env;
   }
   const targetDir = stringOption(parsed, "target_dir");
-  return getMakerEnvironment(void 0, targetDir ? path18.resolve(targetDir) : process.cwd());
+  return getMakerEnvironment(void 0, targetDir ? path19.resolve(targetDir) : process.cwd());
 }
 function mcpVerifyModeOption(parsed) {
   const mode = stringOption(parsed, "mode") || "npx";
@@ -39361,7 +41397,7 @@ function printHelp() {
     [
       "Usage:",
       "  taptap-maker                         Start MCP server mode",
-      "  taptap-maker init [--env rnd|production] [--app-id ID] [--target-dir DIR] [--pat PAT]",
+      "  taptap-maker init [--app-id ID] [--target-dir DIR] [--pat PAT]",
       "                     [--create --name NAME]",
       "                     [--skip-confirm] [--skip-mcp-install]",
       "                     [--register-mcp codex,cursor,claude,trae,opencode,workbuddy]",
@@ -39373,7 +41409,7 @@ function printHelp() {
       "  Create-new-project flow: add `--create --name NAME` only when the user",
       "    clearly asks to create a new Maker project; NAME is the requested project name.",
       "",
-      "  taptap-maker doctor [--target-dir DIR] [--env rnd|production] [--json]",
+      "  taptap-maker doctor [--target-dir DIR] [--json]",
       "  taptap-maker python doctor [--json]",
       "  taptap-maker python setup [--json]",
       "  taptap-maker python path [--json]",
@@ -39381,19 +41417,17 @@ function printHelp() {
       "  taptap-maker lua-lsp setup [--json]",
       "  taptap-maker apps [--pat PAT] [--all] [--json]",
       "                     # --pat warns: PAT appears in ps/history",
-      "  taptap-maker login [--env rnd|production] [--json]",
+      "  taptap-maker login [--json]",
       "  taptap-maker pat set [--pat-stdin] [--json]",
       "  taptap-maker pat set [PAT|--pat PAT] [--json]  # fallback; warns: PAT appears in ps/history",
       "  taptap-maker install [--ide codex,cursor,claude,trae,opencode,workbuddy]",
-      "                        [--env rnd|production]",
       "                        [--target-dir DIR]",
       "                        [--json]  # alias for mcp install",
       "  taptap-maker mcp install [--ide codex,cursor,claude,trae,opencode,workbuddy]",
-      "                             [--env rnd|production]",
       "                             [--target-dir DIR] [--json]",
       "  taptap-maker mcp verify [--mode npx|self] [--json]",
       "  taptap-maker agents update [--target-dir DIR] [--json]",
-      "  taptap-maker upgrade [--ide codex,cursor,claude] [--env rnd|production]",
+      "  taptap-maker upgrade [--ide codex,cursor,claude]",
       "                         [--target-dir DIR] [--json]",
       "  taptap-maker dev-kit update [--target-dir DIR] [--json]",
       "  taptap-maker logs watch [--target-dir DIR] [--interval 5s] [--reset] [--json]",
@@ -40824,7 +42858,7 @@ var StreamableHTTPClientTransport = class {
 };
 
 // src/mcp-proxy/proxy.ts
-import * as path20 from "node:path";
+import * as path21 from "node:path";
 import * as crypto6 from "node:crypto";
 
 // src/mcp-proxy/cookieJar.ts
@@ -41006,8 +43040,8 @@ function createCookieFetch(cookieJar) {
 }
 
 // src/core/utils/logWriter.ts
-import * as fs18 from "node:fs";
-import * as path19 from "node:path";
+import * as fs19 from "node:fs";
+import * as path20 from "node:path";
 import * as crypto5 from "node:crypto";
 
 // src/core/types/log.ts
@@ -41048,7 +43082,7 @@ var LogWriter = class {
       return;
     }
     try {
-      await fs18.promises.mkdir(this.config.logDir, { recursive: true });
+      await fs19.promises.mkdir(this.config.logDir, { recursive: true });
       await this.cleanupOldLogs();
       this.initialized = true;
     } catch (error2) {
@@ -41071,7 +43105,7 @@ var LogWriter = class {
    */
   getLogFilePath(date5) {
     const d = date5 || this.getCurrentDate();
-    return path19.join(this.config.logDir, `${this.config.prefix}-${d}.log`);
+    return path20.join(this.config.logDir, `${this.config.prefix}-${d}.log`);
   }
   /**
    * 获取或创建写入流
@@ -41086,7 +43120,7 @@ var LogWriter = class {
       }
       this.currentDate = date5;
       try {
-        this.writeStream = fs18.createWriteStream(this.getLogFilePath(date5), {
+        this.writeStream = fs19.createWriteStream(this.getLogFilePath(date5), {
           flags: "a",
           encoding: "utf8"
         });
@@ -41138,11 +43172,11 @@ var LogWriter = class {
     if (this.shouldWriteToFile(level) && this.initialized && this.config.enabled) {
       try {
         const filePath = this.getLogFilePath();
-        const dir = path19.dirname(filePath);
-        if (!fs18.existsSync(dir)) {
-          fs18.mkdirSync(dir, { recursive: true });
+        const dir = path20.dirname(filePath);
+        if (!fs19.existsSync(dir)) {
+          fs19.mkdirSync(dir, { recursive: true });
         }
-        fs18.appendFileSync(filePath, message, "utf8");
+        fs19.appendFileSync(filePath, message, "utf8");
       } catch {
       }
     }
@@ -41153,7 +43187,7 @@ var LogWriter = class {
   async cleanupOldLogs() {
     if (this.config.maxDays <= 0) return;
     try {
-      const files = await fs18.promises.readdir(this.config.logDir);
+      const files = await fs19.promises.readdir(this.config.logDir);
       const cutoffDate = /* @__PURE__ */ new Date();
       cutoffDate.setDate(cutoffDate.getDate() - this.config.maxDays);
       const prefix = this.config.prefix;
@@ -41168,7 +43202,7 @@ var LogWriter = class {
           if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
             const fileDate = new Date(year, month - 1, day);
             if (fileDate < cutoffDate) {
-              await fs18.promises.unlink(path19.join(this.config.logDir, file2));
+              await fs19.promises.unlink(path20.join(this.config.logDir, file2));
               process.stderr.write(`[LogWriter] Deleted old log: ${file2}
 `);
             }
@@ -41207,6 +43241,53 @@ var VERSION3 = typeof __PROXY_VERSION__ !== "undefined" ? __PROXY_VERSION__ : "d
 var LOCAL_PROXY_TAG = "local";
 var DEFAULT_RECONNECT_INTERVAL_MS = 5e3;
 var MAX_RECONNECT_INTERVAL_MS = 60 * 1e3;
+function convertMcpApplicationErrorToToolResult(error2) {
+  if (!(error2 instanceof Error)) {
+    return void 0;
+  }
+  const data = error2.data;
+  if (!isRecord3(data) || !("remote_result" in data) || data.remote_result === void 0) {
+    return void 0;
+  }
+  return {
+    isError: true,
+    content: [
+      {
+        type: "text",
+        text: [
+          error2.message,
+          "remote_result:",
+          formatProxyDiagnosticValue(data.remote_result)
+        ].join("\n")
+      }
+    ]
+  };
+}
+function isRecord3(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function formatProxyDiagnosticValue(value) {
+  if (typeof value === "string") {
+    return value;
+  }
+  try {
+    return JSON.stringify(value, null, 2) || String(value);
+  } catch {
+    return String(value);
+  }
+}
+function isTransientHttpServerError2(error2) {
+  const code = error2.code;
+  if (typeof code === "number" && code >= 500 && code < 600) {
+    return true;
+  }
+  return /\bHTTP\s+5\d\d\b|bad gateway|service unavailable|gateway timeout/i.test(error2.message);
+}
+function isHttpClientError2(error2) {
+  const code = error2.code;
+  const numericCode = typeof code === "number" ? code : typeof code === "string" && /^4\d\d$/.test(code) ? Number(code) : void 0;
+  return numericCode !== void 0 && numericCode >= 400 && numericCode < 500 || /\bHTTP\s+4\d\d\b/i.test(error2.message);
+}
 var TapTapMCPProxy = class {
   constructor(config2) {
     this.connected = false;
@@ -41242,10 +43323,10 @@ var TapTapMCPProxy = class {
     const { user_id, project_id } = this.config.tenant;
     let logDir;
     if (user_id && project_id) {
-      logDir = path20.join(logRoot, "proxy", user_id, project_id);
+      logDir = path21.join(logRoot, "proxy", user_id, project_id);
     } else {
       const kidHash = crypto6.createHash("sha256").update(this.config.auth.kid).digest("hex").substring(0, 8);
-      logDir = path20.join(logRoot, "proxy", kidHash);
+      logDir = path21.join(logRoot, "proxy", kidHash);
     }
     return new LogWriter({
       logDir,
@@ -41431,8 +43512,8 @@ var TapTapMCPProxy = class {
       this.log("info", "✅ Connected and session validated");
       this.startHealthCheck();
       if (this.reconnecting) {
-        await this.notifyReconnected();
         await this.processPendingRequests();
+        await this.notifyReconnected();
         this.reconnecting = false;
       }
     } catch (error2) {
@@ -41637,6 +43718,15 @@ var TapTapMCPProxy = class {
    */
   isNetworkError(error2) {
     if (!(error2 instanceof Error)) return false;
+    if (convertMcpApplicationErrorToToolResult(error2)) {
+      return false;
+    }
+    if (isHttpClientError2(error2)) {
+      return false;
+    }
+    if (isTransientHttpServerError2(error2)) {
+      return true;
+    }
     const errorMsg = error2.message.toLowerCase();
     const errorCode = error2.code;
     const networkErrorCodes = [
@@ -41658,6 +43748,9 @@ var TapTapMCPProxy = class {
       // DNS 临时失败
     ];
     if (errorCode && networkErrorCodes.includes(errorCode)) {
+      return true;
+    }
+    if (errorCode === ErrorCode.ConnectionClosed || errorCode === ErrorCode.RequestTimeout) {
       return true;
     }
     if (errorMsg.includes("not connected") || this.isSessionInvalidError(error2)) {
@@ -41715,6 +43808,17 @@ var TapTapMCPProxy = class {
         );
         req.resolve(result);
       } catch (error2) {
+        const toolErrorResult = convertMcpApplicationErrorToToolResult(error2);
+        if (toolErrorResult) {
+          req.resolve(toolErrorResult);
+          continue;
+        }
+        if (this.isNetworkError(error2)) {
+          this.connected = false;
+          this.sessionValidated = false;
+          this.pendingRequests.unshift(req);
+          throw error2;
+        }
         req.reject(error2 instanceof Error ? error2 : new Error(String(error2)));
       }
     }
@@ -41847,6 +43951,10 @@ var TapTapMCPProxy = class {
         );
         return result;
       } catch (error2) {
+        const toolErrorResult = convertMcpApplicationErrorToToolResult(error2);
+        if (toolErrorResult) {
+          return toolErrorResult;
+        }
         if (this.isNetworkError(error2)) {
           this.log("error", "❌ Network error detected, marking connection as lost");
           this.connected = false;
@@ -41910,7 +44018,7 @@ function printHelp2() {
     [
       "Usage:",
       "  taptap-maker                         Start MCP server mode",
-      "  taptap-maker init [--env rnd|production] [--app-id ID] [--target-dir DIR] [--pat PAT]",
+      "  taptap-maker init [--app-id ID] [--target-dir DIR] [--pat PAT]",
       "                     [--create --name NAME]",
       "                     [--skip-confirm] [--skip-mcp-install] [--register-mcp codex,cursor,claude]",
       "                     [--json]",
@@ -41921,7 +44029,7 @@ function printHelp2() {
       "  Create-new-project flow: add `--create --name NAME` only when the user",
       "    clearly asks to create a new Maker project; NAME is the requested project name.",
       "",
-      "  taptap-maker doctor [--target-dir DIR] [--env rnd|production] [--json]",
+      "  taptap-maker doctor [--target-dir DIR] [--json]",
       "  taptap-maker python doctor [--json]",
       "  taptap-maker python setup [--json]",
       "  taptap-maker python path [--json]",
@@ -41929,17 +44037,17 @@ function printHelp2() {
       "  taptap-maker lua-lsp setup [--json]",
       "  taptap-maker apps [--pat PAT] [--all] [--json]",
       "                     # --pat warns: PAT appears in ps/history",
-      "  taptap-maker login [--env rnd|production] [--json]",
+      "  taptap-maker login [--json]",
       "  taptap-maker pat set [--pat-stdin] [--json]",
       "  taptap-maker pat set [PAT|--pat PAT] [--json]  # fallback; warns: PAT appears in ps/history",
-      "  taptap-maker install [--ide codex,cursor,claude] [--env rnd|production]",
+      "  taptap-maker install [--ide codex,cursor,claude]",
       "                        [--target-dir DIR]",
       "                        [--json]  # alias for mcp install",
-      "  taptap-maker mcp install [--ide codex,cursor,claude] [--env rnd|production]",
+      "  taptap-maker mcp install [--ide codex,cursor,claude]",
       "                             [--target-dir DIR] [--json]",
       "  taptap-maker mcp verify [--mode npx|self] [--json]",
       "  taptap-maker agents update [--target-dir DIR] [--json]",
-      "  taptap-maker upgrade [--ide codex,cursor,claude] [--env rnd|production]",
+      "  taptap-maker upgrade [--ide codex,cursor,claude]",
       "                         [--target-dir DIR] [--json]",
       "  taptap-maker dev-kit update [--target-dir DIR] [--json]",
       "  taptap-maker logs watch [--target-dir DIR] [--interval 5s] [--reset] [--json]",
