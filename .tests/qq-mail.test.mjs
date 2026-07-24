@@ -354,7 +354,7 @@ test('Worker 不会把不存在或未更新的 UID 误报为标记成功', async
   assert.equal(mutationCalls, 1);
 });
 
-test('Worker 移动前验证 UID，同时允许服务器成功但不返回 COPYUID', async () => {
+test('Worker 仅在服务器返回目标 UID 映射时报告移动成功', async () => {
   let moveCalls = 0;
   const missing = createWorkerHarness({
     async fetchOne() {
@@ -403,14 +403,32 @@ test('Worker 移动前验证 UID，同时允许服务器成功但不返回 COPYU
       return { path: 'INBOX', destination: 'Archive' };
     },
   });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+      { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
+      withoutCopyUid.deps,
+    ),
+    /MESSAGE_MOVE_UNCONFIRMED/,
+  );
+
+  const withCopyUid = createWorkerHarness({
+    async fetchOne() {
+      return { uid: 42 };
+    },
+    async messageMove() {
+      moveCalls += 1;
+      return { uidMap: new Map([[42, 142]]) };
+    },
+  });
   const result = await worker.performAction(
     { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
     { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
-    withoutCopyUid.deps,
+    withCopyUid.deps,
   );
   assert.equal(result.moved, true);
-  assert.equal(result.destination_uid, null);
-  assert.equal(moveCalls, 2);
+  assert.equal(result.destination_uid, 142);
+  assert.equal(moveCalls, 3);
 });
 
 test('Worker 分块读取邮件，并在解析前拒绝超过 12 MiB 的内容', async () => {
@@ -455,4 +473,5 @@ test('Worker 将认证、网络与频控错误转换成可行动文案', () => {
   assert.match(worker.humanizeError(Object.assign(new Error('Authentication failed'), { code: 'EAUTH' })), /授权码/);
   assert.match(worker.humanizeError(Object.assign(new Error('connect timed out'), { code: 'ETIMEDOUT' })), /网络/);
   assert.match(worker.humanizeError(new Error('Too many simultaneous connections')), /稍后/);
+  assert.match(worker.humanizeError(new Error('MESSAGE_MOVE_UNCONFIRMED')), /重新搜索/);
 });

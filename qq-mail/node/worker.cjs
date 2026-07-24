@@ -66476,12 +66476,14 @@ var require_worker = __commonJS({
         if (!existing) throw new Error("MESSAGE_NOT_FOUND");
         const moved = await client.messageMove(action.message_uid, target, { uid: true });
         if (!moved) throw new Error("MESSAGE_NOT_FOUND");
+        const destinationUid = moved.uidMap && moved.uidMap.get ? moved.uidMap.get(action.message_uid) || null : null;
+        if (!destinationUid) throw new Error("MESSAGE_MOVE_UNCONFIRMED");
         return {
           moved: true,
           from_folder: folder,
           to_folder: target,
           uid: action.message_uid,
-          destination_uid: moved && moved.uidMap && moved.uidMap.get ? moved.uidMap.get(action.message_uid) || null : null
+          destination_uid: destinationUid
         };
       }));
     }
@@ -66549,6 +66551,9 @@ var require_worker = __commonJS({
       }
       if (message === "TARGET_FOLDER_REQUIRED") return "move \u9700\u8981\u76EE\u6807\u6587\u4EF6\u5939";
       if (message === "TARGET_FOLDER_SAME") return "\u76EE\u6807\u6587\u4EF6\u5939\u4E0D\u80FD\u4E0E\u5F53\u524D\u6587\u4EF6\u5939\u76F8\u540C";
+      if (message === "MESSAGE_MOVE_UNCONFIRMED") {
+        return "\u65E0\u6CD5\u786E\u8BA4\u90AE\u4EF6\u662F\u5426\u5DF2\u79FB\u52A8\uFF0C\u8BF7\u91CD\u65B0\u641C\u7D22\u90AE\u7BB1\u540E\u518D\u64CD\u4F5C";
+      }
       if (message === "RECIPIENT_REQUIRED") return "\u8BF7\u81F3\u5C11\u586B\u5199\u4E00\u4E2A\u6536\u4EF6\u4EBA";
       if (message === "INVALID_RECIPIENT") return "\u6536\u4EF6\u4EBA\u3001\u6284\u9001\u6216\u5BC6\u9001\u5730\u5740\u683C\u5F0F\u4E0D\u6B63\u786E";
       if (message === "INVALID_SUBJECT") return "\u90AE\u4EF6\u4E3B\u9898\u683C\u5F0F\u4E0D\u6B63\u786E";

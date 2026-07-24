@@ -438,14 +438,16 @@ async function moveMessage(credentials, action, deps) {
 
     const moved = await client.messageMove(action.message_uid, target, { uid: true });
     if (!moved) throw new Error('MESSAGE_NOT_FOUND');
+    const destinationUid = moved.uidMap && moved.uidMap.get
+      ? (moved.uidMap.get(action.message_uid) || null)
+      : null;
+    if (!destinationUid) throw new Error('MESSAGE_MOVE_UNCONFIRMED');
     return {
       moved: true,
       from_folder: folder,
       to_folder: target,
       uid: action.message_uid,
-      destination_uid: moved && moved.uidMap && moved.uidMap.get
-        ? (moved.uidMap.get(action.message_uid) || null)
-        : null,
+      destination_uid: destinationUid,
     };
   }));
 }
@@ -529,6 +531,9 @@ function humanizeError(error) {
   }
   if (message === 'TARGET_FOLDER_REQUIRED') return 'move 需要目标文件夹';
   if (message === 'TARGET_FOLDER_SAME') return '目标文件夹不能与当前文件夹相同';
+  if (message === 'MESSAGE_MOVE_UNCONFIRMED') {
+    return '无法确认邮件是否已移动，请重新搜索邮箱后再操作';
+  }
   if (message === 'RECIPIENT_REQUIRED') return '请至少填写一个收件人';
   if (message === 'INVALID_RECIPIENT') return '收件人、抄送或密送地址格式不正确';
   if (message === 'INVALID_SUBJECT') return '邮件主题格式不正确';
