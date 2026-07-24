@@ -15,6 +15,18 @@ on:
         description: Plugin Server base URL
         required: true
         type: string
+      event_name:
+        description: Original caller event name
+        required: false
+        type: string
+      before_sha:
+        description: Original caller before SHA
+        required: false
+        type: string
+      after_sha:
+        description: Original caller after SHA
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -40,9 +52,9 @@ jobs:
         id: changes
         uses: actions/github-script@v9
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
-          AFTER_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ inputs.event_name || github.event_name }}
+          BEFORE_SHA: ${{ inputs.before_sha || github.event.before }}
+          AFTER_SHA: ${{ inputs.after_sha || github.sha }}
         with:
           script: |
             const { execFileSync } = require('node:child_process');
