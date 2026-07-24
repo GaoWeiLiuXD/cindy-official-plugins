@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const readline = require('node:readline');
+const { URL } = require('node:url');
 
 const {
   createDeferredChild,
@@ -19,6 +20,8 @@ const MAX_PROJECTS = 5;
 const MAX_RUN_MS = 14 * 60 * 1000;
 const PAT_URL = 'https://maker.taptap.cn/pat-tokens';
 const PROGRESS_HEARTBEAT_MS = 30 * 1000;
+const PRODUCTION_GIT_BASE = 'https://maker.taptap.cn/git';
+const RND_GIT_BASE = 'https://fuping.agnt.xd.com/git';
 
 let mutationInFlight = false;
 let nextProgressToken = 1;
@@ -256,6 +259,69 @@ function projectDirectoryName(project) {
   return `${keyedName}-${projectKey}`;
 }
 
+function makerGitBase() {
+  return process.env.TAPTAP_MAKER_GIT_BASE
+    || process.env.MAKER_GIT_BASE
+    || (process.env.TAPTAP_MCP_ENV === 'rnd' ? RND_GIT_BASE : PRODUCTION_GIT_BASE);
+}
+
+function isExpectedMakerOrigin(origin, projectId) {
+  try {
+    const actual = new URL(origin);
+    actual.username = '';
+    actual.password = '';
+    const expected = new URL(`${makerGitBase().replace(/\/$/, '')}/${projectId}.git`);
+    expected.username = '';
+    expected.password = '';
+    return actual.href === expected.href;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureGitOriginSafe(targetDir, projectId) {
+  const gitDir = path.join(targetDir, '.git');
+  let stat;
+  try {
+    stat = await fs.promises.lstat(gitDir);
+  } catch (error) {
+    if (error && error.code === 'ENOENT') return;
+    throw error;
+  }
+  if (stat.isSymbolicLink() || !stat.isDirectory()) {
+    throw new Error(`目标目录的 Git 元数据不可安全验证：${targetDir}`);
+  }
+
+  let config;
+  try {
+    config = await fs.promises.readFile(path.join(gitDir, 'config'), 'utf8');
+  } catch (error) {
+    if (error && error.code === 'ENOENT') return;
+    throw error;
+  }
+  let inOrigin = false;
+  const origins = [];
+  for (const line of config.split(/\r?\n/)) {
+    const section = line.match(/^\s*\[\s*remote\s+"([^"]+)"\s*]\s*$/i);
+    if (section) {
+      inOrigin = section[1] === 'origin';
+      continue;
+    }
+    if (/^\s*\[/.test(line)) {
+      inOrigin = false;
+      continue;
+    }
+    if (!inOrigin) continue;
+    const url = line.match(/^\s*url\s*=\s*(.*?)\s*$/i);
+    if (url && url[1]) origins.push(url[1]);
+  }
+  if (origins.some(function unexpected(origin) {
+    return !isExpectedMakerOrigin(origin, projectId);
+  })) {
+    throw new Error(`目标目录已绑定其他 Git 远端：${targetDir}`);
+  }
+}
+
 async function ensureTargetAvailable(targetDir, projectId) {
   let stat;
   try {
@@ -269,10 +335,25 @@ async function ensureTargetAvailable(targetDir, projectId) {
   }
   if ((await fs.promises.readdir(targetDir)).length === 0) return;
   try {
+    const configDir = path.join(targetDir, '.maker-mcp');
+    const configPath = path.join(configDir, 'config.json');
+    const configDirStat = await fs.promises.lstat(configDir);
+    const configStat = await fs.promises.lstat(configPath);
+    if (
+      configDirStat.isSymbolicLink()
+      || !configDirStat.isDirectory()
+      || configStat.isSymbolicLink()
+      || !configStat.isFile()
+    ) {
+      throw new Error('Maker 项目配置不可安全验证');
+    }
     const config = JSON.parse(
-      await fs.promises.readFile(path.join(targetDir, '.maker-mcp', 'config.json'), 'utf8'),
+      await fs.promises.readFile(configPath, 'utf8'),
     );
-    if (isRecord(config) && config.project_id === projectId) return;
+    if (isRecord(config) && config.project_id === projectId) {
+      await ensureGitOriginSafe(targetDir, projectId);
+      return;
+    }
   } catch {
     // 非空目录只有 Maker Runtime 的同项目绑定可以证明是可安全重试的目标。
   }

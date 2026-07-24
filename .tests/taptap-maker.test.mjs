@@ -180,7 +180,7 @@ test('项目目录名跨批次稳定，并用 project id 区分清洗后同名�
   assert.match(longName, /^[^. ]+-[a-f0-9]{16}$/);
 });
 
-test('项目目标只允许空目录或同一 Maker 项目绑定', async (t) => {
+test('项目目标只允许空目录或同一 Maker 项目的安全重试', async (t) => {
   const { ensureTargetAvailable } = loadAccountInternals();
   const root = await mkdtemp(path.join(os.tmpdir(), 'cindy-maker-target-'));
   t.after(() => rm(root, { force: true, recursive: true }));
@@ -209,6 +209,46 @@ test('项目目标只允许空目录或同一 Maker 项目绑定', async (t) => 
     ensureTargetAvailable(bound, 'project-b'),
     /目标目录已被其他内容占用/,
   );
+
+  const makerRepo = path.join(root, 'maker-repo');
+  await mkdir(path.join(makerRepo, '.maker-mcp'), { recursive: true });
+  await mkdir(path.join(makerRepo, '.git'), { recursive: true });
+  await writeFile(
+    path.join(makerRepo, '.maker-mcp', 'config.json'),
+    JSON.stringify({ project_id: 'project-a' }),
+  );
+  await writeFile(
+    path.join(makerRepo, '.git', 'config'),
+    [
+      '[remote "origin"]',
+      '\turl = https://git:secret@maker.taptap.cn/git/project-a.git',
+    ].join('\n'),
+  );
+  await assert.doesNotReject(ensureTargetAvailable(makerRepo, 'project-a'));
+
+  const noOrigin = path.join(root, 'no-origin');
+  await mkdir(path.join(noOrigin, '.maker-mcp'), { recursive: true });
+  await mkdir(path.join(noOrigin, '.git'), { recursive: true });
+  await writeFile(
+    path.join(noOrigin, '.maker-mcp', 'config.json'),
+    JSON.stringify({ project_id: 'project-a' }),
+  );
+  await writeFile(path.join(noOrigin, '.git', 'config'), '[core]\n\tbare = false\n');
+  await assert.doesNotReject(ensureTargetAvailable(noOrigin, 'project-a'));
+
+  for (const origin of [
+    'https://maker.taptap.cn/git/project-b.git',
+    'https://github.com/example/project-a.git',
+  ]) {
+    await writeFile(
+      path.join(makerRepo, '.git', 'config'),
+      `[remote "origin"]\n\turl = ${origin}\n`,
+    );
+    await assert.rejects(
+      ensureTargetAvailable(makerRepo, 'project-a'),
+      /目标目录已被其他内容占用/,
+    );
+  }
 
   const occupied = path.join(root, 'occupied');
   await writeFile(occupied, 'not a directory');
