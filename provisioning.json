@@ -28,6 +28,9 @@
     "google-sheets": {
       "audience": "all"
     },
+    "icloud-mail": {
+      "audience": "all"
+    },
     "qq-mail": {
       "audience": "all"
     },
