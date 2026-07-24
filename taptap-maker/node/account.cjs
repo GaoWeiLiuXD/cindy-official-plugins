@@ -256,7 +256,7 @@ function projectDirectoryName(project) {
   return `${keyedName}-${projectKey}`;
 }
 
-async function ensureTargetAvailable(targetDir) {
+async function ensureTargetAvailable(targetDir, projectId) {
   let stat;
   try {
     stat = await fs.promises.lstat(targetDir);
@@ -267,6 +267,16 @@ async function ensureTargetAvailable(targetDir) {
   if (stat.isSymbolicLink() || !stat.isDirectory()) {
     throw new Error(`目标路径已被占用：${targetDir}`);
   }
+  if ((await fs.promises.readdir(targetDir)).length === 0) return;
+  try {
+    const config = JSON.parse(
+      await fs.promises.readFile(path.join(targetDir, '.maker-mcp', 'config.json'), 'utf8'),
+    );
+    if (isRecord(config) && config.project_id === projectId) return;
+  } catch {
+    // 非空目录只有 Maker Runtime 的同项目绑定可以证明是可安全重试的目标。
+  }
+  throw new Error(`目标目录已被其他内容占用：${targetDir}`);
 }
 
 function requireAbsoluteDir(value, label) {
@@ -403,7 +413,7 @@ async function executeAction(args) {
       const synced = [];
       for (const target of targets) {
         try {
-          await ensureTargetAvailable(target.targetDir);
+          await ensureTargetAvailable(target.targetDir, target.project.id);
           await runMaker([
             'init',
             '--target-dir',

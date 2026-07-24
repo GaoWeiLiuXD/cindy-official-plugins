@@ -180,19 +180,39 @@ test('项目目录名跨批次稳定，并用 project id 区分清洗后同名�
   assert.match(longName, /^[^. ]+-[a-f0-9]{16}$/);
 });
 
-test('项目目标允许 Maker Runtime 处理非空目录，但拒绝文件占位', async (t) => {
+test('项目目标只允许空目录或同一 Maker 项目绑定', async (t) => {
   const { ensureTargetAvailable } = loadAccountInternals();
   const root = await mkdtemp(path.join(os.tmpdir(), 'cindy-maker-target-'));
   t.after(() => rm(root, { force: true, recursive: true }));
-  const directory = path.join(root, 'existing-project');
-  await mkdir(directory);
-  await writeFile(path.join(directory, 'local-change.txt'), 'keep');
 
-  await assert.doesNotReject(ensureTargetAvailable(directory));
+  const empty = path.join(root, 'empty');
+  await mkdir(empty);
+  await assert.doesNotReject(ensureTargetAvailable(empty, 'project-a'));
+
+  const unrelated = path.join(root, 'unrelated');
+  await mkdir(unrelated);
+  await writeFile(path.join(unrelated, 'local-change.txt'), 'keep');
+  await assert.rejects(
+    ensureTargetAvailable(unrelated, 'project-a'),
+    /目标目录已被其他内容占用/,
+  );
+
+  const bound = path.join(root, 'bound');
+  await mkdir(path.join(bound, '.maker-mcp'), { recursive: true });
+  await writeFile(
+    path.join(bound, '.maker-mcp', 'config.json'),
+    JSON.stringify({ project_id: 'project-a' }),
+  );
+  await writeFile(path.join(bound, 'local-change.txt'), 'keep');
+  await assert.doesNotReject(ensureTargetAvailable(bound, 'project-a'));
+  await assert.rejects(
+    ensureTargetAvailable(bound, 'project-b'),
+    /目标目录已被其他内容占用/,
+  );
 
   const occupied = path.join(root, 'occupied');
   await writeFile(occupied, 'not a directory');
-  await assert.rejects(ensureTargetAvailable(occupied), /目标路径已被占用/);
+  await assert.rejects(ensureTargetAvailable(occupied, 'project-a'), /目标路径已被占用/);
 });
 
 test('主工具只使用宿主注入的本地 workdir，并为长构建开启续命与右侧预览', async () => {
