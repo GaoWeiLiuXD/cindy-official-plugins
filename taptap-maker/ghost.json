@@ -4,12 +4,11 @@
   "name": "TapTap Maker",
   "description": "使用插件随附的官方 TapTap Maker Runtime 连接账号、同步或初始化项目、构建游戏并打开官方预览；无需自行安装 CLI 或配置 MCP。",
   "whenToUse": "创建、初始化、检查、构建或预览 TapTap Maker 游戏，以及调用 Maker 素材和调试工具时使用。只操作当前本地会话工作区；Maker 工具返回“MCP error -32600: INSUFFICIENT_BALANCE”才表示积分不足，此时说明 Cindy Art 替代能力并等待用户确认。",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "Cindy",
   "icon": "assets/icon.png",
   "entry": "main.js",
   "settingsHtml": "settings.html",
-  "settingsHeight": 760,
   "slots": [
     "tool",
     "card",
@@ -135,7 +134,7 @@
     },
     {
       "name": "maker_call_tool",
-      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具。素材能力优先使用 Maker；只有错误完整匹配“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，并告知 Cindy Art 可作为替代，等待用户确认后再切换。",
+      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具。若 Runtime 报告项目尚未初始化或缺少 .project/project.json，应说明构建会提交并推送项目，询问用户是否现在构建或预览；用户确认后调用 maker_build，再重试原请求，禁止未经确认自动构建。项目已完成构建前置、Runtime 明确返回 missing_taptap_identity 时，插件会自动调用一次 generate_test_qrcode 并重试原工具；若仍要求屏幕方向等用户选择则停止并询问用户。素材能力优先使用 Maker；只有错误完整匹配“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，并告知 Cindy Art 可作为替代，等待用户确认后再切换。",
       "parameters": {
         "type": "object",
         "properties": {

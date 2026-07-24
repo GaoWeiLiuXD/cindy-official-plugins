@@ -1,6 +1,6 @@
 {
   "name": "@taptap/maker",
-  "version": "0.0.24",
+  "version": "0.0.26",
   "type": "module",
   "description": "TapTap Maker local development CLI and MCP server",
   "main": "dist/maker.js",
@@ -17,6 +17,8 @@
     "skills/taptap-maker-local/",
     "skills/taptap-maker-dev-kit-guide/",
     "skills/update-taptap-mcp/",
+    "docs/",
+    "docs/MAKER_MCP_CONNECTION_TROUBLESHOOTING.md",
     "README.md"
   ],
   "keywords": [

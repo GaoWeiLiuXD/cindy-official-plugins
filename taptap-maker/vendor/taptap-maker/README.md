@@ -30,4 +30,6 @@ This package contains only the Maker CLI/MCP bundle and Maker workflow skills.
 It does not include the legacy TapTap Open API MCP server, proxy, native signer,
 or OpenClaw plugin package contents.
 
-Version: 0.0.24
+Full connection and tool-call troubleshooting guide: `docs/MAKER_MCP_CONNECTION_TROUBLESHOOTING.md`.
+
+Version: 0.0.26

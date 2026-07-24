@@ -95,6 +95,44 @@ function isMissingLogin(error) {
     || message.includes('unauthorized');
 }
 
+function projectSyncFailure(error) {
+  const message = String(error && error.message ? error.message : error);
+  if (isMissingLogin(error)) {
+    return {
+      code: 'AUTH_REQUIRED',
+      message: 'TapTap Maker 登录已失效，请重新连接账号后重试',
+    };
+  }
+  if (/目标路径已被占用|目标目录已被其他内容占用/.test(message)) {
+    return {
+      code: 'TARGET_OCCUPIED',
+      message: '目标子目录已有内容，且无法安全确认属于同一 Maker 项目；请改选父目录或手动处理该子目录',
+    };
+  }
+  if (/Git is required|Git.*not found|未检测到可用的 Git/i.test(message)) {
+    return {
+      code: 'GIT_REQUIRED',
+      message: '本机未检测到 Git，请安装 Git 并重启 Cindy 后重试',
+    };
+  }
+  if (/Python.*(?:setup failed|准备失败)|blocking_prerequisite["']?\s*:\s*["']?python/i.test(message)) {
+    return {
+      code: 'PYTHON_SETUP_FAILED',
+      message: 'Maker 自动准备 Python 环境失败，请检查网络、代理和目录权限后重试',
+    };
+  }
+  if (/timed?\s*out|timeout|Could not resolve host|Network is unreachable|ECONNRESET|ENOTFOUND/i.test(message)) {
+    return {
+      code: 'NETWORK_ERROR',
+      message: '连接 TapTap Maker 超时，请检查网络后重试',
+    };
+  }
+  return {
+    code: 'INIT_FAILED',
+    message: 'Maker 项目初始化失败；请重试，若仍失败可在 Cindy 中打开目标目录后运行 Maker 诊断',
+  };
+}
+
 function runMaker(args, input) {
   return new Promise(function run(resolve, reject) {
     const childApi = globalThis.__CINDY_NODE__;
@@ -507,12 +545,15 @@ async function executeAction(args) {
             ok: true,
             targetDir: target.targetDir,
           });
-        } catch {
+        } catch (error) {
+          const failure = projectSyncFailure(error);
           synced.push({
             id: target.project.id,
             name: target.project.name,
             ok: false,
-            message: '同步失败，请重试',
+            targetDir: target.targetDir,
+            code: failure.code,
+            message: failure.message,
           });
         }
       }
