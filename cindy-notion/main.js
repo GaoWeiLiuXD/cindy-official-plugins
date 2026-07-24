@@ -963,6 +963,25 @@ var TOOL_HANDLERS = {
 /* 设置页连接测试：先 /wake，再用同源 BroadcastChannel 递活。 */
 var bc = new BroadcastChannel('cindy-notion');
 var seenTests = {};
+var latestTestId = '';
+var identityWriteQueue = Promise.resolve();
+
+async function cacheIdentityIfLatest(reqId, identity) {
+  identityWriteQueue = identityWriteQueue.then(async function () {
+    if (latestTestId !== reqId) return;
+    try {
+      var kv = await (await fetch('/kv')).json();
+      if (latestTestId !== reqId) return;
+      kv = kv && typeof kv === 'object' ? kv : {};
+      kv.notionIdentity = identity;
+      await fetch('/kv', { method: 'PUT', body: JSON.stringify(kv) });
+    } catch (e) {
+      /* 身份展示缓存写失败不影响连接测试。 */
+    }
+  });
+  await identityWriteQueue;
+  return latestTestId === reqId;
+}
 
 bc.onmessage = function (event) {
   var message = event && event.data;
@@ -970,9 +989,11 @@ bc.onmessage = function (event) {
   if (seenTests[message.reqId]) return;
   if (Object.keys(seenTests).length > 200) seenTests = {};
   seenTests[message.reqId] = true;
+  latestTestId = message.reqId;
 
   void (async function () {
     var status = await api({ url: API + '/users/me' });
+    if (latestTestId !== message.reqId) return;
     if (status.err) {
       bc.postMessage({
         type: 'test-connection-result',
@@ -989,6 +1010,7 @@ bc.onmessage = function (event) {
     }
     var user = status.data || {};
     var visibility = await probeVisibleContent();
+    if (latestTestId !== message.reqId) return;
     var identity = {
       botName: user.name || 'Notion integration',
       workspaceName: user.bot && user.bot.workspace_name ? user.bot.workspace_name : '',
@@ -999,14 +1021,7 @@ bc.onmessage = function (event) {
       visibleSamples: visibility.err ? [] : visibility.samples,
       visibilityError: visibility.err || '',
     };
-    try {
-      var kv = await (await fetch('/kv')).json();
-      kv = kv && typeof kv === 'object' ? kv : {};
-      kv.notionIdentity = identity;
-      await fetch('/kv', { method: 'PUT', body: JSON.stringify(kv) });
-    } catch (e) {
-      /* 身份展示缓存写失败不影响连接测试。 */
-    }
+    if (!await cacheIdentityIfLatest(message.reqId, identity)) return;
     bc.postMessage({
       type: 'test-connection-result',
       reqId: message.reqId,

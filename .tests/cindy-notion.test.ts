@@ -38,8 +38,15 @@ const settingsSource = readFileSync(
 
 class FakeBroadcastChannel {
   onmessage?: (event: { data?: unknown }) => void;
+  readonly messages: Array<Record<string, unknown>> = [];
 
-  postMessage(): void {}
+  postMessage(message: Record<string, unknown>): void {
+    this.messages.push(message);
+  }
+
+  emit(message: Record<string, unknown>): void {
+    this.onmessage?.({ data: message });
+  }
 }
 
 type EventListener = (event: Record<string, unknown>) => void;
@@ -135,6 +142,18 @@ interface SettingsFetchResponse {
 
 async function flushSettingsTasks(): Promise<void> {
   for (let index = 0; index < 12; index += 1) await Promise.resolve();
+}
+
+async function flushNotionTasks(): Promise<void> {
+  for (let index = 0; index < 20; index += 1) await Promise.resolve();
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
 }
 
 async function createSettingsHarness(
@@ -265,6 +284,19 @@ function createNotionHarness(
   let handler: HostMessageHandler | undefined;
   const requests: CindyFetchRequest[] = [];
   const messages: CindyMessage[] = [];
+  const channel = new FakeBroadcastChannel();
+  let kvState: Record<string, unknown> = {};
+  const hostFetch = vi.fn(async (input: string, init?: { method?: string; body?: string }) => {
+    if (input !== '/kv') throw new Error(`unexpected host request: ${input}`);
+    if ((init?.method ?? 'GET') === 'PUT') {
+      kvState = JSON.parse(init?.body ?? '{}') as Record<string, unknown>;
+      return { status: 204, json: async () => ({}) };
+    }
+    return {
+      status: 200,
+      json: async () => JSON.parse(JSON.stringify(kvState)) as Record<string, unknown>,
+    };
+  });
   const cindy = {
     onHostMessage: vi.fn((nextHandler: HostMessageHandler) => {
       handler = nextHandler;
@@ -287,8 +319,12 @@ function createNotionHarness(
   }).runInContext(
     createContext({
       cindy,
-      BroadcastChannel: FakeBroadcastChannel,
-      fetch: vi.fn(),
+      BroadcastChannel: class {
+        constructor() {
+          return channel;
+        }
+      },
+      fetch: hostFetch,
       setTimeout,
       clearTimeout,
       Number,
@@ -309,6 +345,9 @@ function createNotionHarness(
 
   return {
     requests,
+    channel,
+    hostFetch,
+    getKv: () => JSON.parse(JSON.stringify(kvState)) as Record<string, unknown>,
     async call(tool: string, args: Record<string, unknown> = {}): Promise<CindyMessage> {
       messages.length = 0;
       await handler!({
@@ -382,6 +421,69 @@ describe('Cindy Notion', () => {
       'Notion-Version': '2025-09-03',
     });
     expect(harness.requests).toHaveLength(2);
+  });
+
+  it('并发连接检查只允许最新请求写入身份缓存和回传结果', async () => {
+    const firstUser = deferred<CindyFetchResponse>();
+    const firstVisibility = deferred<CindyFetchResponse>();
+    const secondUser = deferred<CindyFetchResponse>();
+    const secondVisibility = deferred<CindyFetchResponse>();
+    let userCalls = 0;
+    let searchCalls = 0;
+    const harness = createNotionHarness((request) => {
+      if (request.url.endsWith('/users/me')) {
+        userCalls += 1;
+        return userCalls === 1 ? firstUser.promise : secondUser.promise;
+      }
+      if (request.url.endsWith('/search')) {
+        searchCalls += 1;
+        return searchCalls === 1 ? firstVisibility.promise : secondVisibility.promise;
+      }
+      throw new Error(`unexpected request: ${request.url}`);
+    });
+
+    harness.channel.emit({ type: 'test-connection', reqId: 'check-a' });
+    await flushNotionTasks();
+    firstUser.resolve(jsonResponse({
+      id: 'bot-a',
+      name: 'Integration A',
+      bot: { workspace_name: 'Workspace A' },
+    }));
+    await flushNotionTasks();
+
+    harness.channel.emit({ type: 'test-connection', reqId: 'check-b' });
+    await flushNotionTasks();
+    secondUser.resolve(jsonResponse({
+      id: 'bot-b',
+      name: 'Integration B',
+      bot: { workspace_name: 'Workspace B' },
+    }));
+    await flushNotionTasks();
+    secondVisibility.resolve(jsonResponse({
+      results: [{ object: 'page', id: 'page-b', properties: {} }],
+      has_more: false,
+    }));
+    await flushNotionTasks();
+
+    firstVisibility.resolve(jsonResponse({
+      results: [{ object: 'page', id: 'page-a', properties: {} }],
+      has_more: false,
+    }));
+    await flushNotionTasks();
+
+    expect(harness.getKv().notionIdentity).toMatchObject({
+      botId: 'bot-b',
+      workspaceName: 'Workspace B',
+      visibleCount: 1,
+    });
+    expect(harness.hostFetch).toHaveBeenCalledTimes(2);
+    expect(harness.channel.messages).toHaveLength(1);
+    expect(harness.channel.messages[0]).toMatchObject({
+      type: 'test-connection-result',
+      reqId: 'check-b',
+      ok: true,
+      workspaceName: 'Workspace B',
+    });
   });
 
   it('搜索请求正确构造 filter、sort 和 cursor', async () => {
