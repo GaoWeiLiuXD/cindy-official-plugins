@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 2,
+  "id": "google-gmail",
+  "name": "Gmail",
+  "description": "独立连接 Gmail：搜索、阅读、整理邮件并生成草稿或发送邮件。只申请 Gmail 所需权限，授权与令牌由主机托管。",
+  "whenToUse": "需要查 Gmail 邮件、读取邮件正文、整理标签、生成草稿或发送邮件时使用。请先在本插件详情页单独连接 Gmail 账号。",
+  "version": "1.0.4",
+  "author": "Cindy",
+  "icon": "assets/icon.png",
+  "entry": "main.js",
+  "settingsHtml": "settings.html",
+  "slots": ["tool", "network"],
+  "command": "google-gmail",
+  "network": {
+    "hosts": [
+      "accounts.google.com",
+      "oauth2.googleapis.com",
+      "www.googleapis.com",
+      "gmail.googleapis.com"
+    ],
+    "secrets": [
+      {
+        "key": "gmail_account",
+        "label": "Gmail 账号",
+        "source": "oauth",
+        "hint": "只授权 Gmail 权限；到本插件详情页点「连接账号」完成授权",
+        "inject": {
+          "header": "Authorization",
+          "format": "Bearer {value}",
+          "hosts": ["www.googleapis.com", "gmail.googleapis.com"]
+        },
+        "oauth": {
+          "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+          "tokenUrl": "https://oauth2.googleapis.com/token",
+          "clientId": "966060737739-d3dfjdsaace1ur4thk03h3aj4hpnjucq.apps.googleusercontent.com",
+          "clientSecret": "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",
+          "scopes": [
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/gmail.modify"
+          ],
+          "pkce": true,
+          "extraAuthorizeParams": {
+            "access_type": "offline",
+            "prompt": "consent"
+          },
+          "identity": {
+            "url": "https://www.googleapis.com/oauth2/v3/userinfo",
+            "labelPath": "email"
+          }
+        }
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "gmail_accounts",
+      "description": "列出本插件已连接的 Gmail 账号及状态。账号必须先在 Gmail 插件详情页单独授权。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "gmail",
+      "description": "执行 Gmail 操作：search 搜索邮件，read 读取正文，send 发送邮件，draft 保存草稿，modify_labels 修改标签，list_labels 列出标签。发送和整理动作必须由用户明确表达。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["search", "read", "send", "draft", "modify_labels", "list_labels"]
+          },
+          "account": { "type": "string", "description": "账号 id；省略使用本插件默认账号" },
+          "query": { "type": "string", "description": "search 使用 Gmail 搜索语法" },
+          "max_results": { "type": "number", "description": "search 返回条数，默认 5，最大 10" },
+          "message_id": { "type": "string" },
+          "to": { "type": "string", "description": "send/draft 收件人，多个用逗号分隔" },
+          "subject": { "type": "string" },
+          "body_text": { "type": "string" },
+          "add_label_ids": { "type": "array", "items": { "type": "string" } },
+          "remove_label_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["action"]
+      }
+    }
+  ]
+}
