@@ -30,7 +30,9 @@ function normalizeCredentials(value) {
   ) {
     throw new Error('INVALID_EMAIL');
   }
-  if (!/^[A-Za-z]{16}$/.test(authorizationCode)) {
+  // 163 生成的 16 位客户端授权密码可能同时包含字母和数字。
+  // 字符内容由服务器认证；这里只校验去除复制空格后的固定长度，避免误拒绝有效授权码。
+  if (authorizationCode.length !== 16) {
     throw new Error('INVALID_AUTHORIZATION_CODE');
   }
   return { email, authorizationCode };

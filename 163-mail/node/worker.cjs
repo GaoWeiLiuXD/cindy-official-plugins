@@ -66118,7 +66118,7 @@ var require_worker = __commonJS({
       if (!EMAIL_RE.test(email) || !email.endsWith("@163.com") || email.length > 254) {
         throw new Error("INVALID_EMAIL");
       }
-      if (!/^[A-Za-z]{16}$/.test(authorizationCode)) {
+      if (authorizationCode.length !== 16) {
         throw new Error("INVALID_AUTHORIZATION_CODE");
       }
       return { email, authorizationCode };

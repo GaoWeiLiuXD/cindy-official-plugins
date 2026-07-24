@@ -139,7 +139,7 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, '163-mail');
-  assert.equal(manifest.version, '0.1.0');
+  assert.equal(manifest.version, '0.1.1');
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [{
     key: 'mail_163_authorization_code',
@@ -167,7 +167,7 @@ test('设置页把客户端授权密码直接写入 /secrets，BroadcastChannel 
   );
 });
 
-test('Worker 仅接受 @163.com 地址和 16 位字母客户端授权密码', () => {
+test('Worker 仅接受 @163.com 地址和去空格后 16 位的客户端授权密码', () => {
   assert.deepEqual(
     worker.normalizeCredentials({
       email: 'USER@163.COM',
@@ -176,6 +176,16 @@ test('Worker 仅接受 @163.com 地址和 16 位字母客户端授权密码', ()
     {
       email: 'user@163.com',
       authorizationCode: 'abcdefghijklmnop',
+    },
+  );
+  assert.deepEqual(
+    worker.normalizeCredentials({
+      email: 'user@163.com',
+      authorizationCode: 'Ab1c Def2 Gh3i Jk4l',
+    }),
+    {
+      email: 'user@163.com',
+      authorizationCode: 'Ab1cDef2Gh3iJk4l',
     },
   );
   assert.throws(
