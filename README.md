@@ -65,10 +65,12 @@ cindy-art/
 - `main` 的普通 push 只发布本次发生变化的插件目录。
 - Actions 页面手动运行 `Publish Cindy Plugins` 会全量发布当前全部插件，供仓库迁移
   后首次建档或显式重发使用。
-- Workflow 使用 GitHub Actions OIDC（audience `cindy-plugin`）发布；国内地址由
-  Workflow 内的 `CINDY_PLUGIN_SERVER_URL_CN` 固定为
-  `https://plugin.cindy.com.cn`，不需要 Repository Secret、API Key 或 Actions
-  Variable。后续海外发布使用独立的 `CINDY_PLUGIN_SERVER_URL_GLOBAL`。
+- Prod 和 Dev 使用两个独立的 Workflow run，均通过 GitHub Actions OIDC
+  （audience `cindy-plugin`）发布。Prod 固定发布到
+  `https://plugin.cindy.com.cn`；Dev 固定发布到
+  `https://plugin-dev.cindy.com.cn`。两套发布独立打包、独立执行、独立报告结果，
+  一边失败不会影响另一边的 Workflow 状态。地址均固定在 Workflow 中，不需要
+  Repository Secret、API Key 或 Actions Variable。后续海外发布使用独立目标。
 
 修改插件内容时必须同步更新 `ghost.json.version`。同一版本内容不同会被服务端以
 `RELEASE_VERSION_CONFLICT` 拒绝，不会覆盖既有 Release。
