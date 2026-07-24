@@ -66329,12 +66329,34 @@ var require_worker = __commonJS({
       return withImap(credentials, deps, (client) => withMailbox(client, folder, async () => {
         const message = await client.fetchOne(
           action.message_uid,
-          { uid: true, envelope: true, flags: true, internalDate: true, size: true, source: true },
+          { uid: true, envelope: true, flags: true, internalDate: true, size: true },
           { uid: true }
         );
-        if (!message || !message.source) throw new Error("MESSAGE_NOT_FOUND");
-        if (message.source.length > MAX_SOURCE_BYTES) throw new Error("MESSAGE_TOO_LARGE");
-        const parsed = await deps.parseMessage(message.source);
+        if (!message) throw new Error("MESSAGE_NOT_FOUND");
+        if (Number.isFinite(message.size) && message.size > MAX_SOURCE_BYTES) {
+          throw new Error("MESSAGE_TOO_LARGE");
+        }
+        const downloaded = await client.download(
+          action.message_uid,
+          void 0,
+          { uid: true, maxBytes: MAX_SOURCE_BYTES + 1 }
+        );
+        if (!downloaded || !downloaded.content) throw new Error("MESSAGE_NOT_FOUND");
+        if (downloaded.meta && Number.isFinite(downloaded.meta.expectedSize) && downloaded.meta.expectedSize > MAX_SOURCE_BYTES) {
+          downloaded.content.destroy();
+          throw new Error("MESSAGE_TOO_LARGE");
+        }
+        const chunks = [];
+        let sourceBytes = 0;
+        for await (const chunk of downloaded.content) {
+          sourceBytes += chunk.length;
+          if (sourceBytes > MAX_SOURCE_BYTES) {
+            downloaded.content.destroy();
+            throw new Error("MESSAGE_TOO_LARGE");
+          }
+          chunks.push(chunk);
+        }
+        const parsed = await deps.parseMessage(Buffer.concat(chunks, sourceBytes));
         const text = typeof parsed.text === "string" && parsed.text.trim() ? parsed.text : typeof parsed.html === "string" ? parsed.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
         return {
           ...summaryFromMessage(message, folder),
@@ -66417,10 +66439,25 @@ var require_worker = __commonJS({
     async function changeFlags(credentials, action, deps, seen) {
       const folder = action.folder || "INBOX";
       return withImap(credentials, deps, (client) => withMailbox(client, folder, async () => {
-        if (seen) {
-          await client.messageFlagsAdd(action.message_uid, ["\\Seen"], { uid: true });
-        } else {
-          await client.messageFlagsRemove(action.message_uid, ["\\Seen"], { uid: true });
+        const existing = await client.fetchOne(
+          action.message_uid,
+          { uid: true, flags: true },
+          { uid: true }
+        );
+        if (!existing) throw new Error("MESSAGE_NOT_FOUND");
+        const currentFlags = flagsArray(existing.flags);
+        if (currentFlags.includes("\\Seen") !== seen) {
+          const updated = seen ? await client.messageFlagsAdd(action.message_uid, ["\\Seen"], { uid: true }) : await client.messageFlagsRemove(action.message_uid, ["\\Seen"], { uid: true });
+          if (!updated) throw new Error("MESSAGE_NOT_FOUND");
+          const verified = await client.fetchOne(
+            action.message_uid,
+            { uid: true, flags: true },
+            { uid: true }
+          );
+          if (!verified) throw new Error("MESSAGE_NOT_FOUND");
+          if (flagsArray(verified.flags).includes("\\Seen") !== seen) {
+            throw new Error("MESSAGE_UPDATE_FAILED");
+          }
         }
         return { updated: true, folder, uid: action.message_uid, unread: !seen };
       }));
@@ -66431,7 +66468,14 @@ var require_worker = __commonJS({
       if (!target) throw new Error("TARGET_FOLDER_REQUIRED");
       if (target === folder) throw new Error("TARGET_FOLDER_SAME");
       return withImap(credentials, deps, (client) => withMailbox(client, folder, async () => {
+        const existing = await client.fetchOne(
+          action.message_uid,
+          { uid: true },
+          { uid: true }
+        );
+        if (!existing) throw new Error("MESSAGE_NOT_FOUND");
         const moved = await client.messageMove(action.message_uid, target, { uid: true });
+        if (!moved) throw new Error("MESSAGE_NOT_FOUND");
         return {
           moved: true,
           from_folder: folder,

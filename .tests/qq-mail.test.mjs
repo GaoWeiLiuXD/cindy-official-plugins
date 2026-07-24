@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import test from 'node:test';
 import { createContext, Script } from 'node:vm';
 
@@ -106,6 +107,32 @@ function createMainHarness(nodeResponder, initial = {}) {
         resolveToolResult = resolve;
         hostHandler({ type: 'tool-call', tool, args, callId: `call-${tool}` });
       });
+    },
+  };
+}
+
+function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
+  const client = {
+    async connect() {},
+    async logout() {},
+    async getMailboxLock() {
+      return { release() {} };
+    },
+    ...overrides,
+  };
+  return {
+    client,
+    deps: {
+      createImap() {
+        return client;
+      },
+      createSmtp() {
+        throw new Error('unexpected SMTP');
+      },
+      createComposer() {
+        throw new Error('unexpected composer');
+      },
+      parseMessage,
     },
   };
 }
@@ -284,6 +311,144 @@ test('Worker 拒绝 params 伪造的授权码，只信任宿主注入字段', as
     }),
     /授权码/,
   );
+});
+
+test('Worker 不会把不存在或未更新的 UID 误报为标记成功', async () => {
+  let mutationCalls = 0;
+  const missing = createWorkerHarness({
+    async fetchOne() {
+      return false;
+    },
+    async messageFlagsAdd() {
+      mutationCalls += 1;
+      return true;
+    },
+  });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+      { action: 'mark_read', folder: 'INBOX', message_uid: 404 },
+      missing.deps,
+    ),
+    /MESSAGE_NOT_FOUND/,
+  );
+  assert.equal(mutationCalls, 0);
+
+  const unchanged = createWorkerHarness({
+    async fetchOne() {
+      return { uid: 42, flags: new Set() };
+    },
+    async messageFlagsAdd() {
+      mutationCalls += 1;
+      return false;
+    },
+  });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+      { action: 'mark_read', folder: 'INBOX', message_uid: 42 },
+      unchanged.deps,
+    ),
+    /MESSAGE_NOT_FOUND/,
+  );
+  assert.equal(mutationCalls, 1);
+});
+
+test('Worker 移动前验证 UID，同时允许服务器成功但不返回 COPYUID', async () => {
+  let moveCalls = 0;
+  const missing = createWorkerHarness({
+    async fetchOne() {
+      return false;
+    },
+    async messageMove() {
+      moveCalls += 1;
+      return { path: 'INBOX', destination: 'Archive' };
+    },
+  });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+      { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 404 },
+      missing.deps,
+    ),
+    /MESSAGE_NOT_FOUND/,
+  );
+  assert.equal(moveCalls, 0);
+
+  const unchanged = createWorkerHarness({
+    async fetchOne() {
+      return { uid: 42 };
+    },
+    async messageMove() {
+      moveCalls += 1;
+      return false;
+    },
+  });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+      { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
+      unchanged.deps,
+    ),
+    /MESSAGE_NOT_FOUND/,
+  );
+  assert.equal(moveCalls, 1);
+
+  const withoutCopyUid = createWorkerHarness({
+    async fetchOne() {
+      return { uid: 42 };
+    },
+    async messageMove() {
+      moveCalls += 1;
+      return { path: 'INBOX', destination: 'Archive' };
+    },
+  });
+  const result = await worker.performAction(
+    { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+    { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
+    withoutCopyUid.deps,
+  );
+  assert.equal(result.moved, true);
+  assert.equal(result.destination_uid, null);
+  assert.equal(moveCalls, 2);
+});
+
+test('Worker 分块读取邮件，并在解析前拒绝超过 12 MiB 的内容', async () => {
+  const maxSourceBytes = 12 * 1024 * 1024;
+  let parseCalls = 0;
+  const harness = createWorkerHarness({
+    async fetchOne(_uid, query) {
+      assert.equal(query.source, undefined);
+      return {
+        uid: 42,
+        envelope: {},
+        flags: new Set(),
+        size: null,
+      };
+    },
+    async download(_uid, part, options) {
+      assert.equal(part, undefined);
+      assert.equal(options.uid, true);
+      assert.equal(options.maxBytes, maxSourceBytes + 1);
+      return {
+        meta: { expectedSize: null },
+        content: Readable.from([Buffer.alloc(maxSourceBytes + 1)]),
+      };
+    },
+  }, async () => {
+    parseCalls += 1;
+    return {};
+  });
+
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@qq.com', authorizationCode: 'abcdefghijklmnop' },
+      { action: 'read', folder: 'INBOX', message_uid: 42 },
+      harness.deps,
+    ),
+    /MESSAGE_TOO_LARGE/,
+  );
+  assert.equal(parseCalls, 0);
 });
 
 test('Worker 将认证、网络与频控错误转换成可行动文案', () => {
