@@ -28,6 +28,9 @@
     "google-sheets": {
       "audience": "all"
     },
+    "qq-mail": {
+      "audience": "all"
+    },
     "taptap-maker": {
       "audience": "all"
     },
