@@ -31,11 +31,216 @@ const notionSource = readFileSync(
   new URL('../cindy-notion/main.js', import.meta.url),
   'utf8',
 );
+const settingsSource = readFileSync(
+  new URL('../cindy-notion/settings.js', import.meta.url),
+  'utf8',
+);
 
 class FakeBroadcastChannel {
   onmessage?: (event: { data?: unknown }) => void;
 
   postMessage(): void {}
+}
+
+type EventListener = (event: Record<string, unknown>) => void;
+
+class FakeSettingsElement {
+  textContent = '';
+  className = '';
+  hidden = false;
+  disabled = false;
+  value = '';
+  type = 'text';
+  placeholder = '';
+  readonly attributes = new Map<string, string>();
+  readonly children: FakeSettingsElement[] = [];
+  readonly classNames = new Set<string>();
+  readonly listeners = new Map<string, EventListener[]>();
+  readonly queryResults = new Map<string, FakeSettingsElement>();
+  parent?: FakeSettingsElement;
+
+  readonly classList = {
+    add: (...names: string[]) => names.forEach((name) => this.classNames.add(name)),
+    remove: (...names: string[]) => names.forEach((name) => this.classNames.delete(name)),
+    toggle: (name: string, force?: boolean) => {
+      const enabled = force ?? !this.classNames.has(name);
+      if (enabled) this.classNames.add(name);
+      else this.classNames.delete(name);
+      return enabled;
+    },
+  };
+
+  constructor(readonly id = '') {}
+
+  setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
+  }
+
+  appendChild(child: FakeSettingsElement): FakeSettingsElement {
+    child.parent = this;
+    this.children.push(child);
+    return child;
+  }
+
+  querySelector(selector: string): FakeSettingsElement | null {
+    return this.queryResults.get(selector) ?? null;
+  }
+
+  addEventListener(type: string, listener: EventListener): void {
+    const listeners = this.listeners.get(type) ?? [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  emit(type: string, event: Record<string, unknown> = {}): void {
+    for (const listener of this.listeners.get(type) ?? []) listener(event);
+  }
+
+  closest(selector: string): FakeSettingsElement | null {
+    return selector === '.step' ? this.parent ?? null : null;
+  }
+
+  focus(): void {}
+}
+
+class FakeSettingsBroadcastChannel {
+  readonly listeners = new Set<EventListener>();
+  removeCalls = 0;
+
+  addEventListener(type: string, listener: EventListener): void {
+    if (type === 'message') this.listeners.add(listener);
+  }
+
+  removeEventListener(type: string, listener: EventListener): void {
+    if (type === 'message') {
+      this.removeCalls += 1;
+      this.listeners.delete(listener);
+    }
+  }
+
+  postMessage(): void {}
+}
+
+interface SettingsFetchResponse {
+  status: number;
+  json?: () => Promise<unknown>;
+}
+
+async function flushSettingsTasks(): Promise<void> {
+  for (let index = 0; index < 12; index += 1) await Promise.resolve();
+}
+
+async function createSettingsHarness(
+  respond?: (url: string, method: string) => SettingsFetchResponse | undefined,
+) {
+  const elements = new Map<string, FakeSettingsElement>();
+  const stepHeads: FakeSettingsElement[] = [];
+  const add = (id: string) => {
+    const element = new FakeSettingsElement(id);
+    elements.set(id, element);
+    return element;
+  };
+  const addStep = (id: string) => {
+    const step = add(id);
+    const head = new FakeSettingsElement();
+    const result = new FakeSettingsElement();
+    const chevron = new FakeSettingsElement();
+    head.parent = step;
+    step.queryResults.set('.step-head', head);
+    step.queryResults.set('.step-result', result);
+    step.queryResults.set('.chevron', chevron);
+    stepHeads.push(head);
+  };
+
+  [
+    'status',
+    'connection-row',
+    'hero-status',
+    'workspace-meta',
+    'steps-summary',
+    'clear',
+    'rebind',
+    'test',
+    'steps-toggle',
+    'toggle-copy',
+    'visible-list',
+    'token',
+    'eye',
+    'save',
+  ].forEach(add);
+  addStep('step-create');
+  addStep('step-token');
+  addStep('step-access');
+  elements.get('token')!.type = 'password';
+
+  const stepsSection = new FakeSettingsElement();
+  const toggleChevron = new FakeSettingsElement();
+  const channel = new FakeSettingsBroadcastChannel();
+  const requests: Array<{ url: string; method: string }> = [];
+  const fetchMock = vi.fn(async (input: string, init?: { method?: string }) => {
+    const method = init?.method ?? 'GET';
+    requests.push({ url: input, method });
+    const custom = respond?.(input, method);
+    if (custom) return custom;
+    if (input === '/secrets') {
+      return {
+        status: 200,
+        json: async () => [{ key: 'notion_token', saved: true, tail: '1234' }],
+      };
+    }
+    if (input === '/kv') {
+      return {
+        status: 200,
+        json: async () => ({
+          notionIdentity: {
+            botId: 'bot-id',
+            workspaceName: 'Acme',
+            visibilityChecked: true,
+            visibilityError: '',
+            visibleCount: 1,
+            visibleHasMore: false,
+            visibleSamples: [],
+          },
+        }),
+      };
+    }
+    return { status: 204, json: async () => ({}) };
+  });
+  const document = {
+    getElementById: (id: string) => elements.get(id) ?? null,
+    querySelector: (selector: string) => {
+      if (selector === '.steps-section') return stepsSection;
+      if (selector === '.toggle-chevron') return toggleChevron;
+      return null;
+    },
+    querySelectorAll: (selector: string) => selector === '.step-head' ? stepHeads : [],
+    createElement: () => new FakeSettingsElement(),
+  };
+
+  new Script(settingsSource, {
+    filename: 'builtin-ghosts/official/cindy-notion/settings.js',
+  }).runInContext(
+    createContext({
+      document,
+      BroadcastChannel: class {
+        constructor() {
+          return channel;
+        }
+      },
+      fetch: fetchMock,
+      setTimeout,
+      clearTimeout,
+      setInterval,
+      clearInterval,
+      Date,
+      Boolean,
+      Array,
+      JSON,
+    }),
+  );
+  await flushSettingsTasks();
+
+  return { channel, elements, fetchMock, requests };
 }
 
 function jsonResponse(data: unknown, status = 200): CindyFetchResponse {
@@ -367,5 +572,42 @@ describe('Cindy Notion', () => {
     expect(result.ok).toBe(false);
     expect(result.message).toContain('重新连接');
     expect(result.message).not.toContain('API token is invalid');
+  });
+});
+
+describe('Cindy Notion settings', () => {
+  it('密钥删除失败时保留身份缓存并显示失败', async () => {
+    const harness = await createSettingsHarness((url, method) => {
+      if (url === '/secrets/notion_token' && method === 'DELETE') {
+        return { status: 500, json: async () => ({}) };
+      }
+      return undefined;
+    });
+
+    harness.elements.get('clear')!.emit('click');
+    await flushSettingsTasks();
+
+    expect(harness.elements.get('status')!.textContent).toBe('清除失败，请重试');
+    expect(harness.requests).not.toContainEqual({ url: '/kv', method: 'PUT' });
+  });
+
+  it('连接检查超时时注销本次 BroadcastChannel 监听器', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = await createSettingsHarness();
+
+      harness.elements.get('test')!.emit('click');
+      await flushSettingsTasks();
+      expect(harness.channel.listeners.size).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(15_000);
+      await flushSettingsTasks();
+
+      expect(harness.channel.removeCalls).toBe(1);
+      expect(harness.channel.listeners.size).toBe(0);
+      expect(harness.elements.get('status')!.textContent).toBe('检查超时——请稍后重试');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

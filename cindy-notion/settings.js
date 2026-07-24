@@ -278,6 +278,7 @@
     var deadline = setTimeout(function () {
       if (settled) return;
       settled = true;
+      bc.removeEventListener('message', onMessage);
       if (resendTimer) clearInterval(resendTimer);
       showStatus('检查超时——请稍后重试', true);
       void load();
@@ -321,7 +322,10 @@
   async function clearConnection() {
     $('clear').disabled = true;
     try {
-      await fetch('/secrets/' + KEY, { method: 'DELETE' });
+      var response = await fetch('/secrets/' + KEY, { method: 'DELETE' });
+      if (response.status !== 204) {
+        throw new Error('secret delete failed');
+      }
       try {
         var kv = await (await fetch('/kv')).json();
         if (kv && typeof kv === 'object') {
