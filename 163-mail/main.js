@@ -9,7 +9,10 @@
 /* global BroadcastChannel, cindy, fetch, setTimeout */
 
 var SETTINGS_CHANNEL = '163-mail-settings';
-var SECRET_KEY = 'mail_163_authorization_code';
+var SECRET_KEYS = {
+  a: 'mail_163_authorization_code',
+  b: 'mail_163_authorization_code_b',
+};
 var settingsRequests = new Map();
 
 function isObject(value) {
@@ -28,6 +31,12 @@ function normalizeEmail(value) {
   return email;
 }
 
+function normalizeCredentialSlot(value) {
+  if (value === undefined || value === null || value === '') return 'a';
+  if (value !== 'a' && value !== 'b') throw new Error('163 邮箱凭证槽位无效，请重新连接');
+  return value;
+}
+
 async function readJson(path) {
   var response = await fetch(path);
   if (!response.ok) throw new Error('读取 163 邮箱配置失败');
@@ -35,27 +44,38 @@ async function readJson(path) {
   return value;
 }
 
-async function loadAccountState() {
+async function loadStoredAccount() {
   var values = await Promise.all([readJson('/kv'), readJson('/secrets')]);
   var kv = isObject(values[0]) ? values[0] : {};
   var secretItems = Array.isArray(values[1]) ? values[1] : [];
   var email = typeof kv.email === 'string' ? kv.email.trim().toLowerCase() : '';
+  var credentialSlot = normalizeCredentialSlot(kv.credentialSlot);
   var secretSaved = secretItems.some(function hasSavedSecret(item) {
-    return isObject(item) && item.key === SECRET_KEY && item.saved === true;
+    return isObject(item) && item.key === SECRET_KEYS[credentialSlot] && item.saved === true;
   });
   return {
     connected: Boolean(email && secretSaved),
     email: email || null,
+    credentialSlot: credentialSlot,
     persistence: 'cindy-safe-storage',
   };
 }
 
-async function requireConfiguredEmail() {
-  var state = await loadAccountState();
+async function loadAccountState() {
+  var state = await loadStoredAccount();
+  return {
+    connected: state.connected,
+    email: state.email,
+    persistence: state.persistence,
+  };
+}
+
+async function requireConfiguredAccount() {
+  var state = await loadStoredAccount();
   if (!state.connected || !state.email) {
     throw new Error('尚未配置 163 邮箱，请到「163 邮箱」插件详情页完成连接');
   }
-  return state.email;
+  return { email: state.email, credentialSlot: state.credentialSlot };
 }
 
 async function nodeRequest(method, params, timeoutMs) {
@@ -75,7 +95,11 @@ async function nodeRequest(method, params, timeoutMs) {
 async function handleSettingsRequest(action, payload) {
   if (action !== 'connect') throw new Error('未知设置动作');
   var email = normalizeEmail(payload.email);
-  return nodeRequest('account/connect', { email: email }, 45000);
+  var credentialSlot = normalizeCredentialSlot(payload.credentialSlot);
+  return nodeRequest('account/connect', {
+    email: email,
+    credentialSlot: credentialSlot,
+  }, 45000);
 }
 
 var settingsChannel = typeof BroadcastChannel === 'function'
@@ -193,9 +217,10 @@ async function runMail(args) {
   }
 
   try {
-    var email = await requireConfiguredEmail();
+    var account = await requireConfiguredAccount();
     var result = await nodeRequest('mail/action', {
-      email: email,
+      email: account.email,
+      credentialSlot: account.credentialSlot,
       action: action,
     }, action.action === 'send' || action.action === 'draft' ? 60000 : 45000);
     return { ok: true, result: result };

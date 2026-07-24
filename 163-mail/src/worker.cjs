@@ -15,7 +15,10 @@ const MAIL_163 = Object.freeze({
 const MAX_BODY_CHARS = 20000;
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SECRET_KEY = 'mail_163_authorization_code';
+const SECRET_KEYS = Object.freeze({
+  a: 'mail_163_authorization_code',
+  b: 'mail_163_authorization_code_b',
+});
 
 function normalizeCredentials(value) {
   const input = value && typeof value === 'object' ? value : {};
@@ -46,8 +49,16 @@ function consumeRequestCredentials(request) {
   const params = request.params && typeof request.params === 'object' ? request.params : {};
   const cindy = request.cindy && typeof request.cindy === 'object' ? request.cindy : {};
   const secrets = cindy.secrets && typeof cindy.secrets === 'object' ? cindy.secrets : {};
-  const rawCode = secrets[SECRET_KEY];
-  secrets[SECRET_KEY] = '';
+  const credentialSlot = params.credentialSlot === undefined ? 'a' : params.credentialSlot;
+  const rawCode = credentialSlot === 'a' || credentialSlot === 'b'
+    ? secrets[SECRET_KEYS[credentialSlot]]
+    : undefined;
+  Object.values(SECRET_KEYS).forEach((key) => {
+    secrets[key] = '';
+  });
+  if (credentialSlot !== 'a' && credentialSlot !== 'b') {
+    throw new Error('INVALID_CREDENTIAL_SLOT');
+  }
   return normalizeCredentials({
     email: params.email,
     authorizationCode: rawCode,
@@ -384,6 +395,7 @@ async function saveDraft(credentials, action, deps) {
     return withImap(credentials, deps, async (client) => {
       const folder = await findDraftFolder(client);
       const appended = await client.append(folder, info.message, ['\\Draft'], new Date());
+      if (!appended) throw new Error('DRAFT_SAVE_FAILED');
       return {
         draft: true,
         folder,
@@ -445,7 +457,6 @@ async function moveMessage(credentials, action, deps) {
     const destinationUid = moved.uidMap && moved.uidMap.get
       ? (moved.uidMap.get(action.message_uid) || null)
       : null;
-    if (!destinationUid) throw new Error('MESSAGE_MOVE_UNCONFIRMED');
     return {
       moved: true,
       from_folder: folder,
@@ -535,11 +546,10 @@ function humanizeError(error) {
   if (message === 'DRAFT_FOLDER_NOT_FOUND') {
     return '没有找到 163 邮箱草稿箱，请先调用 list_folders 确认服务器文件夹';
   }
+  if (message === 'DRAFT_SAVE_FAILED') return '163 邮箱未能保存草稿，请稍后重试';
   if (message === 'TARGET_FOLDER_REQUIRED') return 'move 需要目标文件夹';
   if (message === 'TARGET_FOLDER_SAME') return '目标文件夹不能与当前文件夹相同';
-  if (message === 'MESSAGE_MOVE_UNCONFIRMED') {
-    return '无法确认邮件是否已移动，请重新搜索邮箱后再操作';
-  }
+  if (message === 'INVALID_CREDENTIAL_SLOT') return '163 邮箱凭证状态无效，请重新连接';
   if (message === 'RECIPIENT_REQUIRED') return '请至少填写一个收件人';
   if (message === 'INVALID_RECIPIENT') return '收件人、抄送或密送地址格式不正确';
   if (message === 'INVALID_SUBJECT') return '邮件主题格式不正确';

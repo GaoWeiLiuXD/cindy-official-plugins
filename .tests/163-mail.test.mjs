@@ -40,8 +40,14 @@ function createMainHarness(nodeResponder, initial = {}) {
   FakeBroadcastChannel.instances.length = 0;
   const nodeRequests = [];
   const sent = [];
-  const kv = { email: initial.email || 'user@163.com' };
-  let secretSaved = initial.secretSaved !== false;
+  const kv = {
+    email: initial.email || 'user@163.com',
+    credentialSlot: initial.credentialSlot || 'a',
+  };
+  const secretSaved = {
+    a: initial.secretSaved !== false,
+    b: initial.secretSavedB === true,
+  };
   let hostHandler;
   let resolveToolResult;
   const fetchCalls = [];
@@ -68,7 +74,10 @@ function createMainHarness(nodeResponder, initial = {}) {
     fetchCalls.push({ path, options });
     if (path === '/kv') return response({ ...kv });
     if (path === '/secrets') {
-      return response([{ key: 'mail_163_authorization_code', saved: secretSaved }]);
+      return response([
+        { key: 'mail_163_authorization_code', saved: secretSaved.a },
+        { key: 'mail_163_authorization_code_b', saved: secretSaved.b },
+      ]);
     }
     return response(null, false);
   }
@@ -89,8 +98,8 @@ function createMainHarness(nodeResponder, initial = {}) {
     fetchCalls,
     nodeRequests,
     sent,
-    setSecretSaved(value) {
-      secretSaved = value;
+    setSecretSaved(slot, value) {
+      secretSaved[slot] = value;
     },
     async settings(action, payload, reqId = `settings-${action}`) {
       const channel = FakeBroadcastChannel.instances[0];
@@ -139,15 +148,24 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, '163-mail');
-  assert.equal(manifest.version, '0.1.1');
+  assert.equal(manifest.version, '0.1.2');
   assert.deepEqual(manifest.slots, ['tool', 'node']);
-  assert.deepEqual(manifest.node.secretBindings, [{
-    key: 'mail_163_authorization_code',
-    label: '客户端授权密码',
-    methods: ['account/connect', 'mail/action'],
-    hint: '163 邮箱生成的 16 位客户端授权密码，不是邮箱登录密码',
-    url: 'https://help.mail.163.com/faqDetail.do?code=d7a5dc8471cd0c0e8b4b8f4f8e49998b374173cfe9171305fa1ce630d7f67ac2a5feb28b66796d3b',
-  }]);
+  assert.deepEqual(manifest.node.secretBindings, [
+    {
+      key: 'mail_163_authorization_code',
+      label: '客户端授权密码 A',
+      methods: ['account/connect', 'mail/action'],
+      hint: '163 邮箱生成的 16 位客户端授权密码，不是邮箱登录密码',
+      url: 'https://help.mail.163.com/faqDetail.do?code=d7a5dc8471cd0c0e8b4b8f4f8e49998b374173cfe9171305fa1ce630d7f67ac2a5feb28b66796d3b',
+    },
+    {
+      key: 'mail_163_authorization_code_b',
+      label: '客户端授权密码 B',
+      methods: ['account/connect', 'mail/action'],
+      hint: '163 邮箱生成的 16 位客户端授权密码，不是邮箱登录密码',
+      url: 'https://help.mail.163.com/faqDetail.do?code=d7a5dc8471cd0c0e8b4b8f4f8e49998b374173cfe9171305fa1ce630d7f67ac2a5feb28b66796d3b',
+    },
+  ]);
   assert.match(manifest.description, /Cindy 安全保存/);
   assert.equal(worker.MAIL_163.imapHost, 'imap.163.com');
   assert.equal(worker.MAIL_163.imapPort, 993);
@@ -155,16 +173,31 @@ test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(worker.MAIL_163.smtpPort, 465);
 });
 
-test('设置页把客户端授权密码直接写入 /secrets，BroadcastChannel 只发送邮箱', () => {
-  assert.match(settingsSource, /fetch\('\/secrets\/'\s*\+\s*SECRET_KEY/);
+test('设置页使用双凭证槽安全切换，BroadcastChannel 不发送客户端授权密码', () => {
+  assert.match(settingsSource, /fetch\('\/secrets\/'\s*\+\s*SECRET_KEYS\[credentialSlot\]/);
   assert.match(settingsSource, /body:\s*JSON\.stringify\(\{\s*value:\s*value\s*\}\)/);
-  assert.match(settingsSource, /payload:\s*\{\s*email:\s*email\s*\}/);
+  assert.match(
+    settingsSource,
+    /payload:\s*\{\s*email:\s*email,\s*credentialSlot:\s*credentialSlot\s*\}/,
+  );
   assert.doesNotMatch(mainSource, /authorizationCode/);
   assert.match(
     settingsSource,
     /fetch\('\/wake'\)\.then\(beginPosting,\s*beginPosting\)/,
     '设置页必须等 /wake 完成后再开始发送连接请求',
   );
+  const stageIndex = settingsSource.indexOf(
+    'await saveAuthorizationCode(candidateSlot, authorizationCode)',
+  );
+  const validateIndex = settingsSource.indexOf(
+    'await sendConnect(email, candidateSlot, 50000)',
+  );
+  const commitIndex = settingsSource.indexOf(
+    'await saveAccountState(email, candidateSlot)',
+  );
+  assert.ok(stageIndex >= 0 && stageIndex < validateIndex);
+  assert.ok(validateIndex < commitIndex);
+  assert.match(settingsSource, /render\(previousState\s*\|\|\s*\{\s*connected:\s*false\s*\}\)/);
 });
 
 test('Worker 仅接受 @163.com 地址和去空格后 16 位的客户端授权密码', () => {
@@ -204,7 +237,7 @@ test('Worker 仅接受 @163.com 地址和去空格后 16 位的客户端授权�
   );
 });
 
-test('main.js 的连接与邮件请求都只携带非敏感邮箱地址', async () => {
+test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', async () => {
   const harness = createMainHarness(async (request) => ({
     ok: true,
     result: request.method === 'account/connect'
@@ -212,17 +245,21 @@ test('main.js 的连接与邮件请求都只携带非敏感邮箱地址', async 
       : { folder: 'INBOX', messages: [] },
   }));
 
-  const connected = await harness.settings('connect', { email: 'USER@163.com' });
+  const connected = await harness.settings('connect', {
+    email: 'USER@163.com',
+    credentialSlot: 'b',
+  });
   assert.equal(connected.ok, true);
   assert.equal(
     JSON.stringify(harness.nodeRequests[0].params),
-    JSON.stringify({ email: 'user@163.com' }),
+    JSON.stringify({ email: 'user@163.com', credentialSlot: 'b' }),
   );
 
   const result = await harness.call('mail_163', { action: 'search', text: '账单' });
   assert.equal(result.ok, true);
   assert.equal(harness.nodeRequests[1].method, 'mail/action');
   assert.equal(harness.nodeRequests[1].params.email, 'user@163.com');
+  assert.equal(harness.nodeRequests[1].params.credentialSlot, 'a');
   assert.equal('credentials' in harness.nodeRequests[1].params, false);
   assert.equal('authorizationCode' in harness.nodeRequests[1].params, false);
 });
@@ -242,7 +279,7 @@ test('状态取自 Cindy 持久存储，不依赖 Worker 是否仍在运行', as
   );
   assert.equal(harness.nodeRequests.length, 0);
 
-  harness.setSecretSaved(false);
+  harness.setSecretSaved('a', false);
   const disconnected = await harness.call('mail_163_status');
   assert.equal(disconnected.result.connected, false);
   assert.equal(disconnected.result.email, 'user@163.com');
@@ -309,8 +346,13 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
   };
   const connectRequest = {
     method: 'account/connect',
-    params: { email: 'user@163.com' },
-    cindy: { secrets: { mail_163_authorization_code: 'abcdefghijklmnop' } },
+    params: { email: 'user@163.com', credentialSlot: 'b' },
+    cindy: {
+      secrets: {
+        mail_163_authorization_code: 'unused-old-secret',
+        mail_163_authorization_code_b: 'abcdefghijklmnop',
+      },
+    },
   };
   const connected = await worker.handleRequest(connectRequest, {
     ...deps,
@@ -323,20 +365,28 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
   });
   assert.equal(connected.persistence, 'cindy-safe-storage');
   assert.equal(connectRequest.cindy.secrets.mail_163_authorization_code, '');
+  assert.equal(connectRequest.cindy.secrets.mail_163_authorization_code_b, '');
 
   calls.length = 0;
   const actionRequest = {
     method: 'mail/action',
     params: {
       email: 'user@163.com',
+      credentialSlot: 'a',
       action: { action: 'list_folders' },
     },
-    cindy: { secrets: { mail_163_authorization_code: 'abcdefghijklmnop' } },
+    cindy: {
+      secrets: {
+        mail_163_authorization_code: 'abcdefghijklmnop',
+        mail_163_authorization_code_b: 'unused-new-secret',
+      },
+    },
   };
   const result = await worker.handleRequest(actionRequest, deps);
   assert.deepEqual(calls, ['connect', 'list', 'logout']);
   assert.equal(result.folders[0].path, 'INBOX');
   assert.equal(actionRequest.cindy.secrets.mail_163_authorization_code, '');
+  assert.equal(actionRequest.cindy.secrets.mail_163_authorization_code_b, '');
   assert.equal(JSON.stringify(result).includes('abcdefghijklmnop'), false);
 });
 
@@ -395,7 +445,7 @@ test('Worker 不会把不存在或未更新的 UID 误报为标记成功', async
   assert.equal(mutationCalls, 1);
 });
 
-test('Worker 仅在服务器返回目标 UID 映射时报告移动成功', async () => {
+test('Worker 以 messageMove 结果判断移动成功，COPYUID 映射为可选信息', async () => {
   let moveCalls = 0;
   const missing = createWorkerHarness({
     async fetchOne() {
@@ -444,14 +494,13 @@ test('Worker 仅在服务器返回目标 UID 映射时报告移动成功', async
       return { path: 'INBOX', destination: 'Archive' };
     },
   });
-  await assert.rejects(
-    worker.performAction(
-      { email: 'user@163.com', authorizationCode: 'abcdefghijklmnop' },
-      { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
-      withoutCopyUid.deps,
-    ),
-    /MESSAGE_MOVE_UNCONFIRMED/,
+  const withoutCopyUidResult = await worker.performAction(
+    { email: 'user@163.com', authorizationCode: 'abcdefghijklmnop' },
+    { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
+    withoutCopyUid.deps,
   );
+  assert.equal(withoutCopyUidResult.moved, true);
+  assert.equal(withoutCopyUidResult.destination_uid, null);
 
   const withCopyUid = createWorkerHarness({
     async fetchOne() {
@@ -470,6 +519,37 @@ test('Worker 仅在服务器返回目标 UID 映射时报告移动成功', async
   assert.equal(result.moved, true);
   assert.equal(result.destination_uid, 142);
   assert.equal(moveCalls, 3);
+});
+
+test('Worker 不会把 IMAP append 返回 false 误报为草稿保存成功', async () => {
+  const harness = createWorkerHarness({
+    async list() {
+      return [{ path: 'Drafts', specialUse: '\\Drafts' }];
+    },
+    async append() {
+      return false;
+    },
+  });
+  harness.deps.createComposer = () => ({
+    async sendMail() {
+      return { message: Buffer.from('Subject: Test\r\n\r\nDraft') };
+    },
+    close() {},
+  });
+
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@163.com', authorizationCode: 'abcdefghijklmnop' },
+      {
+        action: 'draft',
+        to: 'recipient@example.com',
+        subject: 'Test',
+        body_text: 'Draft',
+      },
+      harness.deps,
+    ),
+    /DRAFT_SAVE_FAILED/,
+  );
 });
 
 test('Worker 分块读取邮件，并在解析前拒绝超过 12 MiB 的内容', async () => {
@@ -517,5 +597,5 @@ test('Worker 将认证、网络与频控错误转换成可行动文案', () => {
   );
   assert.match(worker.humanizeError(Object.assign(new Error('connect timed out'), { code: 'ETIMEDOUT' })), /网络/);
   assert.match(worker.humanizeError(new Error('Too many simultaneous connections')), /稍后/);
-  assert.match(worker.humanizeError(new Error('MESSAGE_MOVE_UNCONFIRMED')), /重新搜索/);
+  assert.match(worker.humanizeError(new Error('DRAFT_SAVE_FAILED')), /草稿/);
 });

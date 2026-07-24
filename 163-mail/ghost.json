@@ -4,7 +4,7 @@
   "name": "163 邮箱",
   "description": "通过 163 邮箱 IMAP/SMTP 搜索、阅读、整理邮件，并创建草稿或发送邮件。客户端授权密码由 Cindy 安全保存，仅在执行邮箱请求时临时提供给插件 Worker。",
   "whenToUse": "需要查找、阅读或整理 163 邮箱邮件，以及创建草稿或发送邮件时使用。首次使用前请在插件详情页输入 163 邮箱地址和客户端授权密码并完成连接测试。",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Cindy",
   "icon": "assets/icon.png",
   "entry": "main.js",
@@ -22,7 +22,17 @@
     "secretBindings": [
       {
         "key": "mail_163_authorization_code",
-        "label": "客户端授权密码",
+        "label": "客户端授权密码 A",
+        "methods": [
+          "account/connect",
+          "mail/action"
+        ],
+        "hint": "163 邮箱生成的 16 位客户端授权密码，不是邮箱登录密码",
+        "url": "https://help.mail.163.com/faqDetail.do?code=d7a5dc8471cd0c0e8b4b8f4f8e49998b374173cfe9171305fa1ce630d7f67ac2a5feb28b66796d3b"
+      },
+      {
+        "key": "mail_163_authorization_code_b",
+        "label": "客户端授权密码 B",
         "methods": [
           "account/connect",
           "mail/action"

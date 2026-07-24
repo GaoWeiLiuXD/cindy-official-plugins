@@ -2,7 +2,10 @@
   'use strict';
 
   var CHANNEL = '163-mail-settings';
-  var SECRET_KEY = 'mail_163_authorization_code';
+  var SECRET_KEYS = {
+    a: 'mail_163_authorization_code',
+    b: 'mail_163_authorization_code_b',
+  };
   var channel = new BroadcastChannel(CHANNEL);
   var pending = {};
 
@@ -51,40 +54,59 @@
       : {};
     var secretItems = Array.isArray(values[1]) ? values[1] : [];
     var email = typeof kv.email === 'string' ? kv.email.trim().toLowerCase() : '';
-    var secretSaved = secretItems.some(function hasSavedSecret(item) {
-      return item && item.key === SECRET_KEY && item.saved === true;
+    var credentialSlot = kv.credentialSlot === 'b' ? 'b' : 'a';
+    var savedSlots = { a: false, b: false };
+    secretItems.forEach(function recordSavedSecret(item) {
+      if (!item || item.saved !== true) return;
+      if (item.key === SECRET_KEYS.a) savedSlots.a = true;
+      if (item.key === SECRET_KEYS.b) savedSlots.b = true;
     });
-    return { connected: Boolean(email && secretSaved), email: email || null };
+    return {
+      connected: Boolean(email && savedSlots[credentialSlot]),
+      email: email || null,
+      credentialSlot: credentialSlot,
+      savedSlots: savedSlots,
+    };
   }
 
-  async function saveEmail(email) {
+  async function saveAccountState(email, credentialSlot) {
     var current = await readJson('/kv');
     var data = current && typeof current === 'object' && !Array.isArray(current) ? current : {};
     data.email = email;
+    data.credentialSlot = credentialSlot;
     var response = await fetch('/kv', { method: 'PUT', body: JSON.stringify(data) });
-    if (!response.ok) throw new Error('保存 163 邮箱地址失败');
+    if (!response.ok) throw new Error('保存 163 邮箱连接状态失败');
   }
 
-  async function saveAuthorizationCode(value) {
-    var response = await fetch('/secrets/' + SECRET_KEY, {
+  async function clearAccountState() {
+    var current = await readJson('/kv');
+    var data = current && typeof current === 'object' && !Array.isArray(current) ? current : {};
+    delete data.email;
+    delete data.credentialSlot;
+    var response = await fetch('/kv', { method: 'PUT', body: JSON.stringify(data) });
+    if (!response.ok) throw new Error('清除 163 邮箱连接状态失败');
+  }
+
+  async function saveAuthorizationCode(credentialSlot, value) {
+    var response = await fetch('/secrets/' + SECRET_KEYS[credentialSlot], {
       method: 'PUT',
       body: JSON.stringify({ value: value }),
     });
     if (!response.ok) throw new Error('安全保存客户端授权密码失败');
   }
 
-  async function removeAuthorizationCode() {
-    var response = await fetch('/secrets/' + SECRET_KEY, { method: 'DELETE' });
+  async function removeAuthorizationCode(credentialSlot) {
+    var response = await fetch('/secrets/' + SECRET_KEYS[credentialSlot], { method: 'DELETE' });
     if (!response.ok) throw new Error('清除客户端授权密码失败');
   }
 
-  function sendConnect(email, timeoutMs) {
+  function sendConnect(email, credentialSlot, timeoutMs) {
     var reqId = requestId();
     var message = {
       type: 'settings-request',
       reqId: reqId,
       action: 'connect',
-      payload: { email: email },
+      payload: { email: email, credentialSlot: credentialSlot },
     };
     return new Promise(function (resolve, reject) {
       var settled = false;
@@ -134,26 +156,46 @@
     setBusy(true);
     showStatus('正在安全保存客户端授权密码并测试 IMAP 和 SMTP 连接…');
     $('authorizationCode').value = '';
-    var secretStored = false;
+    var previousState = null;
+    var candidateSlot = 'a';
+    var candidateStored = false;
+    var committed = false;
     try {
-      await saveEmail(email);
-      await saveAuthorizationCode(authorizationCode);
-      secretStored = true;
+      previousState = await loadState();
+      candidateSlot = previousState.savedSlots[previousState.credentialSlot]
+        ? (previousState.credentialSlot === 'a' ? 'b' : 'a')
+        : previousState.credentialSlot;
+      await saveAuthorizationCode(candidateSlot, authorizationCode);
+      candidateStored = true;
       authorizationCode = '';
-      var state = await sendConnect(email, 50000);
-      render(state);
+      var state = await sendConnect(email, candidateSlot, 50000);
+      await saveAccountState(email, candidateSlot);
+      committed = true;
+      render({ connected: true, email: state.email || email });
       showStatus('连接成功。客户端授权密码已由 Cindy 安全保存。');
-    } catch (error) {
-      authorizationCode = '';
-      // 测试未通过时不保留未经验证的客户端授权密码；清理失败不覆盖原始错误。
-      if (secretStored) {
+
+      // 新凭证验证并提交成功后，再尽力清除旧槽位；清理失败不会影响新连接。
+      if (
+        previousState.credentialSlot !== candidateSlot
+        && previousState.savedSlots[previousState.credentialSlot]
+      ) {
         try {
-          await removeAuthorizationCode();
-        } catch (_removeError) {
-          // 后续可通过“断开并清除”再次移除。
+          await removeAuthorizationCode(previousState.credentialSlot);
+        } catch (_removeOldError) {
+          // 旧槽位已不再被引用，下次连接或断开时会再次清理。
         }
       }
-      render({ connected: false });
+    } catch (error) {
+      authorizationCode = '';
+      // 测试或提交未通过时只清理候选槽位，原有邮箱和有效凭证保持不变。
+      if (candidateStored && !committed) {
+        try {
+          await removeAuthorizationCode(candidateSlot);
+        } catch (_removeError) {
+          // 清理失败不覆盖原始错误；候选槽位未被 KV 引用。
+        }
+      }
+      render(previousState || { connected: false });
       showStatus(error && error.message ? error.message : '连接失败，请重试', true);
     } finally {
       setBusy(false);
@@ -164,7 +206,13 @@
     setBusy(true);
     showStatus('');
     try {
-      await removeAuthorizationCode();
+      var state = await loadState();
+      var inactiveSlot = state.credentialSlot === 'a' ? 'b' : 'a';
+      if (state.savedSlots[inactiveSlot]) await removeAuthorizationCode(inactiveSlot);
+      if (state.savedSlots[state.credentialSlot]) {
+        await removeAuthorizationCode(state.credentialSlot);
+      }
+      await clearAccountState();
       render({ connected: false });
       showStatus('已断开并从 Cindy 安全存储中清除客户端授权密码。');
     } catch (error) {
