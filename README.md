@@ -4,10 +4,6 @@ Cindy 官方公开插件（Ghost）源码仓库。每个插件进入 `main` 后�
 使用 OIDC 发布到 Cindy Plugin Server，客户端从插件市场发现并安装，不再通过
 submodule 随桌面端打包或在启动时播种。
 
-> This is the official source repository for Cindy's public plugins. Each
-> subdirectory is a self-contained plugin published to the Cindy marketplace.
-> Contributions are welcome — see [参与贡献](#参与贡献) below.
-
 ## 插件列表
 
 | 插件             | 目录                                     | 说明                                                           |
