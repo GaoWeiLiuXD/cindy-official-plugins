@@ -280,6 +280,12 @@ function jsonResponse(data: unknown, status = 200): CindyFetchResponse {
 
 function createNotionHarness(
   respond: (request: CindyFetchRequest) => CindyFetchResponse | Promise<CindyFetchResponse>,
+  options?: {
+    hostRespond?: (
+      input: string,
+      init?: { method?: string; body?: string },
+    ) => SettingsFetchResponse | Promise<SettingsFetchResponse> | undefined;
+  },
 ) {
   let handler: HostMessageHandler | undefined;
   const requests: CindyFetchRequest[] = [];
@@ -287,6 +293,8 @@ function createNotionHarness(
   const channel = new FakeBroadcastChannel();
   let kvState: Record<string, unknown> = {};
   const hostFetch = vi.fn(async (input: string, init?: { method?: string; body?: string }) => {
+    const custom = await options?.hostRespond?.(input, init);
+    if (custom) return custom;
     if (input !== '/kv') throw new Error(`unexpected host request: ${input}`);
     if ((init?.method ?? 'GET') === 'PUT') {
       kvState = JSON.parse(init?.body ?? '{}') as Record<string, unknown>;
@@ -476,13 +484,80 @@ describe('Cindy Notion', () => {
       workspaceName: 'Workspace B',
       visibleCount: 1,
     });
-    expect(harness.hostFetch).toHaveBeenCalledTimes(2);
+    expect(
+      harness.hostFetch.mock.calls.filter(([, init]) => init?.method === 'PUT'),
+    ).toHaveLength(1);
     expect(harness.channel.messages).toHaveLength(1);
     expect(harness.channel.messages[0]).toMatchObject({
       type: 'test-connection-result',
       reqId: 'check-b',
       ok: true,
       workspaceName: 'Workspace B',
+    });
+  });
+
+  it('新检查失败时会在旧 PUT 完成后清除过期身份', async () => {
+    const firstPutStarted = deferred<boolean>();
+    const releaseFirstPut = deferred<boolean>();
+    let userCalls = 0;
+    let putCalls = 0;
+    let kvState: Record<string, unknown> = {};
+    const harness = createNotionHarness((request) => {
+      if (request.url.endsWith('/users/me')) {
+        userCalls += 1;
+        if (userCalls === 1) {
+          return jsonResponse({
+            id: 'bot-a',
+            name: 'Integration A',
+            bot: { workspace_name: 'Workspace A' },
+          });
+        }
+        return jsonResponse({ object: 'error', message: 'invalid token' }, 401);
+      }
+      if (request.url.endsWith('/search')) {
+        return jsonResponse({
+          results: [{ object: 'page', id: 'page-a', properties: {} }],
+          has_more: false,
+        });
+      }
+      throw new Error(`unexpected request: ${request.url}`);
+    }, {
+      hostRespond: async (input, init) => {
+        expect(input).toBe('/kv');
+        if ((init?.method ?? 'GET') === 'PUT') {
+          putCalls += 1;
+          if (putCalls === 1) {
+            firstPutStarted.resolve(true);
+            await releaseFirstPut.promise;
+          }
+          kvState = JSON.parse(init?.body ?? '{}') as Record<string, unknown>;
+          return { status: 204, json: async () => ({}) };
+        }
+        return {
+          status: 200,
+          json: async () => JSON.parse(JSON.stringify(kvState)) as Record<string, unknown>,
+        };
+      },
+    });
+
+    harness.channel.emit({ type: 'test-connection', reqId: 'check-a' });
+    await firstPutStarted.promise;
+
+    harness.channel.emit({ type: 'test-connection', reqId: 'check-b' });
+    await flushNotionTasks();
+    expect(harness.channel.messages).toHaveLength(0);
+
+    releaseFirstPut.resolve(true);
+    await flushNotionTasks();
+    await flushNotionTasks();
+
+    expect(kvState).not.toHaveProperty('notionIdentity');
+    expect(putCalls).toBe(2);
+    expect(harness.channel.messages).toHaveLength(1);
+    expect(harness.channel.messages[0]).toMatchObject({
+      type: 'test-connection-result',
+      reqId: 'check-b',
+      ok: false,
     });
   });
 

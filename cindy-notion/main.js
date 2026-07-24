@@ -966,6 +966,21 @@ var seenTests = {};
 var latestTestId = '';
 var identityWriteQueue = Promise.resolve();
 
+function clearCachedIdentity() {
+  identityWriteQueue = identityWriteQueue.then(async function () {
+    try {
+      var kv = await (await fetch('/kv')).json();
+      kv = kv && typeof kv === 'object' ? kv : {};
+      if (!Object.prototype.hasOwnProperty.call(kv, 'notionIdentity')) return;
+      delete kv.notionIdentity;
+      await fetch('/kv', { method: 'PUT', body: JSON.stringify(kv) });
+    } catch (e) {
+      /* 身份展示缓存清理失败不影响连接测试。 */
+    }
+  });
+  return identityWriteQueue;
+}
+
 async function cacheIdentityIfLatest(reqId, identity) {
   identityWriteQueue = identityWriteQueue.then(async function () {
     if (latestTestId !== reqId) return;
@@ -990,11 +1005,14 @@ bc.onmessage = function (event) {
   if (Object.keys(seenTests).length > 200) seenTests = {};
   seenTests[message.reqId] = true;
   latestTestId = message.reqId;
+  var identityReset = clearCachedIdentity();
 
   void (async function () {
     var status = await api({ url: API + '/users/me' });
     if (latestTestId !== message.reqId) return;
     if (status.err) {
+      await identityReset;
+      if (latestTestId !== message.reqId) return;
       bc.postMessage({
         type: 'test-connection-result',
         reqId: message.reqId,
