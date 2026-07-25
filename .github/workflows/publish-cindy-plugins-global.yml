@@ -1,4 +1,4 @@
-name: Publish Cindy Plugins (CN)
+name: Publish Cindy Plugins (Global)
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cindy-plugin-publish-cn-prod-${{ github.repository }}-${{ github.ref }}
+  group: cindy-plugin-publish-global-prod-${{ github.repository }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -137,7 +137,7 @@ jobs:
             return plugins;
 
   publish:
-    name: Publish ${{ matrix.plugin.directory }} to CN prod
+    name: Publish ${{ matrix.plugin.directory }} to Global prod
     needs: detect
     if: ${{ needs.detect.outputs.plugins != '[]' }}
     runs-on: ubuntu-latest
@@ -164,10 +164,10 @@ jobs:
 
       - name: Publish plugin
         env:
-          CINDY_PLUGIN_SERVER_URL_CN: ${{ secrets.CINDY_PLUGIN_SERVER_URL_CN }}
+          CINDY_PLUGIN_SERVER_URL_GLOBAL: ${{ secrets.CINDY_PLUGIN_SERVER_URL_GLOBAL }}
         run: |
           set -euo pipefail
-          : "${CINDY_PLUGIN_SERVER_URL_CN:?CINDY_PLUGIN_SERVER_URL_CN is not configured}"
+          : "${CINDY_PLUGIN_SERVER_URL_GLOBAL:?CINDY_PLUGIN_SERVER_URL_GLOBAL is not configured}"
 
           oidc_response="$(curl \
             --fail-with-body \
@@ -190,5 +190,5 @@ jobs:
             --header "Authorization: Bearer ${oidc_token}" \
             --header "Content-Type: application/octet-stream" \
             --data-binary "@$RUNNER_TEMP/plugin.cindy" \
-            "${CINDY_PLUGIN_SERVER_URL_CN%/}"
+            "${CINDY_PLUGIN_SERVER_URL_GLOBAL%/}"
           echo
