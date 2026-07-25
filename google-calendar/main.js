@@ -81,6 +81,22 @@ function validCalendarTime(value) {
   return validDate && supported && parseDate(raw) ? raw : '';
 }
 
+function validCalendarRange(startValue, endValue) {
+  var start = validCalendarTime(startValue);
+  if (!start) return null;
+
+  var rawEnd = String(endValue || '').trim();
+  if (!rawEnd) return { start: start, end: '' };
+
+  var end = validCalendarTime(rawEnd);
+  var startIsDate = /^\d{4}-\d{2}-\d{2}$/.test(start);
+  var endIsDate = /^\d{4}-\d{2}-\d{2}$/.test(end);
+  if (!end || startIsDate !== endIsDate || parseDate(end).getTime() <= parseDate(start).getTime()) {
+    return null;
+  }
+  return { start: start, end: end };
+}
+
 function dayLabel(value) {
   var date = parseDate(value);
   if (!date) return clip(value, 34);
@@ -378,15 +394,15 @@ function eventSnapshotFromArgs(args) {
   // A truthful event receipt needs a start value. Title/location/end alone
   // cannot be placed on the calendar and would otherwise render as an
   // invented all-day event under an empty date heading.
-  var start = validCalendarTime(args.start);
-  if (!start) return null;
+  var range = validCalendarRange(args.start, args.end);
+  if (!range) return null;
   return {
     id: args.event_id,
     summary: args.summary || '已删除日程',
     description: args.description || '',
     location: args.location || '',
-    start: start,
-    end: validCalendarTime(args.end),
+    start: range.start,
+    end: range.end,
     status: 'cancelled',
     link: '',
     attendees: Array.isArray(args.attendees) ? args.attendees : [],
