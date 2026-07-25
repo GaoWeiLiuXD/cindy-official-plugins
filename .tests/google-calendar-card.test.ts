@@ -322,5 +322,32 @@ describe('Google Calendar 自绘卡', () => {
     );
     expect(invalidSnapshot.messages[1].html).not.toContain('2026-02-31');
     expect(invalidSnapshot.messages[1].html).not.toContain('时间格式错误的旧日程');
+
+    const inconsistentRanges = [
+      ['2026-07-25', '2026-07-26T20:00:00+08:00'],
+      ['2026-07-25T20:00:00+08:00', '2026-07-26'],
+      ['2026-07-25T21:00:00+08:00', '2026-07-25T20:00:00+08:00'],
+    ];
+    for (const [start, end] of inconsistentRanges) {
+      const inconsistentSnapshot = createCalendarHarness(() => response(null, 204));
+      await inconsistentSnapshot.handler({
+        type: 'tool-call',
+        tool: 'google_calendar',
+        callId: 'call-delete-inconsistent',
+        args: {
+          action: 'delete_event',
+          event_id: 'evt-delete',
+          summary: '区间不一致的旧日程',
+          start,
+          end,
+        },
+      });
+      expect(inconsistentSnapshot.messages[1].html).toContain(
+        '日程已从 Google Calendar 删除。',
+      );
+      expect(inconsistentSnapshot.messages[1].html).not.toContain(
+        '区间不一致的旧日程',
+      );
+    }
   });
 });
