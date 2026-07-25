@@ -70,8 +70,8 @@ them:
    codes.
 
 Official plugins are wired into host-driven `zh-CN / en / ja / ko` locale
-resources; see [`docs/localization.md`](./docs/localization.md) for language
-selection and the English-fallback contract.
+resources; see [`docs/localization.en.md`](./docs/localization.en.md) for
+language selection and the English-fallback contract.
 
 ## Local development
 

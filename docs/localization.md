@@ -1,3 +1,7 @@
+<p align="right">
+  <strong>简体中文</strong> · <a href="localization.en.md">English</a>
+</p>
+
 # 官方插件本地化契约
 
 ## 宿主是唯一语言来源

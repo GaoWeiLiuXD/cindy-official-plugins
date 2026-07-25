@@ -4,7 +4,7 @@
   "name": "TapTap Maker",
   "description": "使用插件随附的官方 TapTap Maker Runtime 连接账号、同步或初始化项目、构建游戏并打开官方预览；无需自行安装 CLI 或配置 MCP。",
   "whenToUse": "创建、初始化、检查、构建或预览 TapTap Maker 游戏，以及调用 Maker 素材和调试工具时使用。只操作当前本地会话工作区；Maker 工具返回“MCP error -32600: INSUFFICIENT_BALANCE”才表示积分不足，此时说明 Cindy Art 替代能力并等待用户确认。",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "locales": {
     "en": "locales/en.json",
     "zh-CN": "locales/zh-CN.json",
