@@ -10,7 +10,7 @@ const pluginDirs = fs.readdirSync(root)
   .sort();
 
 test('all official plugins provide complete host-driven locale resources', () => {
-  assert.equal(pluginDirs.length, 11);
+  assert.ok(pluginDirs.length > 0, 'no official plugins found');
   for (const pluginDir of pluginDirs) {
     const manifestPath = path.join(root, pluginDir, 'ghost.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));

@@ -48,6 +48,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate plugin localization resources
+        run: node --test .tests/localization.test.mjs
+
       - name: Build plugin matrix
         id: changes
         uses: actions/github-script@v9
