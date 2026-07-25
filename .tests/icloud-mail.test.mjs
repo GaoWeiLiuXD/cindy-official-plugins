@@ -194,8 +194,11 @@ test('设置页使用双凭证槽安全切换，BroadcastChannel 不发送 App �
   const commitIndex = settingsSource.indexOf(
     'await saveAccountState(email, candidateSlot)',
   );
+  const commitStartedIndex = settingsSource.indexOf('commitStarted = true');
   assert.ok(stageIndex >= 0 && stageIndex < validateIndex);
-  assert.ok(validateIndex < commitIndex);
+  assert.ok(validateIndex < commitStartedIndex && commitStartedIndex < commitIndex);
+  assert.match(settingsSource, /candidateStored\s*&&\s*!commitStarted/);
+  assert.doesNotMatch(settingsSource, /candidateStored\s*&&\s*!committed/);
   assert.match(settingsSource, /render\(previousState\s*\|\|\s*\{\s*connected:\s*false\s*\}\)/);
 });
 

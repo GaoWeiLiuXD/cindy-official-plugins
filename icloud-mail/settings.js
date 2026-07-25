@@ -159,7 +159,7 @@
     var previousState = null;
     var candidateSlot = 'a';
     var candidateStored = false;
-    var committed = false;
+    var commitStarted = false;
     try {
       previousState = await loadState();
       candidateSlot = previousState.savedSlots[previousState.credentialSlot]
@@ -169,8 +169,9 @@
       candidateStored = true;
       appSpecificPassword = '';
       var state = await sendConnect(email, candidateSlot, 50000);
+      // PUT 的响应可能丢失；从开始提交起，候选槽位就可能已被 KV 引用，不能再删除。
+      commitStarted = true;
       await saveAccountState(email, candidateSlot);
-      committed = true;
       render({ connected: true, email: state.email || email });
       showStatus('连接成功。App 专用密码已由 Cindy 安全保存。');
 
@@ -187,8 +188,9 @@
       }
     } catch (error) {
       appSpecificPassword = '';
-      // 测试或提交未通过时只清理候选槽位，原有邮箱和有效密码保持不变。
-      if (candidateStored && !committed) {
+      // 只有提交开始前失败才能安全清理候选槽位。提交结果不确定时保留两个槽位，
+      // 下次成功连接或断开时会清理未使用的槽位。
+      if (candidateStored && !commitStarted) {
         try {
           await removeAppSpecificPassword(candidateSlot);
         } catch (_removeError) {
