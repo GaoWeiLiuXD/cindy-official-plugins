@@ -3,8 +3,8 @@
   "id": "taptap-maker",
   "name": "TapTap Maker",
   "description": "使用插件随附的官方 TapTap Maker Runtime 连接账号、同步或初始化项目、构建游戏并打开官方预览；无需自行安装 CLI 或配置 MCP。",
-  "whenToUse": "创建、初始化、检查、构建或预览 TapTap Maker 游戏，以及调用 Maker 素材和调试工具时使用。只操作当前本地会话工作区；Maker 工具返回“MCP error -32600: INSUFFICIENT_BALANCE”才表示积分不足，此时说明 Art 插件的替代能力并等待用户确认。",
-  "version": "2.1.1",
+  "whenToUse": "TapTap Maker 项目操作统一通过本插件工具完成，只操作当前本地会话工作区；目标项目在其他目录时，提示用户先在 Cindy 中打开该目录，不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行。创建、初始化、检查、构建或预览 Maker 游戏，以及调用 Maker 素材和调试工具时使用。仅当 Maker 工具完整返回“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，并在用户确认后提供 Art 插件替代能力；其他错误不视为积分不足。",
+  "version": "2.1.2",
   "locales": {
     "en": "locales/en.json",
     "zh-CN": "locales/zh-CN.json",
@@ -21,7 +21,8 @@
     "node",
     "session-context",
     "pick",
-    "preview"
+    "preview",
+    "skill"
   ],
   "card": {
     "externalLinks": true
@@ -42,11 +43,20 @@
       "maker.taptap.cn"
     ]
   },
+  "skill": {
+    "items": [
+      {
+        "dir": "skills/taptap-maker",
+        "name": "taptap-maker",
+        "description": "使用 Cindy 的 TapTap Maker 插件完成账号连接、项目检查或初始化、构建预览，以及调用官方 Maker 动态工具。用户要求创建、打开、检查、构建或预览 TapTap Maker 游戏，或使用 Maker 素材与调试能力时使用。"
+      }
+    ]
+  },
   "command": "taptap-maker",
   "tools": [
     {
       "name": "maker_status",
-      "description": "检查当前会话工作区的 TapTap Maker 状态，包括登录、项目绑定、Git、Python、Lua LSP 与开发工具就绪情况。只操作宿主提供的当前本地工作区。",
+      "description": "仅检查当前会话工作区的 TapTap Maker 状态，包括登录、项目绑定、Git、Python、Lua LSP 与开发工具就绪情况。目标项目在其他目录时先让用户在 Cindy 中打开该目录，不得通过 Shell、CLI、npx 或直接 MCP 绕行。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -67,7 +77,7 @@
     },
     {
       "name": "maker_init",
-      "description": "把当前会话工作区初始化为 TapTap Maker 项目。已有项目传 app_id；仅当用户明确要求创建项目时传 create=true 与 name。不会修改用户的 Agent MCP 配置。",
+      "description": "仅把当前会话工作区初始化为 TapTap Maker 项目。目标项目在其他目录时先让用户在 Cindy 中打开该目录，不得通过 Shell、CLI、npx 或直接 MCP 绕行。已有项目传 app_id；仅当用户明确要求创建项目时传 create=true 与 name。不会修改用户的 Agent MCP 配置。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -92,7 +102,7 @@
     },
     {
       "name": "maker_build",
-      "description": "通过插件随附的官方 Runtime 同步、提交并构建当前会话工作区。仅在用户明确要求构建、运行、预览、提交或推送 Maker 游戏时调用；成功后在当前会话右侧浏览器打开官方预览，并返回可点击地址。",
+      "description": "通过插件随附的官方 Runtime 同步、提交并构建当前会话工作区。仅在用户明确要求构建、运行、预览、提交或推送 Maker 游戏时调用；成功后优先在当前会话右侧浏览器打开官方预览，不调用系统默认浏览器。成功结果会返回 user_facing_markdown，回复用户时必须原样引用该字段且不要放进代码块，使地址保持可点击。不得通过 Shell、CLI、npx、直接 MCP、通用浏览器或 maker_build_current_directory 绕行。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -136,11 +146,11 @@
     },
     {
       "name": "maker_list_tools",
-      "description": "列出当前工作区实时可用的官方 Maker 动态工具及参数 schema。调用 maker_call_tool 前先调用本工具，不要凭记忆硬编码工具名。"
+      "description": "列出当前工作区实时可用的官方 Maker 动态工具及参数 schema。调用 maker_call_tool 前先调用本工具，不要凭记忆硬编码工具名；目标项目在其他目录时先让用户切换工作区，不得通过 Shell、CLI、npx 或直接 MCP 绕行。"
     },
     {
       "name": "maker_call_tool",
-      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具。若 Runtime 报告项目尚未初始化或缺少 .project/project.json，应说明构建会提交并推送项目，询问用户是否现在构建或预览；用户确认后调用 maker_build，再重试原请求，禁止未经确认自动构建。项目已完成构建前置、Runtime 明确返回 missing_taptap_identity 时，插件会自动调用一次 generate_test_qrcode 并重试原工具；若仍要求屏幕方向等用户选择则停止并询问用户。素材能力优先使用 Maker；只有错误完整匹配“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，并告知 Art 插件可作为替代，等待用户确认后再切换。",
+      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具，只操作当前会话工作区，不得通过 Shell、CLI、npx 或直接 MCP 绕行。若 Runtime 报告项目尚未初始化或缺少 .project/project.json，应说明构建会提交并推送项目，询问用户是否现在构建或预览；用户确认后调用 maker_build，再重试原请求，禁止未经确认自动构建。项目已完成构建前置、Runtime 明确返回 missing_taptap_identity 时，插件会自动调用一次 generate_test_qrcode 并重试原工具；若仍要求屏幕方向等用户选择则停止并询问用户。素材能力优先使用 Maker；只有错误完整匹配“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，并告知 Art 插件可作为替代，等待用户确认后再切换。",
       "parameters": {
         "type": "object",
         "properties": {

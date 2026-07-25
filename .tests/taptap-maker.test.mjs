@@ -18,6 +18,7 @@ const pluginRoot = new URL('../taptap-maker/', import.meta.url);
 const mainSource = readFileSync(new URL('main.js', pluginRoot), 'utf8');
 const accountSource = readFileSync(new URL('node/account.cjs', pluginRoot), 'utf8');
 const manifest = JSON.parse(readFileSync(new URL('ghost.json', pluginRoot), 'utf8'));
+const skillMd = readFileSync(new URL('skills/taptap-maker/SKILL.md', pluginRoot), 'utf8');
 const provisioning = JSON.parse(readFileSync(new URL('../provisioning.json', import.meta.url), 'utf8'));
 const vendorPackage = JSON.parse(
   readFileSync(new URL('vendor/taptap-maker/package.json', pluginRoot), 'utf8'),
@@ -151,7 +152,30 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.deepEqual(manifest.slots, ['tool', 'card', 'node', 'session-context', 'pick', 'preview']);
+  assert.equal(manifest.version, '2.1.2');
+  assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
+  assert.match(
+    manifest.tools.find((tool) => tool.name === 'maker_build').description,
+    /user_facing_markdown/,
+  );
+  assert.deepEqual(
+    manifest.slots,
+    ['tool', 'card', 'node', 'session-context', 'pick', 'preview', 'skill'],
+  );
+  assert.deepEqual(manifest.skill, {
+    items: [{
+      dir: 'skills/taptap-maker',
+      name: 'taptap-maker',
+      description: '使用 Cindy 的 TapTap Maker 插件完成账号连接、项目检查或初始化、构建预览，以及调用官方 Maker 动态工具。用户要求创建、打开、检查、构建或预览 TapTap Maker 游戏，或使用 Maker 素材与调试能力时使用。',
+    }],
+  });
+  assert.equal(/^name:\s*(.+)$/m.exec(skillMd)?.[1], manifest.skill.items[0].name);
+  assert.equal(
+    /^description:\s*(.+)$/m.exec(skillMd)?.[1],
+    manifest.skill.items[0].description,
+  );
+  assert.match(skillMd, /ghost_call\(\{ ghost_id: "taptap-maker"/);
+  assert.match(skillMd, /ghost_list/);
   assert.deepEqual(manifest.card, { externalLinks: true });
   assert.deepEqual(manifest.node.entries, ['node/account.cjs', 'node/maker-child.cjs']);
   assert.equal(manifest.node.childSpawn, true);
@@ -355,17 +379,20 @@ test('主工具只使用宿主注入的本地 workdir，并为长构建开启续
     '/tmp/trusted-maker',
   );
   assert.deepEqual(JSON.parse(JSON.stringify(harness.previewRequests)), [{
-    url: 'https://maker.taptap.cn/app/demo?localDev=1',
+    url: 'https://maker.taptap.cn/app/demo?localDev=1&hide_chat=1',
     sessionId: 'session-1',
   }]);
   assert.equal(
     build.result.user_facing_markdown,
-    '[打开 TapTap Maker 预览](https://maker.taptap.cn/app/demo?localDev=1)',
+    '[打开 TapTap Maker 预览](https://maker.taptap.cn/app/demo?localDev=1&hide_chat=1)',
   );
   const card = harness.sentMessages.find((message) => message.type === 'card-update');
   assert.equal(card.callId, 'call-maker_build');
   assert.equal(card.state, 'done');
-  assert.match(card.html, /href="https:\/\/maker\.taptap\.cn\/app\/demo\?localDev=1"/);
+  assert.match(
+    card.html,
+    /href="https:\/\/maker\.taptap\.cn\/app\/demo\?localDev=1&amp;hide_chat=1"/,
+  );
 });
 
 test('动态工具列表携带可信项目 root，并过滤固定工具', async () => {
@@ -717,6 +744,48 @@ test('远程 workdir 在启动 Node Runtime 前即被拒绝', async () => {
   assert.equal(harness.nodeRequests.length, 0);
 });
 
+test('计划或只读会话拒绝可能写工作区的操作，但仍允许状态检查', async () => {
+  for (const [tool, args] of [
+    ['maker_init', { app_id: 'app-1' }],
+    ['maker_build', {}],
+    ['maker_call_tool', { name: 'generate_image', args: {} }],
+    ['maker_call_tool', { name: 'query_video_task', args: { task_id: 'video-1' } }],
+    ['maker_call_tool', {
+      name: 'get_debug_feedbacks',
+      args: { fetch_and_mark_processed: false },
+    }],
+  ]) {
+    const harness = createMainHarness(async () => {
+      throw new Error('只读门禁应在 Node Runtime 前拒绝');
+    });
+    const result = await harness.call(tool, {
+      ...args,
+      session_context: {
+        workdir_is_local: true,
+        workdir_is_read_only: true,
+        workdir: '/tmp/trusted-maker',
+      },
+    });
+    assert.equal(result.ok, false);
+    assert.match(result.message, /计划或只读模式/);
+    assert.equal(harness.nodeRequests.length, 0);
+  }
+
+  const readHarness = createMainHarness(async () => ({
+    ok: true,
+    result: { content: [{ type: 'text', text: 'status ok' }] },
+  }));
+  const status = await readHarness.call('maker_status', {
+    session_context: {
+      workdir_is_local: true,
+      workdir_is_read_only: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+  assert.equal(status.ok, true);
+  assert.equal(readHarness.nodeRequests.length, 1);
+});
+
 test('设置页重发同一 reqId 不会重复执行长任务', async () => {
   let resolveNode;
   const nodeResult = new Promise((resolve) => {
@@ -946,6 +1015,64 @@ test('spawn adapter 只改道固定 Maker 入口并用参数传递 proxy 配置'
   } finally {
     restore();
   }
+});
+
+test('spawn adapter 只把固定 logs watch 子进程交给空闲回收器', async () => {
+  const makerEntry = path.resolve('/tmp/vendor/maker.js');
+  const handle = fakeChildHandle();
+  let watcher = null;
+  const restore = adapter.installMakerSpawnAdapter({
+    makerEntry,
+    childEntry: 'node/maker-child.cjs',
+    spawnEntry: async () => handle,
+    onRuntimeLogWatcher(child) {
+      watcher = child;
+    },
+  });
+
+  try {
+    const child = childProcess.spawn(
+      process.execPath,
+      [makerEntry, 'logs', 'watch', '--target-dir', '/tmp/project'],
+      {},
+    );
+    await once(child, 'spawn');
+    assert.equal(watcher, child);
+  } finally {
+    restore();
+  }
+});
+
+test('Maker MCP 活动续期日志 watcher，空闲到期后主动回收', () => {
+  const timers = [];
+  const cleared = new Set();
+  const controller = adapter.createRuntimeLogWatcherIdleController({
+    idleTimeoutMs: 600_000,
+    setTimeout(callback, timeoutMs) {
+      const timer = { callback, timeoutMs, unref() {} };
+      timers.push(timer);
+      return timer;
+    },
+    clearTimeout(timer) {
+      cleared.add(timer);
+    },
+  });
+  const watcher = fakeChildHandle();
+  let killCount = 0;
+  watcher.kill = () => {
+    killCount += 1;
+    return true;
+  };
+
+  controller.track(watcher);
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0].timeoutMs, 600_000);
+  controller.touch();
+  assert.equal(timers.length, 2);
+  assert.equal(cleared.has(timers[0]), true);
+
+  timers[1].callback();
+  assert.equal(killCount, 1);
 });
 
 test('只在 Maker CLI 最终 JSON 到达后判定完成', () => {

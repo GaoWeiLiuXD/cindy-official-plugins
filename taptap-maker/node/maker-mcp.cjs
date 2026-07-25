@@ -6,7 +6,10 @@ const { PassThrough } = require('node:stream');
 const { StringDecoder } = require('node:string_decoder');
 const { pathToFileURL } = require('node:url');
 
-const { installMakerSpawnAdapter } = require('./child-process-adapter.cjs');
+const {
+  createRuntimeLogWatcherIdleController,
+  installMakerSpawnAdapter,
+} = require('./child-process-adapter.cjs');
 const { createMcpRootRouter } = require('./mcp-root-router.cjs');
 
 const makerEntry = path.resolve(__dirname, '../vendor/taptap-maker/dist/maker.js');
@@ -16,10 +19,17 @@ if (!childApi || typeof childApi.spawnEntry !== 'function') {
   throw new Error('TapTap Maker 需要 Cindy 的 node.childSpawn 能力');
 }
 
+const runtimeLogWatcherIdle = createRuntimeLogWatcherIdleController({
+  idleTimeoutMs: 10 * 60 * 1000,
+});
+
 installMakerSpawnAdapter({
   makerEntry,
   childEntry: 'node/maker-child.cjs',
   spawnEntry: childApi.spawnEntry,
+  onRuntimeLogWatcher(child) {
+    runtimeLogWatcherIdle.track(child);
+  },
 });
 
 // Maker 的 MCP server 运行在虚拟 stdio 上；外层只代理 roots/list，把当前
@@ -47,6 +57,7 @@ const router = createMcpRootRouter({
 });
 
 readline.createInterface({ input: hostStdin }).on('line', function onHostLine(line) {
+  runtimeLogWatcherIdle.touch();
   router.handleHostLine(line);
 });
 runtimeStdout.on('data', function onRuntimeData(chunk) {
