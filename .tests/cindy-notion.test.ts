@@ -35,6 +35,10 @@ const settingsSource = readFileSync(
   new URL('../cindy-notion/settings.js', import.meta.url),
   'utf8',
 );
+const settingsHtml = readFileSync(
+  new URL('../cindy-notion/settings.html', import.meta.url),
+  'utf8',
+);
 
 class FakeBroadcastChannel {
   onmessage?: (event: { data?: unknown }) => void;
@@ -760,6 +764,11 @@ describe('Cindy Notion', () => {
 });
 
 describe('Cindy Notion settings', () => {
+  it('授权指引同时兼容新旧 integration 名称', () => {
+    expect(settingsHtml).toContain('新建时通常为 Notion');
+    expect(settingsHtml).toContain('旧版可能显示 Cindy Notion');
+  });
+
   it('密钥删除失败时保留身份缓存并显示失败', async () => {
     const harness = await createSettingsHarness((url, method) => {
       if (url === '/secrets/notion_token' && method === 'DELETE') {

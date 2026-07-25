@@ -1,5 +1,5 @@
 /**
- * Cindy Web Search 设置页脚本(CSP 禁内联,外挂加载)。
+ * Web Search 设置页脚本(CSP 禁内联,外挂加载)。
  * 数据面:主机 /secrets 只写通道(绝对路径,协议保留路径)——
  *   GET /secrets           → [{ key, saved, tail? }](只有状态 + 尾 4 位指纹,永远没有值)
  *   PUT /secrets/<key>     → { value } 单向入库(主机 OS 级加密保管)

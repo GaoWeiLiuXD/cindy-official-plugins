@@ -1,9 +1,7 @@
 /**
- * Cindy GitLab · 电子脑 —— 内置的 GitLab 服务意识(PAT 模式,自建 / 多实例)。
+ * GitLab · 电子脑 —— 内置的 GitLab 服务意识(PAT 模式,自建 / 多实例)。
  *
- * 命名:id/指令/显示名都走 cindy- 前缀族(Cindy Art / Cindy GitHub 同族),
- * 把朴素的「gitlab」命名空间(指令 $gitlab、显示名 GitLab)让给用户自制意识,
- * 避免内置占名导致第三方 GitLab 意识撞名拒装。
+ * id/指令保留 cindy- 官方命名空间；显示名直接使用 GitLab。
  *
  * 工作方式:
  * - 多连接动态白名单:ghost.json 声明 network.connections(key: gitlab_conn),
@@ -80,7 +78,7 @@ function extractHash(s) {
 
 /** HTTP 状态 → 人话(401 到这里 = 该实例的 token 没填或已失效)。 */
 function classifyStatus(status, bodySnippet) {
-  if (status === 401) return 'GitLab token 未配置或已失效,请用户到主界面侧边栏「插件」→「Cindy GitLab」详情页重新填写该实例的 token(并确认实例地址无误)';
+  if (status === 401) return 'GitLab token 未配置或已失效,请用户到主界面侧边栏「插件」→「GitLab」详情页重新填写该实例的 token(并确认实例地址无误)';
   if (status === 403) return '没有权限(HTTP 403,token scope 不够或无该项目权限):' + bodySnippet;
   if (status === 404) return '对象不存在或无访问权(HTTP 404;project_path 是否拼对?)';
   if (status === 409) return 'GitLab 资源冲突(HTTP 409):' + bodySnippet;
@@ -111,7 +109,7 @@ async function resolveInstance(a) {
   }
   var conns = (slot && Array.isArray(slot.connections)) ? slot.connections : [];
   if (!conns.length) {
-    return { err: '尚未添加任何 GitLab 实例——请用户到主界面侧边栏「插件」→「Cindy GitLab」详情页添加实例地址与 Personal Access Token' };
+    return { err: '尚未添加任何 GitLab 实例——请用户到主界面侧边栏「插件」→「GitLab」详情页添加实例地址与 Personal Access Token' };
   }
   var hosts = conns.map(function (cn) { return cn.host; });
   if (a && a.instance) {
@@ -127,7 +125,7 @@ async function resolveInstance(a) {
     if (conns[d].isDefault) return conns[d];
   }
   if (conns.length === 1) return conns[0];
-  return { err: '配置了多个 GitLab 实例且没有默认连接——在 args 里传 instance 指定(已配置:' + hosts.join(' / ') + '),或到主界面侧边栏「插件」→「Cindy GitLab」详情页设默认' };
+  return { err: '配置了多个 GitLab 实例且没有默认连接——在 args 里传 instance 指定(已配置:' + hosts.join(' / ') + '),或到主界面侧边栏「插件」→「GitLab」详情页设默认' };
 }
 
 /** 实例级操作的 API base 解析(不需要 project_path)。 */

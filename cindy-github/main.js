@@ -1,9 +1,7 @@
 /**
- * Cindy GitHub · 电子脑 —— 内置的 GitHub 服务意识(PAT 模式,仅 github.com)。
+ * GitHub · 电子脑 —— 内置的 GitHub 服务意识(PAT 模式,仅 github.com)。
  *
- * 命名:id/指令/显示名都走 cindy- 前缀族(Cindy Art / Cindy Web Search 同族),
- * 把朴素的「github」命名空间(指令 $github、显示名 GitHub)让给用户自制意识,
- * 避免内置占名导致第三方 GitHub 意识撞名拒装。
+ * id/指令保留 cindy- 官方命名空间；显示名直接使用 GitHub。
  *
  * 工作方式:
  * - 域名白名单代发:cindy.fetch 只能到 ghost.json 声明的域名,请求由主机代发,
@@ -65,7 +63,7 @@ function encPath(p) {
 
 /** HTTP 状态 → 人话(401 到这里 = token 没填或已失效)。 */
 function classifyStatus(status, bodySnippet) {
-  if (status === 401) return 'GitHub token 未配置或已失效,请用户到主界面侧边栏「插件」→「Cindy GitHub」详情页填入 Personal Access Token';
+  if (status === 401) return 'GitHub token 未配置或已失效,请用户到主界面侧边栏「插件」→「GitHub」详情页填入 Personal Access Token';
   if (status === 403) {
     if (bodySnippet && bodySnippet.indexOf('rate limit') >= 0) return 'GitHub 接口限流(HTTP 403 rate limit),请稍后重试';
     return '没有权限(HTTP 403,token scope 不够或无该仓库权限):' + bodySnippet;

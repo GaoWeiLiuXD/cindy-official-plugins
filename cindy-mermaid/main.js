@@ -1,5 +1,5 @@
 /**
- * Cindy Mermaid · 电子脑 —— Mermaid 源码的确定性规范化与常见语法修复。
+ * Mermaid · 电子脑 —— Mermaid 源码的确定性规范化与常见语法修复。
  *
  * 沙箱里没有 DOM / Mermaid parser，因此这里只做纯字符串变换；完整语法与
  * 渲染校验仍由聊天端的 Mermaid 渲染器负责。修复规则与 maker-shared 的
