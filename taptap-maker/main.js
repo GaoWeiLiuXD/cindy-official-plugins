@@ -445,7 +445,10 @@ async function handleTool(message) {
     return { tools: await listMakerTools(listContext.workdir) };
   }
   if (message.tool === 'maker_call_tool') {
-    var callContext = requireWritableContext(requireLocalContext(message));
+    var callContext = requireLocalContext(message);
+    // Maker 0.0.26 没有纯只读的动态工具契约：query_video_task 会落盘完成的视频，
+    // get_debug_feedbacks 即使不标记已处理也会下载附件，因此统一按可能写工作区处理。
+    requireWritableContext(callContext);
     if (typeof args.name !== 'string' || !args.name || (args.args !== undefined && !isObject(args.args))) {
       throw new Error('maker_call_tool 需要 name 与可选的 args 对象');
     }

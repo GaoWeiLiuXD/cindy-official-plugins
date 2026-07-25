@@ -744,11 +744,16 @@ test('远程 workdir 在启动 Node Runtime 前即被拒绝', async () => {
   assert.equal(harness.nodeRequests.length, 0);
 });
 
-test('计划或只读会话拒绝写操作，但仍允许状态检查', async () => {
+test('计划或只读会话拒绝可能写工作区的操作，但仍允许状态检查', async () => {
   for (const [tool, args] of [
     ['maker_init', { app_id: 'app-1' }],
     ['maker_build', {}],
     ['maker_call_tool', { name: 'generate_image', args: {} }],
+    ['maker_call_tool', { name: 'query_video_task', args: { task_id: 'video-1' } }],
+    ['maker_call_tool', {
+      name: 'get_debug_feedbacks',
+      args: { fetch_and_mark_processed: false },
+    }],
   ]) {
     const harness = createMainHarness(async () => {
       throw new Error('只读门禁应在 Node Runtime 前拒绝');
