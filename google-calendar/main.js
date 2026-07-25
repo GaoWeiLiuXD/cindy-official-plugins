@@ -3,43 +3,41 @@
 var SECRET_KEY = 'google_calendar_account';
 var PLUGIN_NAME = 'Google Calendar';
 var BASE = 'https://www.googleapis.com/calendar/v3';
-var CALENDAR_WEB_URL = 'https://calendar.google.com/';
 var CARD_MAX_EVENTS = 6;
+var EVENT_COLORS = ['#4f9d3a', '#e58b73', '#4f8fc9', '#9a78c6', '#d2a03d', '#3f9a8d'];
 
 var CARD_STYLE = [
-  '.gc-card{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",system-ui,sans-serif;color:var(--text-primary,#1d1d1f);background:var(--surface,#fff);border:1px solid var(--border-default,#e5e5ea);border-radius:20px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.04)}',
-  '.gc-head{display:flex;align-items:center;gap:12px;padding:18px 18px 15px}',
-  '.gc-mark{position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid #e5e5ea;border-radius:12px;background:#fff;color:#1d1d1f;overflow:hidden}',
-  '.gc-mark-bar{position:absolute;left:0;right:0;top:0;height:14px;background:#ff3b30;color:#fff;font-size:7px;font-weight:750;line-height:14px;letter-spacing:.7px;text-align:center}',
-  '.gc-mark-day{margin-top:12px;font-size:19px;font-weight:500;line-height:1;letter-spacing:-.7px}',
-  '.gc-kicker{font-size:11px;line-height:1.2;color:var(--text-tertiary,#86868b);letter-spacing:.02em}',
-  '.gc-title{margin-top:3px;font-size:17px;line-height:1.18;font-weight:650;letter-spacing:-.02em}',
-  '.gc-head-copy{min-width:0;flex:1}',
-  '.gc-open{flex:0 0 auto;padding:8px 11px;border:0;border-radius:999px;background:#f2f2f7;color:#007aff;font:600 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;white-space:nowrap}',
-  '.gc-open:active{background:#e5e5ea}',
-  '.gc-body{padding:0 18px 17px}',
-  '.gc-divider{height:1px;background:var(--border-default,#e5e5ea);opacity:.72}',
-  '.gc-section-label{padding:13px 0 8px;color:var(--text-tertiary,#86868b);font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}',
-  '.gc-row{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--border-default,#e5e5ea)}',
-  '.gc-row:first-child{border-top:0}',
-  '.gc-time{flex:0 0 76px;color:#ff3b30;font-size:11px;font-weight:650;line-height:1.35}',
-  '.gc-event-main{min-width:0;flex:1}',
-  '.gc-event-title{font-size:14px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-  '.gc-event-meta{margin-top:3px;color:var(--text-secondary,#6e6e73);font-size:11px;line-height:1.35}',
-  '.gc-empty{padding:18px 0 4px;color:var(--text-secondary,#6e6e73);font-size:13px;line-height:1.45}',
-  '.gc-detail{padding:14px 0 2px}',
-  '.gc-detail-line{display:flex;gap:10px;padding:8px 0;font-size:13px;line-height:1.4}',
-  '.gc-detail-icon{flex:0 0 19px;color:#ff3b30;font-size:14px;text-align:center}',
-  '.gc-detail-value{min-width:0;flex:1}',
-  '.gc-description{margin:7px 0 3px;padding:11px 12px;border-radius:12px;background:var(--surface-chip,#f2f2f7);color:var(--text-secondary,#6e6e73);font-size:12px;line-height:1.5;white-space:pre-wrap}',
-  '.gc-footer{display:flex;justify-content:space-between;gap:12px;padding-top:12px;color:var(--text-tertiary,#86868b);font-size:10px;line-height:1.35}',
-  '.gc-status{display:inline-flex;align-items:center;gap:6px;color:#34c759;font-size:12px;font-weight:600}',
-  '.gc-status:before{content:"";width:7px;height:7px;border-radius:50%;background:#34c759}',
-  '.gc-status-error{color:#ff3b30}',
-  '.gc-status-error:before{background:#ff3b30}',
-  '.gc-calendar-name{min-width:0;flex:1;font-size:13px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-  '.gc-calendar-badge{color:var(--text-tertiary,#86868b);font-size:10px}',
+  '@keyframes gcSweep{0%{transform:translateX(-48px);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(458px);opacity:0}}',
+  '.gc-event-link{cursor:pointer;transition:opacity .16s ease}.gc-event-link:hover{opacity:.72}',
 ].join('');
+
+var CARD_INLINE = {
+  card: 'box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;color:#202124;',
+  cardWhite: 'background:rgba(255,255,255,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);',
+  loading: 'position:relative;display:flex;align-items:center;min-height:48px;padding:0 16px;',
+  loadingTrack: 'position:absolute;top:0;left:0;width:48px;height:2px;border-radius:2px;background:#34a853;animation:gcSweep 1.7s ease-in-out infinite;',
+  loadingTitle: 'font-size:13px;line-height:1.35;font-weight:600;letter-spacing:-.01em;color:#202124;',
+  loadingNote: 'margin-left:8px;font-size:11px;line-height:1.35;color:#74777a;',
+  head: 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px 6px;',
+  status: 'font-size:12px;line-height:1.35;font-weight:600;color:#202124;',
+  count: 'font-size:11px;line-height:1.35;color:#85888b;white-space:nowrap;',
+  body: 'padding:6px 16px 12px;',
+  group: 'margin-top:10px;',
+  groupFirst: '',
+  date: 'margin-bottom:8px;font-size:12px;line-height:1.3;font-weight:650;letter-spacing:.04em;color:#7a7d80;',
+  eventGap: 'margin-top:8px;',
+  eventRow: 'display:grid;grid-template-columns:4px minmax(0,1fr);align-items:stretch;gap:12px;min-height:44px;',
+  accent: 'display:block;width:4px;min-height:44px;border-radius:4px;',
+  accentDeleted: 'display:block;width:4px;min-height:44px;border-radius:4px;background:#c6c9cc;',
+  eventContent: 'display:flex;flex-direction:column;justify-content:center;min-width:0;',
+  eventTime: 'font-variant-numeric:tabular-nums;font-size:11px;line-height:1.25;font-weight:550;color:#85898c;',
+  eventTimeDeleted: 'font-variant-numeric:tabular-nums;font-size:11px;line-height:1.25;font-weight:550;color:#b0b3b6;text-decoration-line:line-through;text-decoration-color:#b0b3b6;text-decoration-thickness:1px;',
+  eventTitle: 'margin-top:3px;font-size:14px;line-height:1.3;font-weight:600;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',
+  eventTitleDeleted: 'margin-top:3px;font-size:14px;line-height:1.3;font-weight:600;color:#a4a7aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration-line:line-through;text-decoration-color:#a4a7aa;text-decoration-thickness:1px;',
+  eventLocation: 'margin-top:3px;font-size:11px;line-height:1.25;color:#7a7d80;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;',
+  eventLocationDeleted: 'margin-top:3px;font-size:11px;line-height:1.25;color:#b0b3b6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration-line:line-through;text-decoration-color:#b0b3b6;text-decoration-thickness:1px;',
+  empty: 'padding:8px 0 4px;font-size:12px;line-height:1.4;color:#7a7d80;',
+};
 
 function fail(message) {
   return { ok: false, message: message };
@@ -68,13 +66,37 @@ function parseDate(value) {
   return isNaN(date.getTime()) ? null : date;
 }
 
+function validCalendarTime(value) {
+  var raw = String(value || '').trim();
+  var dateParts = raw.slice(0, 10).split('-').map(Number);
+  var normalizedDate = dateParts.length === 3
+    ? new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]))
+    : null;
+  var validDate = normalizedDate &&
+    normalizedDate.getUTCFullYear() === dateParts[0] &&
+    normalizedDate.getUTCMonth() === dateParts[1] - 1 &&
+    normalizedDate.getUTCDate() === dateParts[2];
+  var supported = /^\d{4}-\d{2}-\d{2}$/.test(raw) ||
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2})$/.test(raw);
+  return validDate && supported && parseDate(raw) ? raw : '';
+}
+
 function dayLabel(value) {
   var date = parseDate(value);
   if (!date) return clip(value, 34);
   return new Intl.DateTimeFormat('zh-CN', {
-    month: 'short',
+    month: 'long',
     day: 'numeric',
     weekday: 'short',
+  }).format(date);
+}
+
+function compactDayLabel(value) {
+  var date = parseDate(value);
+  if (!date) return clip(value, 18);
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: 'long',
+    day: 'numeric',
   }).format(date);
 }
 
@@ -90,149 +112,187 @@ function timeLabel(value) {
   }).format(date);
 }
 
-function eventRange(event) {
-  var start = event && event.start ? String(event.start) : '';
-  var end = event && event.end ? String(event.end) : '';
-  if (!start) return '时间未提供';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(start)) return dayLabel(start) + ' · 全天';
-  var startDay = dayLabel(start);
-  var endDay = end ? dayLabel(end) : '';
-  var range = startDay + ' · ' + timeLabel(start);
-  if (end) range += endDay === startDay ? '–' + timeLabel(end) : ' → ' + endDay + ' ' + timeLabel(end);
-  return range;
+function dateKey(value) {
+  value = String(value || '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  var date = parseDate(value);
+  if (!date) return value;
+  var parts = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date).reduce(function (acc, part) {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return parts.year + '-' + parts.month + '-' + parts.day;
 }
 
-function accountLabel(args) {
-  return args && args.account ? '指定账号' : '默认账号';
+function eventDateKey(event) {
+  return dateKey(event && event.start);
 }
 
-function cardButton() {
-  return '<button type="button" class="gc-open" data-ghost-action="open-calendar" aria-label="在浏览器中打开 Google Calendar">打开日历&nbsp;↗</button>';
+function eventTimeParts(event) {
+  var allDay = !event || !event.start || /^\d{4}-\d{2}-\d{2}$/.test(String(event.start));
+  if (allDay) return { start: '全天', end: '', range: '全天' };
+  var start = timeLabel(event.start);
+  var end = event.end && !/^\d{4}-\d{2}-\d{2}$/.test(String(event.end)) ? timeLabel(event.end) : '';
+  var crossesDate = end && dateKey(event.start) !== dateKey(event.end);
+  var range = crossesDate
+    ? start + ' → ' + compactDayLabel(event.end) + ' ' + end
+    : end
+      ? start + '–' + end
+      : start;
+  return { start: start, end: end, range: range };
 }
 
-function calendarMark() {
-  return '<div class="gc-mark"><span class="gc-mark-bar">CAL</span><span class="gc-mark-day">' +
-    escapeHtml(new Date().getDate()) + '</span></div>';
-}
-
-function cardFrame(title, body, footer, statusClass, statusText) {
-  return '<div class="gc-card"><style>' + CARD_STYLE + '</style>' +
-    '<div class="gc-head">' +
-      calendarMark() +
-      '<div class="gc-head-copy"><div class="gc-kicker">Google Calendar</div><div class="gc-title">' + escapeHtml(title) + '</div></div>' +
-      cardButton() +
-    '</div>' +
-    '<div class="gc-body">' +
-      body +
-      '<div class="gc-footer"><span class="gc-status ' + (statusClass || '') + '">' + escapeHtml(statusText || '已完成') + '</span><span>' + escapeHtml(footer || '') + '</span></div>' +
-    '</div></div>';
-}
-
-function renderAccountsCard(result) {
-  var accounts = (result && result.accounts) || [];
-  var body = accounts.length
-    ? '<div class="gc-section-label">已连接账号</div>' + accounts.slice(0, 3).map(function (account) {
-      return '<div class="gc-row"><div class="gc-calendar-name">' + escapeHtml(account.email || account.id) + '</div><div class="gc-calendar-badge">' +
-        (account.status === 'expired' ? '需重新连接' : account.is_default ? '默认' : '已连接') + '</div></div>';
-    }).join('')
-    : '<div class="gc-empty">还没有连接 Google Calendar 账号。先在插件详情页完成授权。</div>';
-  return cardFrame(accounts.length ? '账号已就绪' : '需要连接账号', body, accounts.length + ' 个账号', accounts.length ? '' : 'gc-status-error', accounts.length ? '已连接' : '待授权');
-}
-
-function renderCalendarsCard(result) {
-  var calendars = (result && result.calendars) || [];
-  var body = calendars.length
-    ? '<div class="gc-section-label">你的日历</div>' + calendars.slice(0, 6).map(function (calendar) {
-      return '<div class="gc-row"><div class="gc-calendar-name">' + escapeHtml(calendar.summary || calendar.id) + '</div><div class="gc-calendar-badge">' +
-        (calendar.primary ? '主日历' : '日历') + '</div></div>';
-    }).join('')
-    : '<div class="gc-empty">没有找到可用日历。</div>';
-  return cardFrame('日历列表', body, calendars.length + ' 个日历', '', '已完成');
-}
-
-function renderEventsCard(result, args) {
-  var events = (result && result.events) || [];
-  var visible = events.slice(0, CARD_MAX_EVENTS);
-  var body = '<div class="gc-section-label">' +
-    escapeHtml(args && (args.time_min || args.time_max) ? '筛选结果' : '近期安排') + '</div>';
-  if (!visible.length) {
-    body += '<div class="gc-empty">这段时间没有安排。日程表很干净，适合留一点空白。</div>';
-  } else {
-    body += visible.map(function (event) {
-      var attendees = Array.isArray(event.attendees) && event.attendees.length
-        ? event.attendees.length + ' 位参与者'
-        : '';
-      return '<div class="gc-row"><div class="gc-time">' + escapeHtml(timeLabel(event.start)) + '</div>' +
-        '<div class="gc-event-main"><div class="gc-event-title">' + escapeHtml(event.summary || '无标题日程') + '</div>' +
-        '<div class="gc-event-meta">' + escapeHtml(dayLabel(event.start)) + (attendees ? ' · ' + escapeHtml(attendees) : '') + '</div></div></div>';
-    }).join('');
-    if (events.length > visible.length) {
-      body += '<div class="gc-empty">还有 ' + escapeHtml(events.length - visible.length) + ' 条日程，已在结果中保留完整数据。</div>';
-    }
+function eventAccentColor(event) {
+  var seed = String((event && (event.id || event.summary || event.start)) || 'calendar');
+  var hash = 0;
+  for (var i = 0; i < seed.length; i += 1) {
+    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
   }
-  return cardFrame('接下来的安排', body, accountLabel(args), '', events.length ? '已找到' : '暂无安排');
+  return EVENT_COLORS[Math.abs(hash) % EVENT_COLORS.length];
 }
 
-function renderEventCard(event, title, args) {
-  event = event || {};
-  var body = '<div class="gc-detail">' +
-    '<div class="gc-detail-line"><span class="gc-detail-icon">◷</span><span class="gc-detail-value">' + escapeHtml(eventRange(event)) + '</span></div>';
-  if (event.attendees && event.attendees.length) {
-    body += '<div class="gc-detail-line"><span class="gc-detail-icon">⌁</span><span class="gc-detail-value">' +
-      escapeHtml(event.attendees.slice(0, 8).join('、')) + (event.attendees.length > 8 ? ' 等' + (event.attendees.length - 8) + ' 人' : '') + '</span></div>';
-  }
-  if (event.description) {
-    body += '<div class="gc-description">' + escapeHtml(clip(event.description, 600)) + '</div>';
-  }
-  body += '</div>';
-  return cardFrame(title || event.summary || '日程详情', body, accountLabel(args), '', '已完成');
+function eventLink(event, deleted) {
+  if (deleted) return '';
+  var link = String((event && event.link) || '').trim();
+  return /^https?:\/\/\S+$/i.test(link) && link.length <= 2048 ? link : '';
 }
 
-function renderReceiptCard(title, detail, args) {
-  var body = '<div class="gc-detail"><div class="gc-detail-line"><span class="gc-detail-icon">✓</span><span class="gc-detail-value">' +
-    escapeHtml(detail) + '</span></div></div>';
-  return cardFrame(title, body, accountLabel(args), '', '已完成');
+function renderEventRow(event, deleted) {
+  var times = eventTimeParts(event);
+  var location = clip(event && event.location, 80);
+  var link = eventLink(event, deleted);
+  var locationHtml = location
+    ? '<div style="' + (deleted ? CARD_INLINE.eventLocationDeleted : CARD_INLINE.eventLocation) +
+      '">' + escapeHtml(location) + '</div>'
+    : '';
+  var accentStyle = deleted
+    ? CARD_INLINE.accentDeleted
+    : CARD_INLINE.accent + 'background:' + eventAccentColor(event) + ';';
+  return '<div' + (link
+    ? ' class="gc-event-link" data-ghost-link="' + escapeHtml(link) + '"'
+    : '') + ' style="' + CARD_INLINE.eventRow + '"><span style="' + accentStyle +
+    '"></span><div style="' + CARD_INLINE.eventContent + '"><div style="' +
+    (deleted ? CARD_INLINE.eventTimeDeleted : CARD_INLINE.eventTime) + '">' +
+    escapeHtml(times.range) + '</div><div style="' +
+    (deleted ? CARD_INLINE.eventTitleDeleted : CARD_INLINE.eventTitle) + '">' +
+    escapeHtml((event && event.summary) || '无标题日程') + '</div>' +
+    locationHtml + '</div></div>';
 }
 
-function renderErrorCard(message) {
-  var body = '<div class="gc-empty">' + escapeHtml(clip(message || 'Calendar 操作失败，请稍后重试。', 420)) + '</div>';
-  return cardFrame('需要处理', body, 'Google Calendar', 'gc-status-error', '未完成');
+function renderGroups(events, deleted) {
+  var groups = {};
+  (events || []).forEach(function (event) {
+    var key = eventDateKey(event);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(event);
+  });
+  return Object.keys(groups).sort().map(function (key, index) {
+    var label = dayLabel(groups[key][0] && groups[key][0].start);
+    return '<div style="' + (index === 0 ? CARD_INLINE.groupFirst : CARD_INLINE.group) +
+      '"><div style="' + CARD_INLINE.date + '">' + escapeHtml(label) + '</div>' +
+      groups[key].map(function (event, eventIndex) {
+        return '<div style="' + (eventIndex ? CARD_INLINE.eventGap : '') + '">' +
+          renderEventRow(event, deleted) + '</div>';
+      }).join('') + '</div>';
+  }).join('');
+}
+
+function loadingLabel(action) {
+  if (action === 'create_event') return '正在创建日程…';
+  if (action === 'update_event') return '正在修改日程…';
+  if (action === 'delete_event') return '正在删除日程…';
+  return '正在查询日程…';
+}
+
+function renderLoadingCard(action) {
+  return '<div style="' + CARD_INLINE.card + CARD_INLINE.cardWhite + CARD_INLINE.loading +
+    '"><style>' + CARD_STYLE + '</style>' +
+    '<span style="' + CARD_INLINE.loadingTrack + '"></span><div style="' + CARD_INLINE.loadingTitle + '">' +
+    escapeHtml(loadingLabel(action)) + '</div></div>';
+}
+
+function renderFailedStatus(action) {
+  return '<div style="' + CARD_INLINE.card + CARD_INLINE.cardWhite + CARD_INLINE.loading +
+    '"><div style="' +
+    CARD_INLINE.loadingTitle + '">操作未完成</div><div style="' + CARD_INLINE.loadingNote + '">' +
+    escapeHtml(loadingLabel(action).replace('正在', '').replace('…', '')) + '</div></div>';
+}
+
+function resultLabel(action) {
+  if (action === 'create_event') return '日程已创建';
+  if (action === 'update_event') return '日程已修改';
+  if (action === 'delete_event') return '日程已删除';
+  if (action === 'get_event') return '日程详情';
+  return '日程';
 }
 
 function renderCalendarCard(action, result, args) {
-  if (action === 'accounts') return renderAccountsCard(result);
-  if (action === 'list_calendars') return renderCalendarsCard(result);
-  if (action === 'list_events') return renderEventsCard(result, args);
-  if (action === 'get_event') return renderEventCard(result && result.event, '日程详情', args);
-  if (action === 'create_event') return renderEventCard(result && result.event, '日程已创建', args);
-  if (action === 'update_event') return renderEventCard(result && result.event, '日程已更新', args);
-  if (action === 'delete_event') return renderReceiptCard('日程已删除', '这条日程已经从 Google Calendar 中移除。', args);
-  return renderReceiptCard('Calendar 已完成', '操作已完成。', args);
+  var events = action === 'list_events'
+    ? ((result && result.events) || [])
+    : (result && result.event ? [result.event] : []);
+  var visible = events.slice(0, CARD_MAX_EVENTS);
+  var body = visible.length
+    ? renderGroups(visible, action === 'delete_event')
+    : '<div style="' + CARD_INLINE.empty + '">' +
+      (action === 'delete_event'
+        ? '日程已从 Google Calendar 删除。'
+        : '这段时间没有日程。') +
+      '</div>';
+  return '<div style="' + CARD_INLINE.card +
+    CARD_INLINE.cardWhite +
+    '"><style>' + CARD_STYLE + '</style><div style="' + CARD_INLINE.head +
+    '"><div style="' + CARD_INLINE.status + '">' + escapeHtml(resultLabel(action)) +
+    '</div><div style="' + CARD_INLINE.count + '">' +
+    escapeHtml(events.length > 1 ? events.length + ' 个日程' : '') + '</div></div>' +
+    '<div style="' + CARD_INLINE.body + '">' + body + '</div></div>';
 }
 
-async function sendCard(callId, html, height) {
+function shouldRenderCard(action) {
+  return action === 'list_events' || action === 'get_event' || action === 'create_event' ||
+    action === 'update_event' || action === 'delete_event';
+}
+
+async function sendCard(callId, html, height, state) {
   if (!callId) return;
   try {
-    await cindy.send({ type: 'card-update', callId: callId, v: 2, html: html, height: height });
+    await cindy.send({
+      type: 'card-update',
+      callId: callId,
+      v: 2,
+      state: state || 'done',
+      html: html,
+      height: height,
+    });
   } catch (_err) {
     // 卡片只是增强展示，供片失败时仍保留原始工具结果。
   }
 }
 
 function cardHeight(action, result) {
-  if (action === 'list_events') {
-    var count = result && Array.isArray(result.events) ? Math.min(result.events.length, CARD_MAX_EVENTS) : 0;
-    return Math.min(560, Math.max(220, 210 + count * 58));
-  }
-  if (action === 'list_calendars') {
-    var calendars = result && Array.isArray(result.calendars) ? Math.min(result.calendars.length, 6) : 0;
-    return Math.min(480, Math.max(220, 210 + calendars * 45));
-  }
-  if (action === 'accounts') {
-    var accounts = result && Array.isArray(result.accounts) ? Math.min(result.accounts.length, 3) : 0;
-    return Math.min(380, Math.max(220, 210 + accounts * 45));
-  }
-  return 260;
+  var events = action === 'list_events'
+    ? ((result && result.events) || []).slice(0, CARD_MAX_EVENTS)
+    : (result && result.event ? [result.event] : []);
+  if (!events.length) return 104;
+  var grouped = {};
+  events.forEach(function (event) {
+    var key = eventDateKey(event);
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(event);
+  });
+  var height = 55;
+  Object.keys(grouped).forEach(function (key, groupIndex) {
+    if (groupIndex) height += 10;
+    height += 23;
+    grouped[key].forEach(function (event, eventIndex) {
+      if (eventIndex) height += 8;
+      height += event && event.location ? 56 : 44;
+    });
+  });
+  return Math.min(720, Math.max(104, height));
 }
 
 function clampInt(value, fallback, max) {
@@ -305,11 +365,31 @@ function eventView(event) {
     id: event.id,
     summary: event.summary || '',
     description: event.description || '',
+    location: event.location || '',
     start: (event.start && (event.start.dateTime || event.start.date)) || '',
     end: (event.end && (event.end.dateTime || event.end.date)) || '',
     status: event.status,
     link: event.htmlLink || '',
     attendees: (event.attendees || []).map(function (attendee) { return attendee.email; }),
+  };
+}
+
+function eventSnapshotFromArgs(args) {
+  // A truthful event receipt needs a start value. Title/location/end alone
+  // cannot be placed on the calendar and would otherwise render as an
+  // invented all-day event under an empty date heading.
+  var start = validCalendarTime(args.start);
+  if (!start) return null;
+  return {
+    id: args.event_id,
+    summary: args.summary || '已删除日程',
+    description: args.description || '',
+    location: args.location || '',
+    start: start,
+    end: validCalendarTime(args.end),
+    status: 'cancelled',
+    link: '',
+    attendees: Array.isArray(args.attendees) ? args.attendees : [],
   };
 }
 
@@ -371,6 +451,7 @@ async function calendar(args, callId) {
       end: calTime(args.end),
     };
     if (args.description) body.description = args.description;
+    if (args.location) body.location = args.location;
     if (Array.isArray(args.attendees)) {
       body.attendees = args.attendees.map(function (email) { return { email: email }; });
     }
@@ -390,6 +471,7 @@ async function calendar(args, callId) {
     var patch = {};
     if (args.summary !== undefined) patch.summary = args.summary;
     if (args.description !== undefined) patch.description = args.description;
+    if (args.location !== undefined) patch.location = args.location;
     if (args.start !== undefined) patch.start = calTime(args.start);
     if (args.end !== undefined) patch.end = calTime(args.end);
     if (args.attendees !== undefined) {
@@ -415,7 +497,13 @@ async function calendar(args, callId) {
       callId: callId,
     });
     if (removed.err) return fail(removed.err);
-    return { ok: true, result: { deleted: true } };
+    return {
+      ok: true,
+      result: {
+        deleted: true,
+        event: eventSnapshotFromArgs(args),
+      },
+    };
   }
 
   return fail('未知 action:' + args.action);
@@ -424,29 +512,15 @@ async function calendar(args, callId) {
 cindy.onHostMessage(async function (message) {
   if (!message) return;
 
-  // 新版宿主会在卡片点击处直接调用系统浏览器。旧版宿主仍会把动作
-  // 回传给意识，这个兼容分支通过受信宿主请求完成同样的行为。
-  if (message.type === 'event' && message.name === 'card-action') {
-    if (message.actionId === 'open-calendar') {
-      try {
-        await cindy.send({
-          type: 'host-request',
-          kind: 'open-external',
-          url: CALENDAR_WEB_URL,
-        });
-      } catch (_err) {
-        // 旧宿主不认识该请求时静默降级，不影响卡片和工具结果。
-      }
-    }
-    return;
-  }
-
   if (message.type !== 'tool-call') return;
   var action = message.tool === 'google_calendar_accounts'
     ? 'accounts'
     : message.tool === 'google_calendar'
       ? (message.args || {}).action
       : '';
+  if (shouldRenderCard(action)) {
+    await sendCard(message.callId, renderLoadingCard(action), 72, 'working');
+  }
   try {
     var result = message.tool === 'google_calendar_accounts'
       ? await listAccounts()
@@ -454,23 +528,25 @@ cindy.onHostMessage(async function (message) {
         ? await calendar(message.args || {}, message.callId)
         : fail('未知工具:' + message.tool);
     if (result.ok) {
-      await sendCard(
-        message.callId,
-        renderCalendarCard(action, result.result, message.args || {}),
-        cardHeight(action, result.result),
-      );
+      if (shouldRenderCard(action)) {
+        await sendCard(
+          message.callId,
+          renderCalendarCard(action, result.result, message.args || {}),
+          cardHeight(action, result.result),
+          'done',
+        );
+      }
       await cindy.send({ type: 'tool-result', callId: message.callId, ok: true, result: result.result });
     } else {
-      await sendCard(message.callId, renderErrorCard(result.message), 260);
+      if (shouldRenderCard(action)) {
+        await sendCard(message.callId, renderFailedStatus(action), 72, 'done');
+      }
       await cindy.send({ type: 'tool-result', callId: message.callId, ok: false, message: result.message });
     }
   } catch (error) {
-    await sendCard(
-      message.callId,
-      renderErrorCard('Google Calendar 工具执行失败:' +
-        (error && error.message ? error.message : String(error))),
-      260,
-    );
+    if (shouldRenderCard(action)) {
+      await sendCard(message.callId, renderFailedStatus(action), 72, 'done');
+    }
     await cindy.send({
       type: 'tool-result',
       callId: message.callId,
