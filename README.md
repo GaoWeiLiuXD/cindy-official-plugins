@@ -105,12 +105,10 @@ only publishes from `main`:
 - Manually running `Publish Cindy Plugins` from the Actions page publishes all
   current plugins in full — for initial setup after a repository migration or
   an explicit re-release.
-- The production workflow publishes via GitHub Actions OIDC (audience
-  `cindy-plugin`) to the complete publish endpoint stored in the
-  `CINDY_PLUGIN_SERVER_URL_CN` Actions secret (including
-  `/api/publisher/releases`). `CINDY_PLUGIN_SERVER_URL_GLOBAL` is reserved for
-  the future overseas deployment and is not used until that service is
-  available. There is no development publishing workflow.
+- The production workflow publishes via GitHub Actions OIDC to a
+  repository-configured production endpoint. The overseas target remains
+  disabled until that service is available. There is no development publishing
+  workflow.
 
 When changing plugin content you must bump `ghost.json.version` in the same
 change. Publishing different content under the same version is rejected by the

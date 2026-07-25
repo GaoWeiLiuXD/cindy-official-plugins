@@ -75,11 +75,8 @@ cindy-art/
 - `main` 的普通 push 只发布本次发生变化的插件目录。
 - Actions 页面手动运行 `Publish Cindy Plugins` 会全量发布当前全部插件，供仓库迁移
   后首次建档或显式重发使用。
-- 生产 Workflow 通过 GitHub Actions OIDC（audience `cindy-plugin`）发布到
-  `CINDY_PLUGIN_SERVER_URL_CN` Actions Secret 中的完整发布端点（包括
-  `/api/publisher/releases`）。
-  `CINDY_PLUGIN_SERVER_URL_GLOBAL` 为未来海外服务预留，服务部署前不会使用。
-  仓库不再提供 Dev 发布 Workflow。
+- 生产 Workflow 通过 GitHub Actions OIDC 发布到仓库配置的生产端点。
+  海外服务部署前保持停用，仓库不再提供 Dev 发布 Workflow。
 
 修改插件内容时必须同步更新 `ghost.json.version`。同一版本内容不同会被服务端以
 `RELEASE_VERSION_CONFLICT` 拒绝，不会覆盖既有 Release。
