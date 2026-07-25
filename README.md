@@ -1,102 +1,154 @@
 # Cindy Official Plugins
 
-Cindy 官方公开插件（Ghost）源码仓库。每个插件进入 `main` 后由 GitHub Actions
-使用 OIDC 发布到 Cindy Plugin Server，客户端从插件市场发现并安装，不再通过
-submodule 随桌面端打包或在启动时播种。
+<p align="center">
+  <strong>English</strong> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-## 插件列表
+Source repository for Cindy's official public plugins (Ghosts). Once a plugin
+lands on `main`, GitHub Actions publishes it to the Cindy Plugin Server via
+OIDC, and clients discover and install it from the plugin marketplace — plugins
+are no longer bundled with the desktop app as submodules or seeded at startup.
 
-| 插件             | 目录                                     | 说明                                                           |
-| ---------------- | ---------------------------------------- | -------------------------------------------------------------- |
-| Cindy Art        | [`cindy-art`](./cindy-art)               | 图片 / 短视频生成，支持基于已生成图片的改图与风格化            |
-| Cindy GitHub     | [`cindy-github`](./cindy-github)         | GitHub issue / PR / code review / Actions / release 全流程操作 |
-| Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作           |
-| Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
-| Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
-| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
-| 163 邮箱         | [`163-mail`](./163-mail)                 | 通过 IMAP/SMTP 搜索、阅读、整理、撰写和发送 163 邮箱邮件       |
-| QQ 邮箱          | [`qq-mail`](./qq-mail)                   | Cindy 安全保存授权码，按需通过 IMAP/SMTP 搜索、阅读、整理和发送 |
-| TapTap Maker     | [`taptap-maker`](./taptap-maker)         | 账号连接、项目同步、构建与官方动态工具                         |
+## Plugins
 
-## 仓库结构
+| Plugin           | Directory                                | Description                                                        |
+| ---------------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| Cindy Art        | [`cindy-art`](./cindy-art)               | Image / short-video generation, with edits and restyling based on previously generated images |
+| Cindy GitHub     | [`cindy-github`](./cindy-github)         | Full GitHub workflow: issues / PRs / code review / Actions / releases |
+| Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab (gitlab.com and self-hosted) issues / MRs / repository operations |
+| Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid diagram source normalization and common syntax fixes       |
+| Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Read/write Notion pages, databases, and knowledge bases            |
+| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | Public web search (Brave / Tavily, user-provided API key)          |
+| 163 Mail         | [`163-mail`](./163-mail)                 | Search, read, organize, compose, and send 163 Mail via IMAP/SMTP   |
+| QQ Mail          | [`qq-mail`](./qq-mail)                   | Cindy stores the authorization code securely; search, read, organize, and send via IMAP/SMTP on demand |
+| TapTap Maker     | [`taptap-maker`](./taptap-maker)         | Account connection, project sync, builds, and official news tools  |
 
-每个子目录就是一个完整的插件（"意识包"）源码：
+## Repository layout
+
+Each subdirectory is the complete source of one plugin ("consciousness pack"):
 
 ```
 cindy-github/
-├── ghost.json      # 身份卡:插件 id、描述、工具声明、网络与密钥声明
-├── main.js         # 入口:沙箱内运行的插件逻辑
-├── settings.html   # (可选) 设置页,如粘贴 API token
+├── ghost.json      # Identity card: plugin id, description, tool declarations, network & secret declarations
+├── main.js         # Entry point: plugin logic running in the sandbox
+├── settings.html   # (optional) Settings page, e.g. for pasting an API token
 ├── settings.js
-└── assets/         # (可选) 图标等静态资源
+└── assets/         # (optional) Static assets such as icons
 cindy-art/
 ├── ghost.json
 ├── main.js
-└── panel.*         # (可选) 自定义面板 UI
+└── panel.*         # (optional) Custom panel UI
 ```
 
-`.tests/` 目录存放插件行为测试（vitest 风格，当前为存档状态，待接入 CI runner 后启用）。
+The `.tests/` directory holds plugin behavior tests (vitest style; currently
+archived until a CI runner is wired up).
 
-## 设计原则
+## Design principles
 
-官方插件遵循几条硬约束，PR 也会按这些标准审查：
+Official plugins follow a few hard constraints, and PRs are reviewed against
+them:
 
-1. **默认纯沙箱、能力显式声明**：普通插件运行在 Cindy 的隔离沙箱中，只能使用 `ghost.json` 声明的网络白名单与主机通道。确需 Node Runtime 的官方插件必须显式声明 `node` slot、固定入口和最小子进程边界。
-2. **密钥归属明确**：普通 API token 通过主机的 `/secrets` 只写通道保存；Node 插件需明文凭证时，用 `node.secretBindings` 将其限制到指定 Worker 方法并由宿主临时注入，不经过浏览器 `main.js`、Agent 参数或日志。若官方第三方 Runtime 自己管理账号凭证（如 TapTap Maker），插件只负责把凭证交给 Runtime，不复制到 Cindy KV/Secret，也不在日志或页面状态中保留明文。
-3. **工具描述即契约**：`ghost.json` 里每个 tool 的 `description` 是给 Agent 看的使用说明，必须准确描述行为边界（做什么、不做什么、返回什么）。
-4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
+1. **Pure sandbox by default, capabilities declared explicitly.** Regular
+   plugins run in Cindy's isolated sandbox and may only use the network
+   allowlist and host channels declared in `ghost.json`. Official plugins that
+   genuinely need the Node Runtime must explicitly declare the `node` slot, a
+   fixed entry point, and a minimal child-process boundary.
+2. **Clear secret ownership.** Ordinary API tokens are stored through the
+   host's write-only `/secrets` channel. When a Node plugin needs plaintext
+   credentials, use `node.secretBindings` to restrict them to specific Worker
+   methods, injected transiently by the host — never passing through the
+   browser `main.js`, Agent parameters, or logs. If an official third-party
+   runtime manages account credentials itself (e.g. TapTap Maker), the plugin
+   only hands credentials to the runtime; it does not copy them into Cindy
+   KV/Secret or keep plaintext in logs or page state.
+3. **Tool descriptions are contracts.** Each tool's `description` in
+   `ghost.json` is the usage manual the Agent reads; it must accurately
+   describe behavioral boundaries (what it does, what it doesn't, what it
+   returns).
+4. **Error messages speak human.** User-facing errors must be actionable
+   (e.g. 401 → tell the user where to fill in the token), not raw HTTP status
+   codes.
 
-官方插件已接入宿主驱动的 `zh-CN / en / ja / ko` locale 资源；语言选择与英文兜底契约见
-[`docs/localization.md`](./docs/localization.md)。
+Official plugins are wired into host-driven `zh-CN / en / ja / ko` locale
+resources; see [`docs/localization.md`](./docs/localization.md) for language
+selection and the English-fallback contract.
 
-## 本地开发
+## Local development
 
-插件编写的完整契约（`ghost.json` 全字段、卡槽、`cindy.send` 管子 API、打包流程）以 Cindy 客户端内置的 `ghost_forge_guide` 工具返回的手册为准 —— 在 Cindy 对话里说"帮我做一个插件"即可现拿现读。
+The complete plugin-authoring contract (all `ghost.json` fields, slots, the
+`cindy.send` pipe API, packaging flow) is defined by the manual returned by the
+`ghost_forge_guide` tool built into the Cindy client — just say "help me build
+a plugin" in a Cindy conversation to get it on the spot.
 
-常用流程：
+Typical flow:
 
-1. 用客户端的 `ghost_forge_scaffold` 生成骨架，或直接参考本仓任一插件的写法。
-2. dev 环境下直接导入插件目录或 `.cindy` 包验证。
-3. 完成后用 `ghost_forge_pack` 打包成 `.cindy` 装入验证。
+1. Scaffold with the client's `ghost_forge_scaffold`, or copy the layout of any
+   plugin in this repository.
+2. In a dev environment, import the plugin directory or a `.cindy` package
+   directly for verification.
+3. When done, package it with `ghost_forge_pack` into a `.cindy` and install it
+   to verify.
 
-`taptap-maker/vendor/taptap-maker/` 固定随插件分发官方
-`@taptap/maker@0.0.26`。升级时应整体替换 npm 包发布内容并同步更新插件版本，
-不要单独修改生成后的 `dist/maker.js`。
+`taptap-maker/vendor/taptap-maker/` ships the official `@taptap/maker@0.0.26`
+with the plugin. When upgrading, replace the published npm package content
+wholesale and bump the plugin version accordingly — do not edit the generated
+`dist/maker.js` by hand.
 
-## 自动发布
+## Automated publishing
 
-仓库的 [`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml)
-只允许从 `main` 发布：
+The repository's
+[`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml)
+only publishes from `main`:
 
-- `main` 的普通 push 只发布本次发生变化的插件目录。
-- Actions 页面手动运行 `Publish Cindy Plugins` 会全量发布当前全部插件，供仓库迁移
-  后首次建档或显式重发使用。
-- Prod 和 Dev 使用两个独立的 Workflow run，均通过 GitHub Actions OIDC
-  （audience `cindy-plugin`）发布。Prod 固定发布到
-  `https://plugin.cindy.com.cn`；Dev 固定发布到
-  `https://plugin-dev.cindy.com.cn`。两套发布独立打包、独立执行、独立报告结果，
-  一边失败不会影响另一边的 Workflow 状态。地址均固定在 Workflow 中，不需要
-  Repository Secret、API Key 或 Actions Variable。后续海外发布使用独立目标。
+- A regular push to `main` publishes only the plugin directories changed in
+  that push.
+- Manually running `Publish Cindy Plugins` from the Actions page publishes all
+  current plugins in full — for initial setup after a repository migration or
+  an explicit re-release.
+- Prod and Dev use two independent workflow runs, both publishing via GitHub
+  Actions OIDC (audience `cindy-plugin`). Prod publishes to
+  `https://plugin.cindy.com.cn`; Dev publishes to
+  `https://plugin-dev.cindy.com.cn`. The two pipelines package, run, and report
+  independently; a failure on one side does not affect the other's workflow
+  status. Both URLs are fixed in the workflow — no Repository Secret, API key,
+  or Actions variable is needed. Future overseas publishing will use a separate
+  target.
 
-修改插件内容时必须同步更新 `ghost.json.version`。同一版本内容不同会被服务端以
-`RELEASE_VERSION_CONFLICT` 拒绝，不会覆盖既有 Release。
+When changing plugin content you must bump `ghost.json.version` in the same
+change. Publishing different content under the same version is rejected by the
+server with `RELEASE_VERSION_CONFLICT` and will not overwrite an existing
+release.
 
-## 参与贡献
+## Contributing
 
-**欢迎提交 PR！** 无论是修 bug、改进现有插件，还是提议新的官方插件。
+**PRs welcome!** Whether it's a bug fix, an improvement to an existing plugin,
+or a proposal for a new official plugin.
 
-- **修 bug / 小改进**：直接提 PR，描述清楚改了什么、为什么。
-- **新增官方插件**：建议先开 issue 讨论定位与边界（避免与现有插件职责重叠），达成一致后再提 PR。
-- **改动 `ghost.json` 工具声明**：请在 PR 描述中说明对 Agent 行为的影响。
-- 合入 `main` 后由发布 Workflow 自动同步到 Cindy 插件市场。
+- **Bug fixes / small improvements**: open a PR directly, describing what
+  changed and why.
+- **New official plugins**: open an issue first to discuss positioning and
+  boundaries (avoiding overlap with existing plugins), then submit a PR once
+  aligned.
+- **Changes to `ghost.json` tool declarations**: explain the impact on Agent
+  behavior in the PR description.
+- After merging to `main`, the publish workflow syncs the plugin to the Cindy
+  marketplace automatically.
 
-提 issue 报告问题时，请附上插件名、复现步骤和期望行为。
+When filing an issue, please include the plugin name, reproduction steps, and
+expected behavior.
+
+Please do not disclose security vulnerabilities in public issues — see
+[SECURITY.md](./SECURITY.md) for the reporting channel.
 
 ## License
 
-本仓库代码以 [Apache License 2.0](./LICENSE) 开源。
+The code in this repository is open-sourced under the
+[Apache License 2.0](./LICENSE).
 
-打包产物中包含的第三方开源组件,其许可证归属见对应插件目录:
+Third-party open-source components contained in bundled artifacts are
+attributed in the corresponding plugin directories:
 
-- `qq-mail/THIRD-PARTY-LICENSES.txt` — `node/worker.cjs` 内嵌依赖的完整许可证文本
-- `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker`(MIT)
+- `qq-mail/THIRD-PARTY-LICENSES.txt` — full license texts of the dependencies
+  embedded in `node/worker.cjs`
+- `163-mail/THIRD-PARTY-LICENSES.txt` — same, for the 163 Mail plugin
+- `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker` (MIT)
