@@ -37,6 +37,10 @@ function normalizeCredentialSlot(value) {
   return value;
 }
 
+function nodeMethod(baseMethod, credentialSlot) {
+  return baseMethod + '-' + normalizeCredentialSlot(credentialSlot);
+}
+
 async function readJson(path) {
   var response = await fetch(path);
   if (!response.ok) throw new Error('读取 163 邮箱配置失败');
@@ -96,7 +100,7 @@ async function handleSettingsRequest(action, payload) {
   if (action !== 'connect') throw new Error('未知设置动作');
   var email = normalizeEmail(payload.email);
   var credentialSlot = normalizeCredentialSlot(payload.credentialSlot);
-  return nodeRequest('account/connect', {
+  return nodeRequest(nodeMethod('account/connect', credentialSlot), {
     email: email,
     credentialSlot: credentialSlot,
   }, 45000);
@@ -218,7 +222,7 @@ async function runMail(args) {
 
   try {
     var account = await requireConfiguredAccount();
-    var result = await nodeRequest('mail/action', {
+    var result = await nodeRequest(nodeMethod('mail/action', account.credentialSlot), {
       email: account.email,
       credentialSlot: account.credentialSlot,
       action: action,

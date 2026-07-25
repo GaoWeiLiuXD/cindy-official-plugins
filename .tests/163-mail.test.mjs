@@ -148,20 +148,20 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, '163-mail');
-  assert.equal(manifest.version, '0.1.3');
+  assert.equal(manifest.version, '0.1.4');
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [
     {
       key: 'mail_163_authorization_code',
       label: '客户端授权密码 A',
-      methods: ['account/connect', 'mail/action'],
+      methods: ['account/connect-a', 'mail/action-a'],
       hint: '163 邮箱生成的 16 位客户端授权密码，不是邮箱登录密码',
       url: 'https://help.mail.163.com/faqDetail.do?code=d7a5dc8471cd0c0e8b4b8f4f8e49998b374173cfe9171305fa1ce630d7f67ac2a5feb28b66796d3b',
     },
     {
       key: 'mail_163_authorization_code_b',
       label: '客户端授权密码 B',
-      methods: ['account/connect', 'mail/action'],
+      methods: ['account/connect-b', 'mail/action-b'],
       hint: '163 邮箱生成的 16 位客户端授权密码，不是邮箱登录密码',
       url: 'https://help.mail.163.com/faqDetail.do?code=d7a5dc8471cd0c0e8b4b8f4f8e49998b374173cfe9171305fa1ce630d7f67ac2a5feb28b66796d3b',
     },
@@ -240,7 +240,7 @@ test('Worker 仅接受 @163.com 地址和去空格后 16 位的客户端授权�
 test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', async () => {
   const harness = createMainHarness(async (request) => ({
     ok: true,
-    result: request.method === 'account/connect'
+    result: request.method === 'account/connect-b'
       ? { connected: true, email: 'user@163.com', persistence: 'cindy-safe-storage' }
       : { folder: 'INBOX', messages: [] },
   }));
@@ -250,6 +250,7 @@ test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', 
     credentialSlot: 'b',
   });
   assert.equal(connected.ok, true);
+  assert.equal(harness.nodeRequests[0].method, 'account/connect-b');
   assert.equal(
     JSON.stringify(harness.nodeRequests[0].params),
     JSON.stringify({ email: 'user@163.com', credentialSlot: 'b' }),
@@ -257,7 +258,7 @@ test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', 
 
   const result = await harness.call('mail_163', { action: 'search', text: '账单' });
   assert.equal(result.ok, true);
-  assert.equal(harness.nodeRequests[1].method, 'mail/action');
+  assert.equal(harness.nodeRequests[1].method, 'mail/action-a');
   assert.equal(harness.nodeRequests[1].params.email, 'user@163.com');
   assert.equal(harness.nodeRequests[1].params.credentialSlot, 'a');
   assert.equal('credentials' in harness.nodeRequests[1].params, false);
@@ -345,11 +346,10 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     },
   };
   const connectRequest = {
-    method: 'account/connect',
+    method: 'account/connect-b',
     params: { email: 'user@163.com', credentialSlot: 'b' },
     cindy: {
       secrets: {
-        mail_163_authorization_code: 'unused-old-secret',
         mail_163_authorization_code_b: 'abcdefghijklmnop',
       },
     },
@@ -364,12 +364,11 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     },
   });
   assert.equal(connected.persistence, 'cindy-safe-storage');
-  assert.equal(connectRequest.cindy.secrets.mail_163_authorization_code, '');
   assert.equal(connectRequest.cindy.secrets.mail_163_authorization_code_b, '');
 
   calls.length = 0;
   const actionRequest = {
-    method: 'mail/action',
+    method: 'mail/action-a',
     params: {
       email: 'user@163.com',
       credentialSlot: 'a',
@@ -378,7 +377,6 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     cindy: {
       secrets: {
         mail_163_authorization_code: 'abcdefghijklmnop',
-        mail_163_authorization_code_b: 'unused-new-secret',
       },
     },
   };
@@ -386,14 +384,13 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
   assert.deepEqual(calls, ['connect', 'list', 'logout']);
   assert.equal(result.folders[0].path, 'INBOX');
   assert.equal(actionRequest.cindy.secrets.mail_163_authorization_code, '');
-  assert.equal(actionRequest.cindy.secrets.mail_163_authorization_code_b, '');
   assert.equal(JSON.stringify(result).includes('abcdefghijklmnop'), false);
 });
 
 test('Worker 拒绝 params 伪造的客户端授权密码，只信任宿主注入字段', async () => {
   await assert.rejects(
     worker.handleRequest({
-      method: 'mail/action',
+      method: 'mail/action-a',
       params: {
         email: 'user@163.com',
         authorizationCode: 'forged-code',
@@ -401,6 +398,25 @@ test('Worker 拒绝 params 伪造的客户端授权密码，只信任宿主注�
       },
     }),
     /客户端授权密码/,
+  );
+});
+
+test('Worker 拒绝方法绑定与参数声明不一致的凭证槽位', async () => {
+  await assert.rejects(
+    worker.handleRequest({
+      method: 'mail/action-a',
+      params: {
+        email: 'user@163.com',
+        credentialSlot: 'b',
+        action: { action: 'list_folders' },
+      },
+      cindy: {
+        secrets: {
+          mail_163_authorization_code: 'abcdefghijklmnop',
+        },
+      },
+    }),
+    /凭证状态无效/,
   );
 });
 
