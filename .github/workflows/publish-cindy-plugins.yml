@@ -5,34 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      deployment_name:
-        description: Deployment name shown in job labels
-        required: true
-        type: string
-      plugin_server_url:
-        description: Plugin Server base URL
-        required: true
-        type: string
-      event_name:
-        description: Original caller event name
-        required: false
-        type: string
-      before_sha:
-        description: Original caller before SHA
-        required: false
-        type: string
-      after_sha:
-        description: Original caller after SHA
-        required: false
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: cindy-plugin-publish-${{ inputs.deployment_name || 'prod' }}-${{ github.repository }}-${{ github.ref }}
+  group: cindy-plugin-publish-prod-${{ github.repository }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -55,9 +33,9 @@ jobs:
         id: changes
         uses: actions/github-script@v9
         env:
-          EVENT_NAME: ${{ inputs.event_name || github.event_name }}
-          BEFORE_SHA: ${{ inputs.before_sha || github.event.before }}
-          AFTER_SHA: ${{ inputs.after_sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
         with:
           script: |
             const { execFileSync } = require('node:child_process');
@@ -159,7 +137,7 @@ jobs:
             return plugins;
 
   publish:
-    name: Publish ${{ matrix.plugin.directory }} to ${{ inputs.deployment_name || 'prod' }}
+    name: Publish ${{ matrix.plugin.directory }} to prod
     needs: detect
     if: ${{ needs.detect.outputs.plugins != '[]' }}
     runs-on: ubuntu-latest
@@ -186,9 +164,12 @@ jobs:
 
       - name: Publish plugin
         env:
-          CINDY_PLUGIN_SERVER_URL: ${{ inputs.plugin_server_url || 'https://plugin.cindy.com.cn' }}
+          CINDY_PLUGIN_SERVER_URL_CN: ${{ secrets.CINDY_PLUGIN_SERVER_URL_CN }}
+          # Reserved for the future overseas Plugin Server deployment.
+          CINDY_PLUGIN_SERVER_URL_GLOBAL: ${{ secrets.CINDY_PLUGIN_SERVER_URL_GLOBAL }}
         run: |
           set -euo pipefail
+          : "${CINDY_PLUGIN_SERVER_URL_CN:?CINDY_PLUGIN_SERVER_URL_CN is not configured}"
 
           oidc_response="$(curl \
             --fail-with-body \
@@ -211,5 +192,5 @@ jobs:
             --header "Authorization: Bearer ${oidc_token}" \
             --header "Content-Type: application/octet-stream" \
             --data-binary "@$RUNNER_TEMP/plugin.cindy" \
-            "${CINDY_PLUGIN_SERVER_URL%/}/api/publisher/releases"
+            "${CINDY_PLUGIN_SERVER_URL_CN%/}"
           echo
