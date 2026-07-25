@@ -15,6 +15,7 @@ var FIXED_MAKER_TOOLS = {
 };
 var SETTINGS_CHANNEL = 'taptap-maker-settings';
 var WORKSPACE_HINT = '请先在 Cindy 中打开目标 TapTap Maker 项目目录，再重新调用本插件。';
+var READ_ONLY_HINT = '当前会话处于计划或只读模式，不能修改 TapTap Maker 项目。';
 var nextProgressToken = 1;
 var identityInitializations = new Map();
 
@@ -96,6 +97,14 @@ function requireLocalContext(message) {
     : null;
   if (!context || context.workdir_is_local !== true || typeof context.workdir !== 'string' || !context.workdir) {
     throw new Error('当前会话没有可用的本地工作目录。' + WORKSPACE_HINT);
+  }
+  return context;
+}
+
+function requireWritableContext(context) {
+  // 字段由新版宿主铸造；缺字段表示旧版宿主，保持向后兼容。
+  if (context.workdir_is_read_only === true) {
+    throw new Error(READ_ONLY_HINT);
   }
   return context;
 }
@@ -363,6 +372,7 @@ function previewUrlFromResult(result) {
       var url = new URL(match[1]);
       if (url.protocol !== 'https:' || url.hostname !== 'maker.taptap.cn') continue;
       if (!url.pathname.startsWith('/app/') || url.searchParams.get('localDev') !== '1') continue;
+      url.searchParams.set('hide_chat', '1');
       return url.toString();
     } catch (_error) {
       // 检查下一段。
@@ -380,7 +390,7 @@ async function handleTool(message) {
     return accountRequest('apps', {}, false);
   }
   if (message.tool === 'maker_init') {
-    var initContext = requireLocalContext(message);
+    var initContext = requireWritableContext(requireLocalContext(message));
     return publicAccountResult(await accountRequest(
       'init',
       Object.assign({}, args, { workdir: initContext.workdir }),
@@ -404,7 +414,7 @@ async function handleTool(message) {
     )));
   }
   if (message.tool === 'maker_build') {
-    var buildContext = requireLocalContext(message);
+    var buildContext = requireWritableContext(requireLocalContext(message));
     var built = await callMakerTool(
       'maker_build_current_directory',
       Object.assign({}, args, { target_dir: buildContext.workdir }),
@@ -435,7 +445,7 @@ async function handleTool(message) {
     return { tools: await listMakerTools(listContext.workdir) };
   }
   if (message.tool === 'maker_call_tool') {
-    var callContext = requireLocalContext(message);
+    var callContext = requireWritableContext(requireLocalContext(message));
     if (typeof args.name !== 'string' || !args.name || (args.args !== undefined && !isObject(args.args))) {
       throw new Error('maker_call_tool 需要 name 与可选的 args 对象');
     }

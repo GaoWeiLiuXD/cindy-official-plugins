@@ -1,10 +1,15 @@
 {
   "name": "TapTap Maker",
   "description": "使用插件随附的官方 TapTap Maker Runtime 连接账号、同步或初始化项目、构建游戏并打开官方预览，无需单独安装 CLI 或配置 MCP。",
-  "whenToUse": "创建、初始化、检查、构建或预览 TapTap Maker 游戏，以及调用 Maker 素材和调试工具时使用。只操作当前本地会话工作区。只有完整错误为“MCP error -32600: INSUFFICIENT_BALANCE”才表示积分不足，此时说明 Art 插件可作为替代并等待用户确认。",
+  "whenToUse": "TapTap Maker 项目操作统一通过本插件工具完成，只操作当前本地会话工作区；目标项目在其他目录时先让用户在 Cindy 中打开该目录，不通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行。只有完整错误为“MCP error -32600: INSUFFICIENT_BALANCE”才表示积分不足，此时说明 Art 插件可替代并等待用户确认。",
   "tools": {
     "maker_status": {
-      "description": "检查当前会话工作区的 TapTap Maker 状态，包括登录、项目绑定、Git、Python、Lua LSP 与开发工具就绪情况。只操作宿主提供的当前本地工作区。"
+      "description": "仅检查当前会话工作区的 TapTap Maker 状态，包括登录、项目绑定、Git、Python、Lua LSP 与开发工具就绪情况。目标项目在其他目录时先让用户在 Cindy 中打开该目录，不通过 Shell、CLI、npx 或直接 MCP 绕行。",
+      "parameters": {
+        "/properties/skip_remote_sync": {
+          "description": "频繁轮询时可设为 true，跳过远端 Git 同步检查。"
+        }
+      }
     },
     "maker_login": {
       "description": "通过 TapTap Maker 官方 CLI 打开浏览器授权并连接账号。也可在插件设置页手动配置已有 PAT。"
@@ -13,19 +18,64 @@
       "description": "列出当前 TapTap Maker 账号下可用的项目，供初始化前选择 app_id。"
     },
     "maker_init": {
-      "description": "把当前会话工作区初始化为 TapTap Maker 项目。已有项目传 app_id；仅当用户明确要求创建项目时传 create=true 与 name。不会修改用户的 Agent MCP 配置。"
+      "description": "仅把当前会话工作区初始化为 TapTap Maker 项目。目标项目在其他目录时先让用户在 Cindy 中打开该目录，不通过 Shell、CLI、npx 或直接 MCP 绕行。已有项目传 app_id；仅当用户明确要求创建项目时传 create=true 与 name。",
+      "parameters": {
+        "/properties/app_id": {
+          "description": "已有 TapTap Maker 项目的 app id，与 create/name 二选一。"
+        },
+        "/properties/create": {
+          "description": "仅当用户明确要求创建新项目时传 true。"
+        },
+        "/properties/name": {
+          "description": "新项目名称；create=true 时必填。"
+        }
+      }
     },
     "maker_doctor": {
       "description": "诊断当前会话工作目录的 TapTap Maker 本地开发环境与项目配置。"
     },
     "maker_build": {
-      "description": "通过插件随附的官方 Runtime 同步、提交并构建当前会话工作区。仅在用户明确要求构建、运行、预览、提交或推送 Maker 游戏时调用。成功后在当前会话右侧浏览器打开官方预览，并返回可点击地址。"
+      "description": "通过插件随附的官方 Runtime 同步、提交并构建当前会话工作区。仅在用户明确要求构建、运行、预览、提交或推送时调用；成功后优先在当前会话右侧打开预览，并原样返回可点击的 user_facing_markdown。不调用系统浏览器，也不通过外部 CLI、直接 MCP 或内部构建工具绕行。",
+      "parameters": {
+        "/properties/entry": {
+          "description": "可选，单人游戏 Lua 入口文件，相对 scriptsPath。"
+        },
+        "/properties/scriptsPath": {
+          "description": "可选，脚本目录，相对项目根目录。"
+        },
+        "/properties/entry_client": {
+          "description": "可选，多人游戏客户端 Lua 入口。"
+        },
+        "/properties/entry_server": {
+          "description": "可选，多人游戏服务端 Lua 入口。"
+        },
+        "/properties/multiplayer": {
+          "description": "可选，官方 Maker 多人游戏配置。"
+        },
+        "/properties/message": {
+          "description": "可选，本次 Maker 提交说明。"
+        },
+        "/properties/files": {
+          "description": "可选，本次要提交的项目内相对文件路径。"
+        },
+        "/properties/confirm_remote_build_without_submit": {
+          "description": "仅当用户明确要求不提交本地改动、只构建远端版本时传 true。"
+        }
+      }
     },
     "maker_list_tools": {
-      "description": "列出当前工作区实时可用的官方 Maker 动态工具及参数 schema。调用 maker_call_tool 前必须先调用本工具，不要凭记忆硬编码工具名。"
+      "description": "列出当前工作区实时可用的官方 Maker 动态工具及参数 schema。调用 maker_call_tool 前必须先调用本工具；目标项目在其他目录时先让用户切换工作区，不通过 Shell、CLI、npx 或直接 MCP 绕行。"
     },
     "maker_call_tool": {
-      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具。若 Runtime 报告项目尚未初始化或缺少 .project/project.json，应说明构建会提交并推送项目，询问用户是否现在构建或预览；用户确认后调用 maker_build 再重试，禁止未经确认自动构建。项目已完成构建前置且 Runtime 明确返回 missing_taptap_identity 时，插件会自动调用一次 generate_test_qrcode 并重试；若仍要求屏幕方向等用户选择则停止并询问。素材能力优先使用 Maker。只有完整错误严格匹配“MCP error -32600: INSUFFICIENT_BALANCE”时才说明积分不足，告知 Art 插件可替代，并等待用户确认后再切换。"
+      "description": "调用 maker_list_tools 刚返回的官方 Maker 动态工具，只操作当前会话工作区，不通过 Shell、CLI、npx 或直接 MCP 绕行。缺少 .project/project.json 时说明构建会提交并推送项目，确认后调用 maker_build 再重试。missing_taptap_identity 由插件自动恢复一次。只有完整错误严格匹配“MCP error -32600: INSUFFICIENT_BALANCE”才说明积分不足并在确认后建议 Art 插件。",
+      "parameters": {
+        "/properties/name": {
+          "description": "动态工具名，来自最近一次 maker_list_tools。"
+        },
+        "/properties/args": {
+          "description": "该动态工具的参数对象；无参数时传 {}。"
+        }
+      }
     }
   }
 }

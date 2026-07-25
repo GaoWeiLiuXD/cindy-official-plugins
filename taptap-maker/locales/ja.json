@@ -1,10 +1,15 @@
 {
   "name": "TapTap Maker",
   "description": "同梱の公式 TapTap Maker Runtime を使って、アカウント接続、プロジェクトの同期・初期化、ゲームのビルド、公式プレビューの表示を行います。CLI の別途インストールや MCP 設定は不要です。",
-  "whenToUse": "TapTap Maker ゲームの作成、初期化、確認、ビルド、プレビュー、Maker の素材・デバッグツールの呼び出しに使用します。現在のローカルセッションのワークスペースだけを操作します。完全なエラーが「MCP error -32600: INSUFFICIENT_BALANCE」と一致する場合だけクレジット不足と判断し、Art プラグインを代替案として案内してユーザーの確認を待ちます。",
+  "whenToUse": "TapTap Maker の操作にはこのプラグインだけを使い、現在の Cindy ローカルワークスペースだけを対象にします。別の場所にあるプロジェクトは Cindy で開くよう案内し、Shell、CLI、npx、直接 MCP、汎用ブラウザで迂回しません。「MCP error -32600: INSUFFICIENT_BALANCE」だけをクレジット不足と判断し、確認後に Art を案内します。",
   "tools": {
     "maker_status": {
-      "description": "現在のセッションワークスペースについて、ログイン、プロジェクト関連付け、Git、Python、Lua LSP、開発ツールの準備状態を含む TapTap Maker の状態を確認します。ホストが提供する現在のローカルワークスペースだけを操作します。"
+      "description": "現在のセッションワークスペースだけを対象に、ログイン、プロジェクト関連付け、Git、Python、Lua LSP、開発ツールの状態を確認します。別の場所にある場合は Cindy で開くよう案内し、Shell、CLI、npx、直接 MCP で迂回しません。",
+      "parameters": {
+        "/properties/skip_remote_sync": {
+          "description": "頻繁に確認する場合は true にして、リモート Git 同期チェックを省略できます。"
+        }
+      }
     },
     "maker_login": {
       "description": "TapTap Maker 公式 CLI からブラウザ認証を開き、アカウントを接続します。既存の PAT をプラグイン設定で手動設定することもできます。"
@@ -13,19 +18,64 @@
       "description": "現在の TapTap Maker アカウントで利用できるプロジェクトを一覧表示し、初期化前に app_id を選べるようにします。"
     },
     "maker_init": {
-      "description": "現在のセッションワークスペースを TapTap Maker プロジェクトとして初期化します。既存プロジェクトには app_id を渡します。ユーザーがプロジェクト作成を明示的に求めた場合だけ create=true と name を渡します。ユーザーの Agent MCP 設定は変更しません。"
+      "description": "現在のセッションワークスペースだけを TapTap Maker プロジェクトとして初期化します。別の場所にある場合は Cindy で開くよう案内し、Shell、CLI、npx、直接 MCP で迂回しません。既存プロジェクトには app_id、新規作成を明示された場合だけ create=true と name を渡します。",
+      "parameters": {
+        "/properties/app_id": {
+          "description": "既存 TapTap Maker プロジェクトの app id。create/name とは排他的です。"
+        },
+        "/properties/create": {
+          "description": "ユーザーが新規プロジェクト作成を明示した場合だけ true を渡します。"
+        },
+        "/properties/name": {
+          "description": "新規プロジェクト名。create=true の場合は必須です。"
+        }
+      }
     },
     "maker_doctor": {
       "description": "現在のセッション作業ディレクトリにある TapTap Maker のローカル開発環境とプロジェクト設定を診断します。"
     },
     "maker_build": {
-      "description": "同梱の公式 Runtime で現在のセッションワークスペースを同期、提出、ビルドします。ユーザーが Maker ゲームのビルド、実行、プレビュー、提出、push を明示的に求めた場合だけ呼び出します。成功すると現在のセッションの右側ブラウザで公式プレビューを開き、クリック可能な URL を返します。"
+      "description": "明示的に求められた場合だけ、同梱の公式 Runtime で現在のワークスペースを同期、提出、ビルドします。成功時は Cindy の右側ブラウザでプレビューを開き、user_facing_markdown をそのまま引用します。システムブラウザ、外部 CLI、直接 MCP、内部ビルドツールは使いません。",
+      "parameters": {
+        "/properties/entry": {
+          "description": "任意。scriptsPath からの相対パスで指定する一人用 Lua エントリです。"
+        },
+        "/properties/scriptsPath": {
+          "description": "任意。プロジェクトルートからの相対スクリプトディレクトリです。"
+        },
+        "/properties/entry_client": {
+          "description": "任意。マルチプレイのクライアント Lua エントリです。"
+        },
+        "/properties/entry_server": {
+          "description": "任意。マルチプレイのサーバー Lua エントリです。"
+        },
+        "/properties/multiplayer": {
+          "description": "任意。Maker 公式のマルチプレイ設定です。"
+        },
+        "/properties/message": {
+          "description": "任意。今回の Maker 提出用コミットメッセージです。"
+        },
+        "/properties/files": {
+          "description": "任意。今回提出するプロジェクト内の相対ファイルパスです。"
+        },
+        "/properties/confirm_remote_build_without_submit": {
+          "description": "ローカル変更を提出せずリモート版だけをビルドするよう明示された場合だけ true を渡します。"
+        }
+      }
     },
     "maker_list_tools": {
-      "description": "現在のワークスペースで利用可能な公式 Maker 動的ツールとパラメータ schema を一覧表示します。maker_call_tool の前に必ず呼び出し、記憶したツール名を使わないでください。"
+      "description": "現在のワークスペースで利用可能な公式 Maker 動的ツールとパラメータ schema を一覧表示します。maker_call_tool の前に必ず呼び出します。別の場所にある場合はワークスペースの切り替えを案内し、Shell、CLI、npx、直接 MCP で迂回しません。"
     },
     "maker_call_tool": {
-      "description": "maker_list_tools が直前に返した公式 Maker 動的ツールを呼び出します。Runtime が未初期化または .project/project.json の欠落を報告した場合、ビルドによってプロジェクトが提出・push されることを説明し、今ビルドまたはプレビューするか確認します。確認後だけ maker_build を呼んで再試行し、無断でビルドしません。ビルド前提が完了し Runtime が missing_taptap_identity を明示した場合、プラグインは generate_test_qrcode を一度だけ呼んで再試行します。それでも画面方向などの選択が必要なら停止して尋ねます。素材には Maker を優先します。完全なエラーが「MCP error -32600: INSUFFICIENT_BALANCE」と厳密に一致する場合だけクレジット不足を説明し、Art プラグインを代替案として提示し、切り替える前に確認を待ちます。"
+      "description": "maker_list_tools が直前に返した公式 Maker 動的ツールを現在のワークスペースで呼び出し、Shell、CLI、npx、直接 MCP で迂回しません。.project/project.json がない場合はビルドが提出と push を行うと説明し、確認後だけ maker_build と再試行を行います。missing_taptap_identity はプラグインが一度だけ回復します。「MCP error -32600: INSUFFICIENT_BALANCE」だけをクレジット不足と判断し、確認後に Art を案内します。",
+      "parameters": {
+        "/properties/name": {
+          "description": "直近の maker_list_tools が返した動的ツール名です。"
+        },
+        "/properties/args": {
+          "description": "動的ツールの引数オブジェクトです。引数がない場合は {} を渡します。"
+        }
+      }
     }
   }
 }
