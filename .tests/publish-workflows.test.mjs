@@ -36,10 +36,16 @@ test('both regional publishers support main pushes and full manual republish', (
   }
 });
 
-test('both regional publishers pin checkout before requesting OIDC', () => {
+test('both regional publishers pin actions in the OIDC publishing chain', () => {
   const checkoutRef = '3d3c42e5aac5ba805825da76410c181273ba90b1';
+  const githubScriptRef = '3a2844b7e9c422d3c10d287c895573f7108da1b3';
   for (const workflow of [cnWorkflow, globalWorkflow]) {
     assert.match(workflow, new RegExp(`actions/checkout@${checkoutRef}`));
     assert.doesNotMatch(workflow, /actions\/checkout@v\d+/);
+    assert.match(
+      workflow,
+      new RegExp(`actions/github-script@${githubScriptRef}`),
+    );
+    assert.doesNotMatch(workflow, /actions\/github-script@v\d+/);
   }
 });
