@@ -1,0 +1,13 @@
+{
+  "name": "Google Sheets",
+  "description": "独立连接 Google Sheets：列出工作表、读取范围并写入单元格。只申请 Sheets 所需权限，授权与令牌由宿主管理。",
+  "whenToUse": "需要读取或更新 Google Sheets 表格数据时使用。请先在本插件详情页单独连接 Google Sheets 账号。",
+  "tools": {
+    "google_sheets_accounts": {
+      "description": "列出本插件已连接的 Google Sheets 账号及状态。账号必须先在 Google Sheets 插件详情页单独授权。"
+    },
+    "google_sheets": {
+      "description": "执行 Google Sheets 操作：list_sheets、read_range、write_range。写入单元格前必须向用户展示目标范围与内容并获得确认。"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Google Drive",
+  "description": "Connect Google Drive independently to search, read, download, upload, move, and delete cloud files. Only Drive permissions are requested; authorization and tokens are managed by the host.",
+  "whenToUse": "Use this plugin to search or manage files in Google Drive, Docs, or Slides. Connect a Google Drive account separately in this plugin's details first.",
+  "tools": {
+    "google_drive_accounts": {
+      "description": "List the Google Drive accounts connected to this plugin and their status. Accounts must be authorized separately in the Google Drive plugin details."
+    },
+    "google_drive": {
+      "description": "Run a Google Drive operation: search, list_folder, get_meta, read, download, upload, move, or delete. search treats query as a file-name fragment unless query_mode=raw is explicitly set. download requires a destination directory in the top-level save_dir field of ghost_call so the host can inject save_deposit. Delete, overwrite, move, and upload operations require clear user intent."
+    }
+  }
+}

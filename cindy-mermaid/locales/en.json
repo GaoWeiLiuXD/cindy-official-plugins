@@ -1,0 +1,10 @@
+{
+  "name": "Mermaid",
+  "description": "Cindy's built-in Mermaid diagram plugin. It deterministically normalizes Mermaid source written by the Agent, fixes common mechanical syntax issues, and returns render-ready Mermaid Markdown.",
+  "whenToUse": "Use this plugin to create or revise Mermaid flowcharts, sequence diagrams, architecture diagrams, state diagrams, class diagrams, Gantt charts, ER diagrams, or to clean up Mermaid source.",
+  "tools": {
+    "prepare_mermaid": {
+      "description": "Normalize complete Mermaid source and return a Markdown code block ready to include in the answer. When the user requests a Mermaid diagram, first write the complete Mermaid source, then call this tool and use the returned markdown as the final diagram without copying or changing its source. The tool normalizes line endings and fixes common mechanical syntax issues, but it does not run Mermaid parse/render and cannot guarantee semantic or full syntactic validity. Returns { markdown, source, changed, validation: \"not-performed\", note }."
+    }
+  }
+}

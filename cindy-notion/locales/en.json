@@ -1,0 +1,31 @@
+{
+  "name": "Notion",
+  "description": "Connect your Notion workspace to search and read pages, query data sources, and create or update pages and comments. Uses an official Notion Internal Integration Token. Cindy encrypts the token and injects it only into api.notion.com requests.",
+  "whenToUse": "Use this plugin to search Notion, read pages or databases, query data sources, create pages, append or edit page content, update properties, or add comments. Connect Notion in the plugin details and share the target pages with the integration first.",
+  "tools": {
+    "notion_status": {
+      "description": "Validate the Notion token and inspect how many pages and data sources the integration can actually access. Returns bot and workspace information, visible-content samples, and an explicit authorization diagnosis. Use when the connection fails, search returns nothing, or the user asks about connection status."
+    },
+    "notion_search": {
+      "description": "Search pages or data sources shared with the integration by title and return results plus the next-page cursor. Omit the query to list recently edited content."
+    },
+    "notion_fetch": {
+      "description": "Read a page, data_source, database, or block by ID or Notion URL. A page returns metadata and complete Markdown by default; a block can also return its immediate children. Prefer this tool for page content and data-source schemas."
+    },
+    "notion_query_data_source": {
+      "description": "Query a Notion data source with native filters, sorts, and pagination. First use notion_fetch with object_type=data_source to obtain its property schema, then build the filter."
+    },
+    "notion_create_page": {
+      "description": "Only when the user clearly requests it, create a page under a Notion page or data source. Before writing to a data source, read its schema and validate properties. Common Markdown elements are converted into Notion blocks."
+    },
+    "notion_update_page": {
+      "description": "Only when the user clearly requests it, update a Notion page's properties, icon, cover, or Markdown. Before writing properties, read the page and data-source schema. Full-page replacement, archive, trash, or deleting child content requires confirm:true."
+    },
+    "notion_append_content": {
+      "description": "Only when the user clearly requests it, append Markdown to the end of a Notion page or block without overwriting existing content. Supports headings, paragraphs, lists, to-dos, quotes, dividers, and code blocks."
+    },
+    "notion_create_comment": {
+      "description": "Only when the user clearly requests it, add a plain-text comment to a shared Notion page and return the new comment information."
+    }
+  }
+}

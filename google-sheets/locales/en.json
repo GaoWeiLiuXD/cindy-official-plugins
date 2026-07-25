@@ -1,0 +1,13 @@
+{
+  "name": "Google Sheets",
+  "description": "Connect Google Sheets independently to list worksheets, read ranges, and write cells. Only Sheets permissions are requested; authorization and tokens are managed by the host.",
+  "whenToUse": "Use this plugin to read or update data in Google Sheets. Connect a Google Sheets account separately in this plugin's details first.",
+  "tools": {
+    "google_sheets_accounts": {
+      "description": "List the Google Sheets accounts connected to this plugin and their status. Accounts must be authorized separately in the Google Sheets plugin details."
+    },
+    "google_sheets": {
+      "description": "Run a Google Sheets operation: list_sheets, read_range, or write_range. Before writing cells, show the target range and values to the user and obtain confirmation."
+    }
+  }
+}
