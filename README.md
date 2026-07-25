@@ -91,3 +91,12 @@ cindy-art/
 - 合入 `main` 后由发布 Workflow 自动同步到 Cindy 插件市场。
 
 提 issue 报告问题时，请附上插件名、复现步骤和期望行为。
+
+## License
+
+本仓库代码以 [Apache License 2.0](./LICENSE) 开源。
+
+打包产物中包含的第三方开源组件,其许可证归属见对应插件目录:
+
+- `qq-mail/THIRD-PARTY-LICENSES.txt` — `node/worker.cjs` 内嵌依赖的完整许可证文本
+- `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker`(MIT)
