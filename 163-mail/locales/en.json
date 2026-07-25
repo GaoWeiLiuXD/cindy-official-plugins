@@ -1,0 +1,13 @@
+{
+  "name": "163 Mail",
+  "description": "Search, read, and organize 163 Mail via IMAP/SMTP, and create drafts or send messages. The client authorization password is stored securely by Cindy and only provided to the plugin Worker transiently when executing a mailbox request.",
+  "whenToUse": "Use this plugin to find, read, or organize 163 Mail messages, and to create drafts or send email. Before first use, enter the 163 Mail address and client authorization password on the plugin details page and complete the connection test.",
+  "tools": {
+    "mail_163_status": {
+      "description": "Check whether 163 Mail is configured. Returns only the mail address and connection status, never the client authorization password."
+    },
+    "mail_163": {
+      "description": "Run a 163 Mail operation: list folders, search, read, send, save a draft, mark read/unread, or move messages. Each operation opens a transient IMAP/SMTP connection and closes it when done; sending, moving, and changing read status must come from an explicit user request."
+    }
+  }
+}
