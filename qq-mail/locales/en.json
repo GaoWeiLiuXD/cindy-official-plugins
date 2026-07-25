@@ -1,13 +1,13 @@
 {
   "name": "QQ Mail",
-  "description": "Search, read, and organize QQ Mail via IMAP/SMTP, and create drafts or send messages. The authorization code is stored securely by Cindy and only provided to the plugin Worker transiently when executing a mailbox request.",
-  "whenToUse": "Use this plugin to find, read, or organize QQ Mail messages, and to create drafts or send email. Before first use, enter the QQ Mail address and IMAP/SMTP authorization code on the plugin details page and complete the connection test.",
+  "description": "Search, read, and organize messages through QQ Mail IMAP/SMTP, and create drafts or send mail. Cindy stores the authorization code securely and provides it to the plugin Worker only while handling a mail request.",
+  "whenToUse": "Use when the user needs to find, read, or organize QQ Mail messages, create a draft, or send mail. Before first use, enter the QQ Mail address and IMAP/SMTP authorization code in the plugin details and complete the connection test.",
   "tools": {
     "qq_mail_status": {
-      "description": "Check whether QQ Mail is configured. Returns only the mail address and connection status, never the authorization code."
+      "description": "Check whether QQ Mail is configured. Returns only the email address and connection status, never the authorization code."
     },
     "qq_mail": {
-      "description": "Run a QQ Mail operation: list folders, search, read, send, save a draft, mark read/unread, or move messages. Each operation opens a transient IMAP/SMTP connection and closes it when done; sending, moving, and changing read status must come from an explicit user request."
+      "description": "Perform QQ Mail operations: list folders, search, read, send, save drafts, mark messages read or unread, and move messages. Each operation opens a temporary IMAP/SMTP connection and closes it afterward. Sending, moving, and changing read status require explicit user intent."
     }
   }
 }
