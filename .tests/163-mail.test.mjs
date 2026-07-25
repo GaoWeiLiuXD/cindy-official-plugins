@@ -148,7 +148,7 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, '163-mail');
-  assert.equal(manifest.version, '0.1.2');
+  assert.equal(manifest.version, '0.1.3');
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [
     {

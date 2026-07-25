@@ -139,7 +139,7 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, 'qq-mail');
-  assert.equal(manifest.version, '0.2.0');
+  assert.equal(manifest.version, '0.2.1');
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [{
     key: 'qq_mail_authorization_code',
