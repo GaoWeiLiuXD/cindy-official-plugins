@@ -12,12 +12,12 @@ submodule 随桌面端打包或在启动时播种。
 
 | 插件             | 目录                                     | 说明                                                           |
 | ---------------- | ---------------------------------------- | -------------------------------------------------------------- |
-| Cindy Art        | [`cindy-art`](./cindy-art)               | 图片 / 短视频生成，支持基于已生成图片的改图与风格化            |
-| Cindy GitHub     | [`cindy-github`](./cindy-github)         | GitHub issue / PR / code review / Actions / release 全流程操作 |
-| Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作           |
-| Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
-| Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
-| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
+| Art              | [`cindy-art`](./cindy-art)               | 图片 / 短视频生成，支持基于已生成图片的改图与风格化            |
+| GitHub           | [`cindy-github`](./cindy-github)         | GitHub issue / PR / code review / Actions / release 全流程操作 |
+| GitLab           | [`cindy-gitlab`](./cindy-gitlab)         | GitLab（gitlab.com 及自建实例）issue / MR / 仓库操作           |
+| Mermaid          | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
+| Notion           | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
+| Web Search       | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
 | 163 邮箱         | [`163-mail`](./163-mail)                 | 通过 IMAP/SMTP 搜索、阅读、整理、撰写和发送 163 邮箱邮件       |
 | QQ 邮箱          | [`qq-mail`](./qq-mail)                   | Cindy 安全保存授权码，按需通过 IMAP/SMTP 搜索、阅读、整理和发送 |
 | TapTap Maker     | [`taptap-maker`](./taptap-maker)         | 账号连接、项目同步、构建与官方动态工具                         |

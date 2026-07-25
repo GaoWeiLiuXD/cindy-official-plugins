@@ -1,5 +1,5 @@
 /**
- * Cindy Art 意识 · 电子脑(离屏逻辑页)。
+ * Art 意识 · 电子脑(离屏逻辑页)。
  *
  * 职责链:收活(tool-call: gen_image / edit_image / gen_video / edit_video)
  * → 请主机代办(cindy-request)→ 拿到指纹后广播给画廊面板上墙 → 交卷
@@ -40,7 +40,7 @@ function failCall(callId, message) {
  * ── 聊天卡片供片(卡槽③海报模式,v1.9.0)────────────────────────────
  * 聊天卡片视觉规格:
  * 过程态 = 题注 + 灰底占位画布;终版 = 全幅大图 + 「题注」 + 落款
- * (Cindy Art · 模型名)。背景与文字消费主机注入的语义色 token,随
+ * (Art · 模型名)。背景与文字消费主机注入的语义色 token,随
  * light/dark/扩展主题切换;媒体内容本身不改色。
  * 只给图片工具供卡:海报模式点图进的是图片 lightbox,视频供卡会把默认
  * 视频卡顶掉又放不了片,视频调用保持默认渲染(不发 card-update 即回退)。
@@ -96,7 +96,7 @@ function sendProgressCard(callId, prompt, verb) {
  *  交卷前发。 */
 function sendResultCard(callId, gen, caption, edited) {
   var label = edited ? '改动:' + caption : '「' + caption + '」';
-  var sig = 'Cindy Art' + (gen.modelLabel ? ' · ' + gen.modelLabel : '');
+  var sig = 'Art' + (gen.modelLabel ? ' · ' + gen.modelLabel : '');
   // 卡高精确声明:主机随代办结果带回图片真实像素宽高,按卡片画布宽
   // 458(卡宽 460 − 边框 2)算出出血图高,加题注区 ~52——首帧即最终
   // 高度,切 session 回看不再有"估计高 → 实测高"的收缩跳动。主机没带

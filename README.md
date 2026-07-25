@@ -13,12 +13,12 @@ are no longer bundled with the desktop app as submodules or seeded at startup.
 
 | Plugin           | Directory                                | Description                                                        |
 | ---------------- | ---------------------------------------- | ------------------------------------------------------------------ |
-| Cindy Art        | [`cindy-art`](./cindy-art)               | Image / short-video generation, with edits and restyling based on previously generated images |
-| Cindy GitHub     | [`cindy-github`](./cindy-github)         | Full GitHub workflow: issues / PRs / code review / Actions / releases |
-| Cindy GitLab     | [`cindy-gitlab`](./cindy-gitlab)         | GitLab (gitlab.com and self-hosted) issues / MRs / repository operations |
-| Cindy Mermaid    | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid diagram source normalization and common syntax fixes       |
-| Cindy Notion     | [`cindy-notion`](./cindy-notion)         | Read/write Notion pages, databases, and knowledge bases            |
-| Cindy Web Search | [`cindy-web-search`](./cindy-web-search) | Public web search (Brave / Tavily, user-provided API key)          |
+| Art              | [`cindy-art`](./cindy-art)               | Image / short-video generation, with edits and restyling based on previously generated images |
+| GitHub           | [`cindy-github`](./cindy-github)         | Full GitHub workflow: issues / PRs / code review / Actions / releases |
+| GitLab           | [`cindy-gitlab`](./cindy-gitlab)         | GitLab (gitlab.com and self-hosted) issues / MRs / repository operations |
+| Mermaid          | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid diagram source normalization and common syntax fixes       |
+| Notion           | [`cindy-notion`](./cindy-notion)         | Read/write Notion pages, databases, and knowledge bases            |
+| Web Search       | [`cindy-web-search`](./cindy-web-search) | Public web search (Brave / Tavily, user-provided API key)          |
 | 163 Mail         | [`163-mail`](./163-mail)                 | Search, read, organize, compose, and send 163 Mail via IMAP/SMTP   |
 | QQ Mail          | [`qq-mail`](./qq-mail)                   | Cindy stores the authorization code securely; search, read, organize, and send via IMAP/SMTP on demand |
 | TapTap Maker     | [`taptap-maker`](./taptap-maker)         | Account connection, project sync, builds, and official news tools  |

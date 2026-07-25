@@ -1,5 +1,5 @@
 /**
- * Cindy Notion · Notion 官方 REST API 连接插件。
+ * Notion · Notion 官方 REST API 连接插件。
  *
  * - Internal Integration Token 由 Cindy 保险库保管并只注入 api.notion.com；
  * - 常规 API 使用 Notion-Version 2025-09-03（data source 版）；
@@ -72,7 +72,7 @@ function classifyStatus(status, data, rawBody) {
   var detail = bodyMessage(data, rawBody);
   if (status === 400) return 'Notion 拒绝了请求参数（HTTP 400）' + (detail ? '：' + detail : '');
   if (status === 401) {
-    return 'Notion token 未配置或已失效，请到主界面侧边栏「插件」→「Cindy Notion」详情页重新连接';
+    return 'Notion token 未配置或已失效，请到主界面侧边栏「插件」→「Notion」详情页重新连接';
   }
   if (status === 403) {
     return 'Notion integration 权限不足（HTTP 403），请在集成设置中开启所需 capability，并确认目标页面已分享给该 integration' +
