@@ -4,7 +4,7 @@
   "name": "iCloud Mail",
   "description": "通过 iCloud Mail IMAP/SMTP 搜索、阅读、整理邮件，并创建草稿或发送邮件。App 专用密码由 Cindy 安全保存，仅在执行邮箱请求时临时提供给插件 Worker。",
   "whenToUse": "需要查找、阅读或整理 iCloud Mail 邮件，以及创建草稿或发送邮件时使用。首次使用前请在插件详情页输入 iCloud Mail 地址和 Apple 账户 App 专用密码并完成连接测试。",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "locales": {
     "en": "locales/en.json",
     "zh-CN": "locales/zh-CN.json",
@@ -30,8 +30,8 @@
         "key": "icloud_mail_app_password",
         "label": "Apple 账户 App 专用密码 A",
         "methods": [
-          "account/connect",
-          "mail/action"
+          "account/connect-a",
+          "mail/action-a"
         ],
         "hint": "在 Apple 账户网站生成的 App 专用密码，不是 Apple 账户密码",
         "url": "https://account.apple.com/"
@@ -40,8 +40,8 @@
         "key": "icloud_mail_app_password_b",
         "label": "Apple 账户 App 专用密码 B",
         "methods": [
-          "account/connect",
-          "mail/action"
+          "account/connect-b",
+          "mail/action-b"
         ],
         "hint": "在 Apple 账户网站生成的 App 专用密码，不是 Apple 账户密码",
         "url": "https://account.apple.com/"

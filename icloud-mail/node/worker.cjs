@@ -66585,16 +66585,30 @@ var require_worker = __commonJS({
     }
     async function handleRequest(request, deps = createRuntimeDeps()) {
       if (!request || typeof request !== "object") throw new Error("INVALID_REQUEST");
-      const params = request.params && typeof request.params === "object" ? request.params : {};
       let credentials = null;
       try {
-        if (request.method === "account/connect") {
-          credentials = consumeRequestCredentials(request);
+        const params = request.params && typeof request.params === "object" ? request.params : {};
+        const methodMatch = /^(account\/connect|mail\/action)-([ab])$/.exec(request.method);
+        if (!methodMatch) throw new Error("METHOD_NOT_FOUND");
+        const method = methodMatch[1];
+        const credentialSlot = methodMatch[2];
+        if (params.credentialSlot !== void 0 && params.credentialSlot !== credentialSlot) {
+          throw new Error("INVALID_CREDENTIAL_SLOT");
+        }
+        const boundRequest = {
+          ...request,
+          params: {
+            ...params,
+            credentialSlot
+          }
+        };
+        if (method === "account/connect") {
+          credentials = consumeRequestCredentials(boundRequest);
           const tested = await testAccount(credentials, deps);
           return { ...tested, persistence: "cindy-safe-storage" };
         }
-        if (request.method === "mail/action") {
-          credentials = consumeRequestCredentials(request);
+        if (method === "mail/action") {
+          credentials = consumeRequestCredentials(boundRequest);
           const action = params.action && typeof params.action === "object" ? params.action : {};
           return await performAction(credentials, action, deps);
         }
