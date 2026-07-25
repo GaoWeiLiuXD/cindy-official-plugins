@@ -35,3 +35,11 @@ test('both regional publishers support main pushes and full manual republish', (
     assert.match(workflow, /audience=cindy-plugin/);
   }
 });
+
+test('both regional publishers pin checkout before requesting OIDC', () => {
+  const checkoutRef = '3d3c42e5aac5ba805825da76410c181273ba90b1';
+  for (const workflow of [cnWorkflow, globalWorkflow]) {
+    assert.match(workflow, new RegExp(`actions/checkout@${checkoutRef}`));
+    assert.doesNotMatch(workflow, /actions\/checkout@v\d+/);
+  }
+});
