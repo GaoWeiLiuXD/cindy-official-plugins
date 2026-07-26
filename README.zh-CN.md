@@ -109,4 +109,5 @@ Copyright 2026 心动网络股份有限公司 (X.D. Network Inc.)，见 [`NOTICE
 
 - `qq-mail/THIRD-PARTY-LICENSES.txt` — `node/worker.cjs` 内嵌依赖的完整许可证文本
 - `163-mail/THIRD-PARTY-LICENSES.txt` — 同上，163 邮箱插件的内嵌依赖
+- `icloud-mail/THIRD-PARTY-LICENSES.txt` — 同上，iCloud Mail 插件的内嵌依赖
 - `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker`（MIT）
