@@ -1,23 +1,30 @@
 <p align="right">
-  <strong>简体中文</strong> · <a href="SUPPORT.en.md">English</a>
+  <a href="SUPPORT.zh-CN.md">简体中文</a> · <strong>English</strong>
 </p>
 
-# 使用支持
+# Support
 
-本仓库是 Cindy 官方插件（Ghost）的源码仓。社区可以帮助确认可复现的问题和改进方向，
-但不承诺为每个自定义环境提供一对一排障或商业服务支持。
+This repository holds the source of Cindy's official plugins (Ghosts). The
+community can help confirm reproducible issues and discuss improvements, but
+one-to-one troubleshooting for every custom environment or commercial support is
+not guaranteed.
 
-## 先查什么
+## Where to start
 
-- 插件用途、目录结构和开发流程：先看 [README.zh-CN.md](README.zh-CN.md) 和
-  [贡献指南](CONTRIBUTING.md)；
-- 安全漏洞、凭证或可利用细节：按照 [SECURITY.md](SECURITY.md) 私下报告；
-- 某个插件的 Bug：提交 GitHub issue，并提供**插件名、`ghost.json` 版本**、平台、
-  复现步骤和脱敏日志；
-- 新官方插件提案：先开 issue 讨论定位与边界（避免与现有插件重叠），对齐后再提 PR；
-- 功能建议：提交 feature request，说明使用场景和期望结果。
+- What a plugin does, repository layout, and the development flow: read
+  [README.md](README.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+- Security vulnerabilities, credentials, or exploitable details: follow
+  [SECURITY.md](SECURITY.md) and report privately.
+- A bug in a specific plugin: open a GitHub issue with the **plugin name and its
+  `ghost.json` version**, the platform, reproduction steps, and redacted logs.
+- Proposing a new official plugin: open an issue first to discuss positioning and
+  boundaries (avoiding overlap with existing plugins), then submit a pull request
+  once aligned.
+- Feature requests: describe the use case and the expected outcome.
 
-如果问题出在 Cindy 客户端或 Plugin Server 本身（而不是某个插件的代码），请到
-[makecindy/cindy](https://github.com/makecindy/cindy) 反馈。
+If the problem is in the Cindy client or the Plugin Server itself rather than in a
+plugin's code, report it at
+[makecindy/cindy](https://github.com/makecindy/cindy).
 
-请不要在公开 issue、讨论或日志中提交真实用户数据、访问令牌、授权码、私钥或内部地址。
+Do not post real user data, access tokens, authorization codes, private keys, or
+internal addresses in public issues, discussions, or logs.

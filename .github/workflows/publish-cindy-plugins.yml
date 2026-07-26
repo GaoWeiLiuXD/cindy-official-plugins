@@ -167,7 +167,7 @@ jobs:
             --add-file=LICENSE \
             --add-file=NOTICE \
             --add-file=TRADEMARKS.md \
-            --add-file=TRADEMARKS.en.md \
+            --add-file=TRADEMARKS.zh-CN.md \
             "HEAD:${PLUGIN_DIRECTORY}"
 
       - name: Publish plugin

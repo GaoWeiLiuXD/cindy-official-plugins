@@ -31,7 +31,7 @@ body:
         Proposing a **new official plugin**? Open this issue first to discuss its
         positioning and boundaries (avoiding overlap with existing plugins)
         before writing code — see
-        [CONTRIBUTING.en.md](https://github.com/makecindy/cindy-official-plugins/blob/main/CONTRIBUTING.en.md).
+        [CONTRIBUTING.md](https://github.com/makecindy/cindy-official-plugins/blob/main/CONTRIBUTING.md).
 
         提议**新增官方插件**？请先用这个 issue 讨论定位与边界（避免与现有插件职责重叠）
-        再动手写代码 —— 见 [CONTRIBUTING.md](https://github.com/makecindy/cindy-official-plugins/blob/main/CONTRIBUTING.md)。
+        再动手写代码 —— 见 [CONTRIBUTING.zh-CN.md](https://github.com/makecindy/cindy-official-plugins/blob/main/CONTRIBUTING.zh-CN.md)。

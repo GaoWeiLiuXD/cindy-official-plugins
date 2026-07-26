@@ -85,7 +85,7 @@ them:
    codes.
 
 Official plugins are wired into host-driven `zh-CN / en / ja / ko` locale
-resources; see [`docs/localization.en.md`](./docs/localization.en.md) for
+resources; see [`docs/localization.md`](./docs/localization.md) for
 language selection and the English-fallback contract. Note that this currently
 covers the catalog layer only (plugin name/description and tool descriptions) —
 settings pages and runtime error copy are still Chinese-only. Contributions that
@@ -154,17 +154,17 @@ or a proposal for a new official plugin.
 - After merging to `main`, the publish workflow syncs the plugin to the Cindy
   marketplace automatically.
 
-Read [`CONTRIBUTING.en.md`](./CONTRIBUTING.en.md) before opening a PR — it covers
+Read [`CONTRIBUTING.md`](./CONTRIBUTING.md) before opening a PR — it covers
 the PR title convention, the mandatory `ghost.json` version bump, the
 localization check, how to rebuild the bundled Node Workers, and the
 [DCO](./DCO) sign-off required on every commit (`git commit -s`).
 
 Participation is governed by
-[`CODE_OF_CONDUCT.en.md`](./CODE_OF_CONDUCT.en.md). For usage questions and what
-to include in an issue, see [`SUPPORT.en.md`](./SUPPORT.en.md).
+[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md). For usage questions and what
+to include in an issue, see [`SUPPORT.md`](./SUPPORT.md).
 
 Please do not disclose security vulnerabilities in public issues — see
-[SECURITY.en.md](./SECURITY.en.md) for the reporting channel.
+[SECURITY.md](./SECURITY.md) for the reporting channel.
 
 ## License
 
@@ -185,4 +185,4 @@ attributed in the corresponding plugin directories:
 
 Apache-2.0 grants no trademark rights. These plugins are unofficial integrations
 with the services they connect to; third-party names and logos belong to their
-owners — see [`TRADEMARKS.en.md`](./TRADEMARKS.en.md).
+owners — see [`TRADEMARKS.md`](./TRADEMARKS.md).

@@ -1,27 +1,29 @@
 <p align="right">
-  <strong>简体中文</strong> · <a href="localization.en.md">English</a>
+  <a href="localization.zh-CN.md">简体中文</a> · <strong>English</strong>
 </p>
 
-# 官方插件本地化契约
+# Official Plugin Localization Contract
 
-## 宿主是唯一语言来源
+## The host is the single source of language
 
-插件语言完全跟随 Cindy 宿主当前语言。插件不得读取 `navigator.language`、操作系统语言，
-也不得保存独立的语言偏好。
+Plugin language strictly follows the Cindy host's current language. Plugins
+must not read `navigator.language` or the operating system language, and must
+not store an independent language preference.
 
-宿主当前支持：
+The host currently supports:
 
 - `zh-CN`
 - `en`
 - `ja`
 - `ko`
 
-插件没有提供宿主当前语言时固定使用英文；宿主传入未知语言时同样使用英文。英文不是
-可配置项，而是协议级兜底。
+When the plugin does not provide the host's current language, English is used;
+when the host passes an unknown language, English is used as well. English is
+not a configurable option — it is the protocol-level fallback.
 
-## Manifest 资源
+## Manifest resources
 
-每个官方插件在 `ghost.json` 中声明四种语言：
+Every official plugin declares four languages in `ghost.json`:
 
 ```json
 {
@@ -34,7 +36,7 @@
 }
 ```
 
-locale 文件完整覆盖以下字段：
+A locale file fully covers the following fields:
 
 ```json
 {
@@ -49,20 +51,28 @@ locale 文件完整覆盖以下字段：
 }
 ```
 
-插件 id、command、tool name、参数名、枚举值和错误 code 都是稳定协议，不翻译。工具翻译
-以稳定 tool name 为键，不依赖数组顺序。
+Plugin ids, commands, tool names, parameter names, enum values, and error codes
+are stable protocol and are never translated. Tool translations are keyed by
+the stable tool name, not by array order.
 
-## 宿主行为
+## Host behavior
 
-Cindy 客户端负责：
+The Cindy client is responsible for:
 
-1. 校验 `locales` 只包含四种受支持语言，且必须有 `en`。
-2. 在 Forge 打包和安装时校验资源文件存在、是合法 JSON、单文件不超过 64KB，并完整
-   覆盖清单已有字段与所有工具。
-3. 使用宿主当前语言解析插件列表、详情、安装确认和 Agent 工具目录。
-4. 插件缺少目标语言、宿主语言不受支持，或已安装的目标资源损坏时，重新尝试英文资源。
-5. 应用内切换语言后重新广播本地化插件清单，并重载已打开的插件设置页和面板。
-6. 通过 `cindy.request({ kind: 'app-context' })` 和同源 `GET /app-context` 返回：
+1. Validating that `locales` contains only the four supported languages and
+   that `en` is present.
+2. Validating at Forge packaging time and at install time that the resource
+   files exist, are valid JSON, are no larger than 64KB each, and fully cover
+   the manifest's existing fields and all tools.
+3. Resolving the plugin list, details, install confirmation, and the Agent tool
+   catalog using the host's current language.
+4. Falling back to the English resources when the plugin lacks the target
+   language, the host language is unsupported, or the installed target
+   resource is corrupted.
+5. Re-broadcasting the localized plugin catalog after an in-app language
+   switch, and reloading any open plugin settings pages and panels.
+6. Returning, via `cindy.request({ kind: 'app-context' })` and the same-origin
+   `GET /app-context`:
 
 ```json
 {
@@ -74,31 +84,38 @@ Cindy 客户端负责：
 }
 ```
 
-运行中的逻辑页还会收到 `host-context-changed` 消息。插件自绘页面或运行时文案需要动态
-切换时，只读取这个 `locale`，并在自身不支持时选择英文资源。
+Running logic pages also receive the `host-context-changed` message. When a
+plugin's self-rendered pages or runtime copy need to switch dynamically, read
+only this `locale`, and fall back to the English resources when the plugin
+itself does not support it.
 
-## 当前实际覆盖范围
+## What is actually covered today
 
-需要如实说明：**上述四语言资源目前只覆盖清单层**，即 `ghost.json` 的 `name` /
-`description` / `whenToUse` 以及各 tool 的 `description` —— 也就是插件市场里的展示文案
-和 Agent 读到的工具说明。
+To be accurate: **the four-locale resources currently cover the catalog layer
+only** — `ghost.json`'s `name` / `description` / `whenToUse` and each tool's
+`description`. That is, the marketplace copy and the tool manual the Agent reads.
 
-尚未覆盖的部分：
+Not yet covered:
 
-- **设置页与自绘面板**（各插件的 `settings.html` / `panel.html`）目前全部硬编码简体
-  中文，没有任何一个插件实现了上面描述的读取 `locale` / 监听 `host-context-changed`
-  的契约。
-- **运行时面向用户的报错文案**（各插件 `main.js` 内）同样硬编码简体中文。
+- **Settings pages and self-rendered panels** (each plugin's `settings.html` /
+  `panel.html`) are hardcoded Simplified Chinese. No plugin currently implements
+  the `locale` / `host-context-changed` contract described above.
+- **User-facing runtime error copy** (inside each plugin's `main.js`) is likewise
+  hardcoded Simplified Chinese.
 
-因此非中文宿主用户会看到英文的工具列表配上中文的设置页和中文报错。上面的自绘页契约是
-**目标契约**，新插件应当按它实现；存量插件的补齐尚未完成。
+A non-Chinese host user therefore sees an English tool list alongside Chinese
+settings screens and Chinese error messages. The self-rendered-page contract
+above is the *target* contract — new plugins should implement it; retrofitting
+the existing ones is not done.
 
-## 仓库门禁
+## Repository gate
 
-发布前必须确认：
+Before publishing, confirm:
 
-- 每个官方插件（当前 14 个）都声明 `zh-CN / en / ja / ko`。数量不必写死在文档里，
-  `.tests/localization.test.mjs` 会动态遍历所有含 `ghost.json` 的目录。
-- 四种资源的字段和工具 key 完全一致，没有空值或占位文案。
-- HTML/JS 不使用 `navigator.language`。
-- 本地化内容变化同步递增 `ghost.json.version`。
+- Every official plugin (currently 14) declares `zh-CN / en / ja / ko`. The count
+  does not need to be hardcoded in docs — `.tests/localization.test.mjs`
+  enumerates every directory containing a `ghost.json` dynamically.
+- The fields and tool keys of the four resources are exactly consistent, with
+  no empty values or placeholder copy.
+- HTML/JS does not use `navigator.language`.
+- Localization content changes bump `ghost.json.version` in the same change.

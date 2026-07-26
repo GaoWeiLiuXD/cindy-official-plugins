@@ -65,7 +65,7 @@ cindy-art/
 4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
 
 官方插件已接入宿主驱动的 `zh-CN / en / ja / ko` locale 资源；语言选择与英文兜底契约见
-[`docs/localization.md`](./docs/localization.md)。注意目前只覆盖清单层（插件名／描述与
+[`docs/localization.zh-CN.md`](./docs/localization.zh-CN.md)。注意目前只覆盖清单层（插件名／描述与
 工具描述）—— 设置页和运行时报错文案仍是中文单语，欢迎贡献补齐。
 
 ## 本地开发
@@ -113,14 +113,14 @@ cindy-art/
 - **新增官方插件**：建议先开 issue 讨论定位与边界（避免与现有插件职责重叠），达成一致后再提 PR。
 - 合入 `main` 后由发布 Workflow 自动同步到 Cindy 插件市场。
 
-提 PR 前请读 [`CONTRIBUTING.md`](./CONTRIBUTING.md)：其中包含 PR 标题规范、必须同步
+提 PR 前请读 [`CONTRIBUTING.zh-CN.md`](./CONTRIBUTING.zh-CN.md)：其中包含 PR 标题规范、必须同步
 bump `ghost.json.version` 的要求、本地化检查、内嵌 Node Worker 的重新构建方式，以及
 每个 commit 都需要的 [DCO](./DCO) 签名（`git commit -s`）。
 
-参与社区请遵守 [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)。使用问题以及提 issue
-需要附上的信息见 [`SUPPORT.md`](./SUPPORT.md)。
+参与社区请遵守 [`CODE_OF_CONDUCT.zh-CN.md`](./CODE_OF_CONDUCT.zh-CN.md)。使用问题以及提 issue
+需要附上的信息见 [`SUPPORT.zh-CN.md`](./SUPPORT.zh-CN.md)。
 
-安全漏洞请勿通过公开 issue 披露，报告渠道见 [SECURITY.md](./SECURITY.md)。
+安全漏洞请勿通过公开 issue 披露，报告渠道见 [SECURITY.zh-CN.md](./SECURITY.zh-CN.md)。
 
 ## License
 
@@ -136,4 +136,4 @@ Copyright 2026 心动网络股份有限公司 (X.D. Network Inc.)，见 [`NOTICE
 - `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker`（MIT）
 
 Apache-2.0 不授予商标权。本仓库插件是对所连接服务的非官方集成，第三方名称与标志归其
-各自所有者所有 —— 见 [`TRADEMARKS.md`](./TRADEMARKS.md)。
+各自所有者所有 —— 见 [`TRADEMARKS.zh-CN.md`](./TRADEMARKS.zh-CN.md)。

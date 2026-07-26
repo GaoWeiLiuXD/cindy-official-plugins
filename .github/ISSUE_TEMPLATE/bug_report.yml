@@ -11,7 +11,7 @@ body:
         not a public issue.
 
         请不要贴出访问令牌、邮箱授权码、App 专用密码、私钥或真实用户数据。安全漏洞
-        请走 [SECURITY.md](https://github.com/makecindy/cindy-official-plugins/blob/main/SECURITY.md) 的私密渠道，不要开公开 issue。
+        请走 [SECURITY.zh-CN.md](https://github.com/makecindy/cindy-official-plugins/blob/main/SECURITY.zh-CN.md) 的私密渠道，不要开公开 issue。
 
   - type: input
     id: plugin

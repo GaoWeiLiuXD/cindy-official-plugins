@@ -2,7 +2,7 @@
 #
 # 允许 remediation commit：贡献者可以推一个后续 commit，用固定格式的正文为先前的
 # commit 补上签名，不必改写历史 force-push（否则已有的 review 评论会全部 outdated）。
-# 格式与用法写在 CONTRIBUTING.en.md / CONTRIBUTING.md 的 DCO 一节。
+# 格式与用法写在 CONTRIBUTING.md / CONTRIBUTING.zh-CN.md 的 DCO 一节。
 # thirdParty 依赖 individual，必须一起开。
 allowRemediationCommits:
   individual: true

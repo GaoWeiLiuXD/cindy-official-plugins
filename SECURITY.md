@@ -1,43 +1,55 @@
 <p align="right">
-  <strong>简体中文</strong> · <a href="SECURITY.en.md">English</a>
+  <a href="SECURITY.zh-CN.md">简体中文</a> · <strong>English</strong>
 </p>
 
-# 安全漏洞报告
+# Security Policy
 
-请不要在公开 issue、Pull Request、讨论区或聊天中披露未修复的安全漏洞、凭证、令牌或
-可直接利用的详细信息。
+Do not disclose unpatched security vulnerabilities, credentials, tokens, or
+directly exploitable details in public issues, pull requests, discussions, or
+chat.
 
-## 报告渠道
+## Reporting a vulnerability
 
-首选 GitHub 的私密漏洞报告入口：
+The preferred channel is GitHub's private vulnerability reporting form:
 
 <https://github.com/makecindy/cindy-official-plugins/security/advisories/new>
 
-如果该入口对你不可用，请发送邮件至 **feedback@cindy.app**。邮件标题建议包含
-`[Cindy Security]`。如果复现材料包含敏感信息，请先在邮件中说明，等待维护者提供
-合适的安全传输方式，不要把敏感材料直接发到公开渠道。
+If that form is unavailable, email **feedback@cindy.app**. We recommend using
+`[Cindy Security]` in the subject. If reproduction materials contain sensitive
+information, tell us in the email and wait for the maintainers to provide an
+appropriate secure transfer method. Do not send sensitive materials through a
+public channel.
 
-## 报告内容
+## What to include
 
-请尽量提供：
+Please provide as much of the following as possible:
 
-- 受影响的插件名与 `ghost.json` 版本（或 commit）；
-- 受影响的平台、组件和配置；
-- 可复现步骤、最小化 PoC 或日志（请先删除凭证和个人数据）；
-- 潜在影响、利用条件和建议的修复方向。
+- the affected plugin name and its `ghost.json` version (or commit);
+- affected platform, component, and configuration;
+- reproduction steps, a minimal PoC, or logs, after removing credentials and
+  personal data;
+- potential impact, exploitation requirements, and any suggested mitigation.
 
-如果问题涉及 Cindy 客户端或 Plugin Server 本身（而非某个插件的代码），也请通过
-上述私密渠道报告，我们会转交给对应的维护者，不要通过公开 issue 披露细节。
+If the issue involves the Cindy client or the Plugin Server itself (rather than
+a plugin's code), please also report it through the private channels above and
+we will route it to the appropriate maintainers. Do not disclose details in a
+public issue.
 
-## 处理方式
+## Response process
 
-我们会在收到报告后进行确认、复现和影响评估，并在修复或缓解措施可公开时更新报告。
-目标响应节奏：**5 个工作日内确认收到并给出初步判断**；确认为有效漏洞后，我们按
-**90 天协调披露窗口**推进修复与公开（可与报告者协商调整）。如果超过 7 天没有收到
-任何回复，请通过另一渠道（邮件或 GitHub）提醒我们。
+We will acknowledge the report, reproduce it, assess its impact, and update the
+report when a fix or mitigation can be disclosed. Our target cadence:
+**acknowledgement with an initial assessment within 5 business days**, and a
+**90-day coordinated disclosure window** for confirmed vulnerabilities
+(adjustable in coordination with the reporter). If you hear nothing for more
+than 7 days, please ping us through the other channel (email or GitHub).
 
-## 贡献者注意事项
+## Contributor notes
 
-- 不要把真实用户数据、访问令牌、私钥或内部 endpoint 写入 issue、测试夹具或提交。
-- 如果你误提交了敏感信息，请立即私下报告；仅删除工作区文件不能保证 Git 历史中的秘密已失效。
-- 普通缺陷、文档问题和功能请求请使用公开 issue，不要占用安全披露渠道。
+- Do not put real user data, access tokens, private keys, or internal endpoints
+  in issues, test fixtures, or commits.
+- If you accidentally commit sensitive information, report it privately
+  immediately. Deleting the file from the working tree does not invalidate
+  secrets that may exist in Git history.
+- Use public issues for ordinary bugs, documentation problems, and feature
+  requests. Do not use the security channel for those topics.
