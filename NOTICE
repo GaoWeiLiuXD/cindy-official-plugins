@@ -5,10 +5,12 @@ This product includes software developed by
 心动网络股份有限公司 (X.D. Network Inc.).
 
 Third-party components distributed with this product retain their own
-copyright and license terms. Their attribution notices are collected in the
-plugin directory that ships them, not in this file:
+copyright and license terms, and are not covered by this file.
 
-  - 163-mail/THIRD-PARTY-LICENSES.txt
-  - icloud-mail/THIRD-PARTY-LICENSES.txt
-  - qq-mail/THIRD-PARTY-LICENSES.txt
-  - taptap-maker/vendor/taptap-maker/LICENSE
+Where a plugin bundles third-party code, its attribution notices ship in that
+plugin's own THIRD-PARTY-LICENSES.txt, alongside this file. The taptap-maker
+plugin additionally carries the license of the vendored @taptap/maker package
+at vendor/taptap-maker/LICENSE.
+
+The complete set of attribution notices for every plugin is at
+https://github.com/makecindy/cindy-official-plugins

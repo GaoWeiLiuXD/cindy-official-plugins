@@ -139,7 +139,9 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, 'qq-mail');
-  assert.equal(manifest.version, '0.2.1');
+  // Shape, not a pinned value: this test is about the secret bindings, and a
+  // hardcoded version goes stale on every release bump.
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [{
     key: 'qq_mail_authorization_code',

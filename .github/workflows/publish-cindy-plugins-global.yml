@@ -157,9 +157,17 @@ jobs:
           PLUGIN_DIRECTORY: ${{ matrix.plugin.directory }}
         run: |
           set -euo pipefail
+          # Apache-2.0 4(a)/(d): a redistributed artifact must carry the License
+          # and the NOTICE. Both live at the repository root, so an archive of a
+          # plugin subdirectory would omit them without --add-file. A plugin's own
+          # THIRD-PARTY-LICENSES.txt already travels, being inside its directory.
           git archive \
             --format=zip \
             --output="$RUNNER_TEMP/plugin.cindy" \
+            --add-file=LICENSE \
+            --add-file=NOTICE \
+            --add-file=TRADEMARKS.md \
+            --add-file=TRADEMARKS.en.md \
             "HEAD:${PLUGIN_DIRECTORY}"
 
       - name: Publish plugin

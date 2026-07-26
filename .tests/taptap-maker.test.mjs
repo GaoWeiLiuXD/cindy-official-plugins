@@ -8,7 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
 import test from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createContext, Script } from 'node:vm';
 
 import adapter from '../taptap-maker/node/child-process-adapter.cjs';
@@ -854,8 +854,11 @@ test('MCP root router 只为当前 tools/list 暴露一个可信 file root', () 
     method: 'roots/list',
     params: {},
   }));
+  // Derive the expected URI rather than hardcoding a POSIX one: on Windows
+  // pathToFileURL('/tmp/...') resolves against the current drive and yields
+  // file:///C:/tmp/..., so a literal file:///tmp/... only passes on POSIX.
   assert.deepEqual(runtimeLines.shift().result.roots, [{
-    uri: 'file:///tmp/trusted-maker',
+    uri: pathToFileURL('/tmp/trusted-maker').href,
     name: 'trusted-maker',
   }]);
 
