@@ -152,7 +152,7 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.2');
+  assert.equal(manifest.version, '2.1.4');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
@@ -977,6 +977,116 @@ test('真实 Maker Runtime 可经插件入口完成 initialize 与 roots-aware t
     assert.equal(listed.error, undefined, stderr);
     assert.ok(listed.result.tools.some((tool) => tool.name === 'maker_status_lite'));
     assert.ok(listed.result.tools.some((tool) => tool.name === 'maker_build_current_directory'));
+  } finally {
+    child.kill();
+    await once(child, 'close');
+  }
+});
+
+test('宿主钉死 stdio 时插件入口仍完成 initialize 与 roots-aware tools/list', {
+  timeout: 20_000,
+}, async () => {
+  const makerMcpEntry = fileURLToPath(new URL('node/maker-mcp.cjs', pluginRoot));
+  // 复刻 Electron 在 Windows 上给 utilityProcess 的 stdio：process.stdin 是
+  // configurable: false 的 getter，宿主靠 stub.push 喂字节；宿主先宣布 ready、
+  // 再 require 本入口，所以第一条 initialize 已经落进流缓冲。stdout 一并钉死，
+  // 把 write 劫持路径也覆盖到。
+  const bootstrap = [
+    'const { Readable } = require("node:stream");',
+    'const pipeStdin = process.stdin;',
+    'const pipeStdout = process.stdout;',
+    'const stubStdin = new Readable({ read() {} });',
+    'pipeStdin.on("data", (chunk) => { stubStdin.push(chunk); });',
+    'pipeStdin.on("end", () => { stubStdin.push(null); });',
+    'Object.defineProperty(process, "stdin", {',
+    '  configurable: false,',
+    '  enumerable: true,',
+    '  get() { return stubStdin; },',
+    '});',
+    'Object.defineProperty(process, "stdout", {',
+    '  configurable: false,',
+    '  enumerable: true,',
+    '  get() { return pipeStdout; },',
+    '});',
+    'globalThis.__CINDY_NODE__ = {',
+    '  spawnEntry() { return Promise.reject(new Error("unexpected child spawn")); }',
+    '};',
+    'stubStdin.push(JSON.stringify({',
+    '  jsonrpc: "2.0",',
+    '  id: "buffered-init",',
+    '  method: "initialize",',
+    '  params: {',
+    '    protocolVersion: "2024-11-05",',
+    '    capabilities: {},',
+    '    clientInfo: { name: "test", version: "1" },',
+    '  },',
+    '}) + "\\n");',
+    `require(${JSON.stringify(makerMcpEntry)});`,
+  ].join('\n');
+  const child = childProcess.spawn(process.execPath, ['-e', bootstrap], {
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  const pending = new Map();
+  let stdoutBuffer = '';
+  let stderr = '';
+
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stderr.on('data', (chunk) => {
+    stderr += chunk;
+  });
+  child.stdout.on('data', (chunk) => {
+    stdoutBuffer += chunk;
+    for (;;) {
+      const newline = stdoutBuffer.indexOf('\n');
+      if (newline < 0) break;
+      const line = stdoutBuffer.slice(0, newline).trim();
+      stdoutBuffer = stdoutBuffer.slice(newline + 1);
+      if (!line) continue;
+      const message = JSON.parse(line);
+      if (message.id !== undefined && pending.has(String(message.id))) {
+        pending.get(String(message.id))(message);
+        pending.delete(String(message.id));
+      }
+    }
+  });
+
+  function expect(id, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        pending.delete(String(id));
+        reject(new Error(`Maker Runtime 请求超时：${label}\n${stderr}`));
+      }, 15_000);
+      pending.set(String(id), (message) => {
+        clearTimeout(timer);
+        resolve(message);
+      });
+    });
+  }
+
+  try {
+    // 装劫持前落进缓冲的 initialize 也必须经 router，否则动态 tools/list 会残废。
+    const initialized = await expect('buffered-init', 'initialize');
+    assert.equal(initialized.result.serverInfo.name, 'taptap-maker');
+    assert.doesNotMatch(stderr, /Cannot redefine property/);
+
+    const listed = expect('pinned-list', 'cindy/tools-list');
+    child.stdin.write(`${JSON.stringify({
+      jsonrpc: '2.0',
+      method: 'notifications/initialized',
+      params: {},
+    })}\n`);
+    child.stdin.write(`${JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'pinned-list',
+      method: 'cindy/tools-list',
+      params: { target_dir: '/tmp/cindy-taptap-maker-pinned-stdio-test' },
+    })}\n`);
+
+    const tools = await listed;
+    assert.equal(tools.error, undefined, stderr);
+    assert.ok(tools.result.tools.some((tool) => tool.name === 'maker_status_lite'));
+    assert.ok(tools.result.tools.some((tool) => tool.name === 'maker_build_current_directory'));
   } finally {
     child.kill();
     await once(child, 'close');
