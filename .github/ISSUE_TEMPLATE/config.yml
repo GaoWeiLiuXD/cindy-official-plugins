@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability / 安全漏洞
+    url: https://github.com/makecindy/cindy-official-plugins/security/advisories/new
+    about: Report privately — never in a public issue. / 请私下报告，不要开公开 issue。
+  - name: Cindy client or Plugin Server issue / Cindy 客户端或 Plugin Server 问题
+    url: https://github.com/makecindy/cindy/issues
+    about: This repository only holds plugin source. / 本仓库只存放插件源码。
+  - name: Usage question / 使用问题
+    url: https://github.com/makecindy/cindy-official-plugins/blob/main/SUPPORT.md
+    about: What to check first before filing. / 先看这里该查什么。

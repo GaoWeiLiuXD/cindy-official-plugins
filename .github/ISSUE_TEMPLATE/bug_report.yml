@@ -1,0 +1,64 @@
+name: Bug report / 缺陷报告
+description: Report a problem with an official plugin / 报告某个官方插件的问题
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not post access tokens, mailbox authorization codes, app-specific
+        passwords, private keys, or real user data. Security vulnerabilities go
+        through the private channel in [SECURITY.md](https://github.com/makecindy/cindy-official-plugins/blob/main/SECURITY.md),
+        not a public issue.
+
+        请不要贴出访问令牌、邮箱授权码、App 专用密码、私钥或真实用户数据。安全漏洞
+        请走 [SECURITY.md](https://github.com/makecindy/cindy-official-plugins/blob/main/SECURITY.md) 的私密渠道，不要开公开 issue。
+
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin / 插件
+      description: Directory name, e.g. `cindy-github` / 目录名，例如 `cindy-github`
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version / 插件版本
+      description: The `version` field in that plugin's `ghost.json` / 该插件 `ghost.json` 里的 `version`
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform / 平台
+      description: OS and Cindy client version / 操作系统与 Cindy 客户端版本
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour / 期望行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened / 实际行为
+      description: Include error messages and redacted logs / 附上报错信息和脱敏后的日志
+    validations:
+      required: true

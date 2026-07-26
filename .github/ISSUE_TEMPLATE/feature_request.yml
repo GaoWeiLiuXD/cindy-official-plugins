@@ -1,0 +1,37 @@
+name: Feature request / 功能建议
+description: Suggest an improvement to an existing plugin / 建议改进某个现有插件
+labels: [enhancement]
+body:
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin / 插件
+      description: Directory name, or "new plugin" / 目录名，或填「新插件」
+    validations:
+      required: true
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case / 使用场景
+      description: What are you trying to do, and why does the current behaviour fall short? / 你想完成什么？现在的行为为什么不够？
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome / 期望结果
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Proposing a **new official plugin**? Open this issue first to discuss its
+        positioning and boundaries (avoiding overlap with existing plugins)
+        before writing code — see
+        [CONTRIBUTING.en.md](https://github.com/makecindy/cindy-official-plugins/blob/main/CONTRIBUTING.en.md).
+
+        提议**新增官方插件**？请先用这个 issue 讨论定位与边界（避免与现有插件职责重叠）
+        再动手写代码 —— 见 [CONTRIBUTING.md](https://github.com/makecindy/cindy-official-plugins/blob/main/CONTRIBUTING.md)。

@@ -1,3 +1,27 @@
+# Line endings are LF in the repository and LF in every working tree, on every
+# platform. Without this, Git for Windows' default core.autocrlf=true checks
+# every text file out as CRLF, which breaks tests that match on "\n" and makes
+# the committed bundles below appear to differ from a local rebuild.
+* text=auto eol=lf
+
+# Generated bundles: committed artifacts that must stay byte-identical to what
+# their documented build command produces (and, for maker.js, to the published
+# npm package). Never normalized, never touched by hand.
+163-mail/node/worker.cjs -text
+qq-mail/node/worker.cjs -text
+icloud-mail/node/worker.cjs -text
+taptap-maker/vendor/taptap-maker/dist/maker.js -text
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
 # Vendored npm output is kept byte-for-byte. Its generated bundle contains
 # whitespace inside template literals, and its workflow guide documents a
 # seven-character Git conflict example.

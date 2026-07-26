@@ -19,6 +19,10 @@ are no longer bundled with the desktop app as submodules or seeded at startup.
 | Mermaid          | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid diagram source normalization and common syntax fixes       |
 | Notion           | [`cindy-notion`](./cindy-notion)         | Read/write Notion pages, databases, and knowledge bases            |
 | Web Search       | [`cindy-web-search`](./cindy-web-search) | Public web search (Brave / Tavily, user-provided API key)          |
+| Gmail            | [`google-gmail`](./google-gmail)         | Search, read, and organize Gmail, create drafts, and send messages; host-managed OAuth |
+| Google Drive     | [`google-drive`](./google-drive)         | Search, read, download, upload, move, and delete Drive files       |
+| Google Calendar  | [`google-calendar`](./google-calendar)   | View schedules and availability; create and update meetings        |
+| Google Sheets    | [`google-sheets`](./google-sheets)       | List worksheets, read ranges, and write cells                      |
 | 163 Mail         | [`163-mail`](./163-mail)                 | Search, read, organize, compose, and send 163 Mail via IMAP/SMTP   |
 | iCloud Mail      | [`icloud-mail`](./icloud-mail)           | Cindy stores the app-specific password securely; manage iCloud Mail via IMAP/SMTP on demand |
 | QQ Mail          | [`qq-mail`](./qq-mail)                   | Cindy stores the authorization code securely; search, read, organize, and send via IMAP/SMTP on demand |
@@ -41,8 +45,18 @@ cindy-art/
 └── panel.*         # (optional) Custom panel UI
 ```
 
-The `.tests/` directory holds plugin behavior tests (vitest style; currently
-archived until a CI runner is wired up).
+`provisioning.json` at the repository root declares, per plugin, which audience
+receives it as a built-in. Every plugin directory has a corresponding entry, so
+adding a plugin means adding a row there too.
+
+The `.tests/` directory holds plugin behavior tests in two tiers:
+
+- `*.test.mjs` run on Node's built-in test runner
+  (`node --test .tests/<file>.test.mjs`). `localization.test.mjs` is not merely
+  a local check — both publish workflows run it as a gate before packaging.
+- `*.test.ts` are written for vitest, which this repository does not currently
+  wire up (there is no root `package.json`). They are archived until a runner is
+  configured, and cannot be run as-is.
 
 ## Design principles
 
@@ -72,7 +86,10 @@ them:
 
 Official plugins are wired into host-driven `zh-CN / en / ja / ko` locale
 resources; see [`docs/localization.en.md`](./docs/localization.en.md) for
-language selection and the English-fallback contract.
+language selection and the English-fallback contract. Note that this currently
+covers the catalog layer only (plugin name/description and tool descriptions) —
+settings pages and runtime error copy are still Chinese-only. Contributions that
+localize them are welcome.
 
 ## Local development
 
@@ -97,19 +114,27 @@ wholesale and bump the plugin version accordingly — do not edit the generated
 
 ## Automated publishing
 
-The repository's
-[`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml)
-only publishes from `main`:
+Two workflows publish, and both only from `main`:
+
+- [`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml) —
+  `Publish Cindy Plugins (CN)`
+- [`publish-cindy-plugins-global.yml`](./.github/workflows/publish-cindy-plugins-global.yml) —
+  `Publish Cindy Plugins (Global)`
+
+Both are active and behave identically:
 
 - A regular push to `main` publishes only the plugin directories changed in
-  that push.
-- Manually running `Publish Cindy Plugins` from the Actions page publishes all
-  current plugins in full — for initial setup after a repository migration or
-  an explicit re-release.
-- The production workflow publishes via GitHub Actions OIDC to a
-  repository-configured production endpoint. The overseas target remains
-  disabled until that service is available. There is no development publishing
-  workflow.
+  that push. A push that touches no plugin directory publishes nothing.
+- Manually running a workflow from the Actions page publishes all current
+  plugins in full — for initial setup after a repository migration or an
+  explicit re-release.
+- Each publishes via GitHub Actions OIDC (audience `cindy-plugin`) to its own
+  endpoint, supplied by a repository secret. The two runs package, execute, and
+  report independently; a failure on one side does not affect the other's
+  workflow status. There is no development publishing workflow.
+
+Because both fire on the same push, one merge that changes a plugin produces two
+releases of it — one per region.
 
 When changing plugin content you must bump `ghost.json.version` in the same
 change. Publishing different content under the same version is rejected by the
@@ -157,3 +182,7 @@ attributed in the corresponding plugin directories:
 - `163-mail/THIRD-PARTY-LICENSES.txt` — same, for the 163 Mail plugin
 - `icloud-mail/THIRD-PARTY-LICENSES.txt` — same, for the iCloud Mail plugin
 - `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker` (MIT)
+
+Apache-2.0 grants no trademark rights. These plugins are unofficial integrations
+with the services they connect to; third-party names and logos belong to their
+owners — see [`TRADEMARKS.en.md`](./TRADEMARKS.en.md).

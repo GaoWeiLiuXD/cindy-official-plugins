@@ -1,2 +1,40 @@
+# Packaged plugin artifacts (built with ghost_forge_pack, never committed)
 *.cindy
+
+# Dependencies
 node_modules/
+
+# Agent / tooling scratch directories
+.cindy-worktrees/
+
+# Credentials — never commit these. If you already did, see SECURITY.md:
+# deleting the working-tree file does not invalidate the secret in Git history.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets.json
+service-account*.json
+credentials.json
+
+# Logs and crash output
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# OS junk
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*~

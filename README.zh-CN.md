@@ -18,6 +18,10 @@ submodule 随桌面端打包或在启动时播种。
 | Mermaid          | [`cindy-mermaid`](./cindy-mermaid)       | Mermaid 图表源码规范化与常见语法修复                           |
 | Notion           | [`cindy-notion`](./cindy-notion)         | Notion 页面、数据库与知识库读写                                |
 | Web Search       | [`cindy-web-search`](./cindy-web-search) | 公网搜索（Brave / Tavily，用户自备 API key）                   |
+| Gmail            | [`google-gmail`](./google-gmail)         | 搜索、阅读、整理 Gmail 邮件，生成草稿或发送邮件；授权由宿主托管 |
+| Google Drive     | [`google-drive`](./google-drive)         | 搜索、读取、下载、上传、移动和删除云端文件                     |
+| Google Calendar  | [`google-calendar`](./google-calendar)   | 查询日程与空闲时间，创建或修改会议                             |
+| Google Sheets    | [`google-sheets`](./google-sheets)       | 列出工作表、读取范围并写入单元格                               |
 | 163 邮箱         | [`163-mail`](./163-mail)                 | 通过 IMAP/SMTP 搜索、阅读、整理、撰写和发送 163 邮箱邮件       |
 | iCloud Mail      | [`icloud-mail`](./icloud-mail)           | Cindy 安全保存 App 专用密码，按需通过 IMAP/SMTP 管理邮件        |
 | QQ 邮箱          | [`qq-mail`](./qq-mail)                   | Cindy 安全保存授权码，按需通过 IMAP/SMTP 搜索、阅读、整理和发送 |
@@ -40,7 +44,16 @@ cindy-art/
 └── panel.*         # (可选) 自定义面板 UI
 ```
 
-`.tests/` 目录存放插件行为测试（vitest 风格，当前为存档状态，待接入 CI runner 后启用）。
+根目录的 `provisioning.json` 按插件声明哪些受众会把它作为内置插件装上。每个插件目录
+都有对应条目，因此新增插件时也要同步加一行。
+
+`.tests/` 目录存放插件行为测试，分两层：
+
+- `*.test.mjs` 用 Node 内置 test runner 运行
+  （`node --test .tests/<文件>.test.mjs`）。其中 `localization.test.mjs` 不只是本地检查
+  —— 两个发布 Workflow 都会在打包前把它作为门禁执行。
+- `*.test.ts` 是按 vitest 写的，但本仓目前没有接入 vitest（没有根 `package.json`），
+  处于存档状态，现状下无法直接运行。
 
 ## 设计原则
 
@@ -52,7 +65,8 @@ cindy-art/
 4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
 
 官方插件已接入宿主驱动的 `zh-CN / en / ja / ko` locale 资源；语言选择与英文兜底契约见
-[`docs/localization.md`](./docs/localization.md)。
+[`docs/localization.md`](./docs/localization.md)。注意目前只覆盖清单层（插件名／描述与
+工具描述）—— 设置页和运行时报错文案仍是中文单语，欢迎贡献补齐。
 
 ## 本地开发
 
@@ -70,14 +84,23 @@ cindy-art/
 
 ## 自动发布
 
-仓库的 [`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml)
-只允许从 `main` 发布：
+共有两个发布 Workflow，都只允许从 `main` 发布：
 
-- `main` 的普通 push 只发布本次发生变化的插件目录。
-- Actions 页面手动运行 `Publish Cindy Plugins` 会全量发布当前全部插件，供仓库迁移
-  后首次建档或显式重发使用。
-- 生产 Workflow 通过 GitHub Actions OIDC 发布到仓库配置的生产端点。
-  海外服务部署前保持停用，仓库不再提供 Dev 发布 Workflow。
+- [`publish-cindy-plugins.yml`](./.github/workflows/publish-cindy-plugins.yml) ——
+  `Publish Cindy Plugins (CN)`
+- [`publish-cindy-plugins-global.yml`](./.github/workflows/publish-cindy-plugins-global.yml) ——
+  `Publish Cindy Plugins (Global)`
+
+两者均已启用，行为完全一致：
+
+- `main` 的普通 push 只发布本次发生变化的插件目录；没有触及任何插件目录的 push 不会
+  发布任何东西。
+- Actions 页面手动运行会全量发布当前全部插件，供仓库迁移后首次建档或显式重发使用。
+- 各自通过 GitHub Actions OIDC（audience `cindy-plugin`）发布到由仓库 Secret 提供的
+  端点。两次运行独立打包、独立执行、独立汇报，一边失败不影响另一边的 Workflow 状态。
+  仓库不提供 Dev 发布 Workflow。
+
+由于两者由同一次 push 触发，一次改动插件的合并会产生两个 Release —— 每个区域一个。
 
 修改插件内容时必须同步更新 `ghost.json.version`。同一版本内容不同会被服务端以
 `RELEASE_VERSION_CONFLICT` 拒绝，不会覆盖既有 Release。
@@ -111,3 +134,6 @@ Copyright 2026 心动网络股份有限公司 (X.D. Network Inc.)，见 [`NOTICE
 - `163-mail/THIRD-PARTY-LICENSES.txt` — 同上，163 邮箱插件的内嵌依赖
 - `icloud-mail/THIRD-PARTY-LICENSES.txt` — 同上，iCloud Mail 插件的内嵌依赖
 - `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker`（MIT）
+
+Apache-2.0 不授予商标权。本仓库插件是对所连接服务的非官方集成，第三方名称与标志归其
+各自所有者所有 —— 见 [`TRADEMARKS.md`](./TRADEMARKS.md)。

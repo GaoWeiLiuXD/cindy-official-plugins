@@ -89,14 +89,33 @@ plugin's self-rendered pages or runtime copy need to switch dynamically, read
 only this `locale`, and fall back to the English resources when the plugin
 itself does not support it.
 
+## What is actually covered today
+
+To be accurate: **the four-locale resources currently cover the catalog layer
+only** — `ghost.json`'s `name` / `description` / `whenToUse` and each tool's
+`description`. That is, the marketplace copy and the tool manual the Agent reads.
+
+Not yet covered:
+
+- **Settings pages and self-rendered panels** (each plugin's `settings.html` /
+  `panel.html`) are hardcoded Simplified Chinese. No plugin currently implements
+  the `locale` / `host-context-changed` contract described above.
+- **User-facing runtime error copy** (inside each plugin's `main.js`) is likewise
+  hardcoded Simplified Chinese.
+
+A non-Chinese host user therefore sees an English tool list alongside Chinese
+settings screens and Chinese error messages. The self-rendered-page contract
+above is the *target* contract — new plugins should implement it; retrofitting
+the existing ones is not done.
+
 ## Repository gate
 
 Before publishing, confirm:
 
-- All 11 official plugins declare `zh-CN / en / ja / ko`.
+- Every official plugin (currently 14) declares `zh-CN / en / ja / ko`. The count
+  does not need to be hardcoded in docs — `.tests/localization.test.mjs`
+  enumerates every directory containing a `ghost.json` dynamically.
 - The fields and tool keys of the four resources are exactly consistent, with
   no empty values or placeholder copy.
 - HTML/JS does not use `navigator.language`.
 - Localization content changes bump `ghost.json.version` in the same change.
-- The Mermaid icon continues to be served from the local Components directory,
-  compressed within the host's size limit.

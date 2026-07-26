@@ -77,12 +77,28 @@ Cindy 客户端负责：
 运行中的逻辑页还会收到 `host-context-changed` 消息。插件自绘页面或运行时文案需要动态
 切换时，只读取这个 `locale`，并在自身不支持时选择英文资源。
 
+## 当前实际覆盖范围
+
+需要如实说明：**上述四语言资源目前只覆盖清单层**，即 `ghost.json` 的 `name` /
+`description` / `whenToUse` 以及各 tool 的 `description` —— 也就是插件市场里的展示文案
+和 Agent 读到的工具说明。
+
+尚未覆盖的部分：
+
+- **设置页与自绘面板**（各插件的 `settings.html` / `panel.html`）目前全部硬编码简体
+  中文，没有任何一个插件实现了上面描述的读取 `locale` / 监听 `host-context-changed`
+  的契约。
+- **运行时面向用户的报错文案**（各插件 `main.js` 内）同样硬编码简体中文。
+
+因此非中文宿主用户会看到英文的工具列表配上中文的设置页和中文报错。上面的自绘页契约是
+**目标契约**，新插件应当按它实现；存量插件的补齐尚未完成。
+
 ## 仓库门禁
 
 发布前必须确认：
 
-- 11 个官方插件都声明 `zh-CN / en / ja / ko`。
+- 每个官方插件（当前 14 个）都声明 `zh-CN / en / ja / ko`。数量不必写死在文档里，
+  `.tests/localization.test.mjs` 会动态遍历所有含 `ghost.json` 的目录。
 - 四种资源的字段和工具 key 完全一致，没有空值或占位文案。
 - HTML/JS 不使用 `navigator.language`。
 - 本地化内容变化同步递增 `ghost.json.version`。
-- Mermaid 图标继续使用本地 Components 目录提供并压缩到宿主大小限制内的资源。
