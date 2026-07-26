@@ -19,7 +19,10 @@
 | GitHub（GitHub, Inc.） | `cindy-github/assets/icon.png`、插件显示名 |
 | GitLab（GitLab B.V.） | `cindy-gitlab/assets/icon.png`、插件显示名 |
 | Notion（Notion Labs, Inc.） | `cindy-notion/assets/icon.png`、插件显示名 |
-| Google、Gmail、Google Drive、Google Calendar、Google Sheets（Google LLC） | `google-*/assets/icon.png`、插件显示名 |
+| Google Drive（Google LLC） | `google-drive/assets/icon.png` —— 官方标识原样使用；插件显示名 |
+| Google Sheets（Google LLC） | `google-sheets/assets/icon.png` —— 官方标识原样使用；插件显示名 |
+| Gmail（Google LLC） | `google-gmail/assets/icon.png` —— Gmail 的「M」，配色被改为渐变；插件显示名 |
+| Google Calendar（Google LLC） | 仅插件显示名 —— 图标为通用图形，非 Google 官方标识 |
 | iCloud、Apple（Apple Inc.） | `icloud-mail` 插件显示名 |
 | QQ 邮箱、腾讯（深圳市腾讯计算机系统有限公司） | `qq-mail/assets/icon.png`、插件显示名 |
 | 163 邮箱、网易（网易（杭州）网络有限公司） | `163-mail/assets/icon.png`、插件显示名 |
@@ -45,7 +48,8 @@
 - 如确需使用第三方标志，先查阅该品牌自己的品牌使用规范（部分品牌明确禁止第三方在产品
   图标中使用其标志），并在本文件的表格中补上一行。
 - 不要修改第三方标志的颜色、比例或形状后再使用 —— 多数品牌规范禁止这样做，且这比原样
-  使用的风险更高。
+  使用的风险更高。现有的 `google-gmail` 图标是改过配色的 Gmail 标识，已在上表中标出待
+  审，不要把它当成先例。
 
 ## 侵权反馈
 

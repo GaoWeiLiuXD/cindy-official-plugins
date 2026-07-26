@@ -23,7 +23,10 @@ owners:
 | GitHub (GitHub, Inc.) | `cindy-github/assets/icon.png`, plugin display name |
 | GitLab (GitLab B.V.) | `cindy-gitlab/assets/icon.png`, plugin display name |
 | Notion (Notion Labs, Inc.) | `cindy-notion/assets/icon.png`, plugin display name |
-| Google, Gmail, Google Drive, Google Calendar, Google Sheets (Google LLC) | `google-*/assets/icon.png`, plugin display names |
+| Google Drive (Google LLC) | `google-drive/assets/icon.png` — the official mark, unmodified; plugin display name |
+| Google Sheets (Google LLC) | `google-sheets/assets/icon.png` — the official mark, unmodified; plugin display name |
+| Gmail (Google LLC) | `google-gmail/assets/icon.png` — the Gmail "M", recoloured to a gradient; plugin display name |
+| Google Calendar (Google LLC) | plugin display name only — the icon is generic artwork, not Google's mark |
 | iCloud, Apple (Apple Inc.) | `icloud-mail` plugin display name |
 | QQ Mail, Tencent (Tencent Technology (Shenzhen) Co., Ltd.) | `qq-mail/assets/icon.png`, plugin display name |
 | 163 Mail, NetEase (NetEase (Hangzhou) Network Co., Ltd.) | `163-mail/assets/icon.png`, plugin display name |
@@ -53,7 +56,8 @@ this repository as an official distribution.
   a product icon), and add a row to the table above.
 - Do not recolour, restretch, or reshape a third-party logo before using it —
   most brand guidelines prohibit this, and it carries more risk than using the
-  mark as-is.
+  mark as-is. The existing `google-gmail` icon is a recoloured Gmail mark and is
+  flagged above for review; do not treat it as a precedent.
 
 ## Reporting a concern
 
