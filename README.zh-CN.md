@@ -88,16 +88,22 @@ cindy-art/
 
 - **修 bug / 小改进**：直接提 PR，描述清楚改了什么、为什么。
 - **新增官方插件**：建议先开 issue 讨论定位与边界（避免与现有插件职责重叠），达成一致后再提 PR。
-- **改动 `ghost.json` 工具声明**：请在 PR 描述中说明对 Agent 行为的影响。
 - 合入 `main` 后由发布 Workflow 自动同步到 Cindy 插件市场。
 
-提 issue 报告问题时，请附上插件名、复现步骤和期望行为。
+提 PR 前请读 [`CONTRIBUTING.md`](./CONTRIBUTING.md)：其中包含 PR 标题规范、必须同步
+bump `ghost.json.version` 的要求、本地化检查、内嵌 Node Worker 的重新构建方式，以及
+每个 commit 都需要的 [DCO](./DCO) 签名（`git commit -s`）。
+
+参与社区请遵守 [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)。使用问题以及提 issue
+需要附上的信息见 [`SUPPORT.md`](./SUPPORT.md)。
 
 安全漏洞请勿通过公开 issue 披露，报告渠道见 [SECURITY.md](./SECURITY.md)。
 
 ## License
 
 本仓库代码以 [Apache License 2.0](./LICENSE) 开源。
+
+Copyright 2026 心动网络股份有限公司 (X.D. Network Inc.)，见 [`NOTICE`](./NOTICE)。
 
 打包产物中包含的第三方开源组件，其许可证归属见对应插件目录：
 

@@ -126,21 +126,28 @@ or a proposal for a new official plugin.
 - **New official plugins**: open an issue first to discuss positioning and
   boundaries (avoiding overlap with existing plugins), then submit a PR once
   aligned.
-- **Changes to `ghost.json` tool declarations**: explain the impact on Agent
-  behavior in the PR description.
 - After merging to `main`, the publish workflow syncs the plugin to the Cindy
   marketplace automatically.
 
-When filing an issue, please include the plugin name, reproduction steps, and
-expected behavior.
+Read [`CONTRIBUTING.en.md`](./CONTRIBUTING.en.md) before opening a PR — it covers
+the PR title convention, the mandatory `ghost.json` version bump, the
+localization check, how to rebuild the bundled Node Workers, and the
+[DCO](./DCO) sign-off required on every commit (`git commit -s`).
+
+Participation is governed by
+[`CODE_OF_CONDUCT.en.md`](./CODE_OF_CONDUCT.en.md). For usage questions and what
+to include in an issue, see [`SUPPORT.en.md`](./SUPPORT.en.md).
 
 Please do not disclose security vulnerabilities in public issues — see
-[SECURITY.md](./SECURITY.md) for the reporting channel.
+[SECURITY.en.md](./SECURITY.en.md) for the reporting channel.
 
 ## License
 
 The code in this repository is open-sourced under the
 [Apache License 2.0](./LICENSE).
+
+Copyright 2026 心动网络股份有限公司 (X.D. Network Inc.) — see
+[`NOTICE`](./NOTICE).
 
 Third-party open-source components contained in bundled artifacts are
 attributed in the corresponding plugin directories:
