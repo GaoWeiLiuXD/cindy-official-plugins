@@ -143,6 +143,12 @@ test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   // hardcoded version goes stale on every release bump.
   assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
   assert.deepEqual(manifest.slots, ['tool', 'node']);
+  assert.equal(manifest.settingsHtml, 'settings.html');
+  assert.equal(
+    Object.hasOwn(manifest, 'settingsHeight'),
+    false,
+    'QQ 邮箱设置页应由宿主按内容自适应高度',
+  );
   assert.deepEqual(manifest.node.secretBindings, [{
     key: 'qq_mail_authorization_code',
     label: 'IMAP/SMTP 授权码',
