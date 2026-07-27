@@ -152,11 +152,15 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.5');
+  assert.equal(manifest.version, '2.1.6');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
     /user_facing_markdown/,
+  );
+  assert.match(
+    manifest.tools.find((tool) => tool.name === 'maker_ads_guide').description,
+    /不会修改项目/,
   );
   assert.deepEqual(
     manifest.slots,
@@ -176,13 +180,14 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   );
   assert.match(skillMd, /ghost_call\(\{ ghost_id: "taptap-maker"/);
   assert.match(skillMd, /ghost_list/);
+  assert.match(skillMd, /maker_ads_guide/);
   assert.deepEqual(manifest.card, { externalLinks: true });
   assert.deepEqual(manifest.node.entries, ['node/account.cjs', 'node/maker-child.cjs']);
   assert.equal(manifest.node.childSpawn, true);
   assert.deepEqual(manifest.preview.hosts, ['maker.taptap.cn']);
   assert.deepEqual(provisioning.ghosts['taptap-maker'], { audience: 'all' });
   assert.equal(vendorPackage.name, '@taptap/maker');
-  assert.equal(vendorPackage.version, '0.0.26');
+  assert.equal(vendorPackage.version, '0.0.27');
 });
 
 test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {
@@ -421,6 +426,36 @@ test('动态工具列表携带可信项目 root，并过滤固定工具', async 
   assert.equal(harness.nodeRequests[0].method, 'cindy/tools-list');
   assert.deepEqual(JSON.parse(JSON.stringify(harness.nodeRequests[0].params)), {
     target_dir: '/tmp/trusted-maker',
+  });
+});
+
+test('广告指南只读取官方固定 MCP resource，且允许只读会话调用', async () => {
+  const guide = {
+    contents: [{
+      uri: 'maker://ads-integration-guide',
+      mimeType: 'text/plain',
+      text: 'TapTap Maker ads integration guide',
+    }],
+  };
+  const harness = createMainHarness(async () => ({
+    ok: true,
+    result: guide,
+  }));
+
+  const result = await harness.call('maker_ads_guide', {
+    session_context: {
+      workdir_is_local: true,
+      workdir_is_read_only: true,
+      workdir: '/tmp/trusted-maker',
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.result)), guide);
+  assert.deepEqual(JSON.parse(JSON.stringify(harness.nodeRequests[0])), {
+    method: 'resources/read',
+    params: { uri: 'maker://ads-integration-guide' },
+    timeoutMs: 30000,
   });
 });
 
@@ -980,6 +1015,14 @@ test('真实 Maker Runtime 可经插件入口完成 initialize 与 roots-aware t
     assert.equal(listed.error, undefined, stderr);
     assert.ok(listed.result.tools.some((tool) => tool.name === 'maker_status_lite'));
     assert.ok(listed.result.tools.some((tool) => tool.name === 'maker_build_current_directory'));
+
+    const guide = await request('3', 'resources/read', {
+      uri: 'maker://ads-integration-guide',
+    });
+    assert.equal(guide.error, undefined, stderr);
+    assert.match(guide.result.contents[0].text, /TapTap Maker ads integration guide/);
+    assert.match(guide.result.contents[0].text, /get_ad_config/);
+    assert.match(guide.result.contents[0].text, /engine-docs\/recipes\/sdk\.md/);
   } finally {
     child.kill();
     await once(child, 'close');

@@ -9,16 +9,17 @@ description: 使用 Cindy 的 TapTap Maker 插件完成账号连接、项目检�
 
 ## 基本流程
 
-1. 项目任务先调用 `maker_status`；需要更完整的环境诊断时调用 `maker_doctor`。
-2. 未连接账号时调用 `maker_login`，等待浏览器授权完成后继续原任务，不要求用户重新发起。
-3. 初始化已有项目时先用 `maker_apps` 获取 `app_id`，再调用 `maker_init`。只有用户明确要求新建项目时才传 `create=true` 和 `name`。
-4. 构建、运行或预览用 `maker_build`。成功结果含 `user_facing_markdown` 时原样引用，不放进代码块；右侧预览由插件打开。
-5. 使用素材、调试或其它 Maker 能力前，先调用 `maker_list_tools` 获取实时工具与参数，再通过 `maker_call_tool` 调用，不凭记忆猜工具名。
+1. 广告、激励视频、广告位或 `ShowRewardVideoAd` 请求先调用 `maker_ads_guide`，再按官方指南检查项目状态、调用 `get_ad_config`，并读取项目内 `engine-docs/recipes/sdk.md` 后修改广告代码。
+2. 其它项目任务先调用 `maker_status`；广告请求在读取指南后调用。需要更完整的环境诊断时调用 `maker_doctor`。
+3. 未连接账号时调用 `maker_login`，等待浏览器授权完成后继续原任务，不要求用户重新发起。
+4. 初始化已有项目时先用 `maker_apps` 获取 `app_id`，再调用 `maker_init`。只有用户明确要求新建项目时才传 `create=true` 和 `name`。
+5. 构建、运行或预览用 `maker_build`。成功结果含 `user_facing_markdown` 时原样引用，不放进代码块；右侧预览由插件打开。
+6. 使用素材、广告、调试或其它 Maker 能力前，先调用 `maker_list_tools` 获取实时工具与参数，再通过 `maker_call_tool` 调用，不凭记忆猜工具名。
 
 ## 约束与恢复
 
 - 所有项目操作只针对当前 Cindy 会话的本地工作区。目标项目在别处时，请用户先在 Cindy 中打开该目录，不要绕过插件。
-- 当前会话处于计划或只读模式时，只做状态、诊断和工具列表等只读检查；不要尝试初始化、构建或调用动态工具。
+- 当前会话处于计划或只读模式时，只做广告指南、状态、诊断和工具列表等只读检查；不要尝试初始化、构建或调用动态工具。
 - 如果缺少 `.project/project.json`，且用户已经要求构建、运行或预览，调用 `maker_build` 后重试；否则先说明构建会提交并推送项目，获得确认后再构建。
 - `missing_taptap_identity` 由插件自动初始化并重试一次；仍失败时把插件返回的可操作提示交给用户，不自行反复重试。
 - 只有完整错误 `MCP error -32600: INSUFFICIENT_BALANCE` 表示 Maker 积分不足。此时提示用户，并在获得确认后再建议使用 Art 插件替代；其它错误不要按积分不足处理。

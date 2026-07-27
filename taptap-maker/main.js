@@ -9,6 +9,7 @@
 
 var ACCOUNT_ENTRY = 'node/account.cjs';
 var ACCOUNT_TOOL = 'cindy_maker_account';
+var MAKER_ADS_GUIDE_URI = 'maker://ads-integration-guide';
 var FIXED_MAKER_TOOLS = {
   maker_status_lite: true,
   maker_build_current_directory: true,
@@ -142,6 +143,14 @@ async function callMakerTool(name, args, longRunning) {
     },
     timeoutMs: longRunning ? 60000 : 30000,
     ...(longRunning ? { maxTotalMs: 900000 } : {}),
+  });
+}
+
+async function readMakerAdsGuide() {
+  return nodeRequest({
+    method: 'resources/read',
+    params: { uri: MAKER_ADS_GUIDE_URI },
+    timeoutMs: 30000,
   });
 }
 
@@ -413,6 +422,9 @@ async function handleTool(message) {
       false,
     )));
   }
+  if (message.tool === 'maker_ads_guide') {
+    return readMakerAdsGuide();
+  }
   if (message.tool === 'maker_build') {
     var buildContext = requireWritableContext(requireLocalContext(message));
     var built = await callMakerTool(
@@ -446,7 +458,7 @@ async function handleTool(message) {
   }
   if (message.tool === 'maker_call_tool') {
     var callContext = requireLocalContext(message);
-    // Maker 0.0.26 没有纯只读的动态工具契约：query_video_task 会落盘完成的视频，
+    // Maker 0.0.27 没有纯只读的动态工具契约：query_video_task 会落盘完成的视频，
     // get_debug_feedbacks 即使不标记已处理也会下载附件，因此统一按可能写工作区处理。
     requireWritableContext(callContext);
     if (typeof args.name !== 'string' || !args.name || (args.args !== undefined && !isObject(args.args))) {

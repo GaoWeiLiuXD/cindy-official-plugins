@@ -11,6 +11,9 @@
         }
       }
     },
+    "maker_ads_guide": {
+      "description": "포함된 공식 Runtime의 TapTap Maker 광고 연동 가이드를 읽습니다. 광고, 보상형 동영상, 광고 배치 또는 ShowRewardVideoAd 작업에서는 프로젝트 상태 확인, get_ad_config 호출 또는 광고 코드 변경 전에 먼저 호출해야 합니다. 프로젝트는 변경하지 않습니다."
+    },
     "maker_login": {
       "description": "TapTap Maker 공식 CLI를 통해 브라우저 인증을 열고 계정을 연결합니다. 기존 PAT를 플러그인 설정 화면에서 직접 구성할 수도 있습니다."
     },

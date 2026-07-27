@@ -11,6 +11,9 @@
         }
       }
     },
+    "maker_ads_guide": {
+      "description": "Read the bundled official Runtime's TapTap Maker ads integration guide. For ads, rewarded videos, ad placements, or ShowRewardVideoAd, call this before checking project status, calling get_ad_config, or changing ad code. This tool does not modify the project."
+    },
     "maker_login": {
       "description": "Open browser authorization through the official TapTap Maker CLI and connect an account. An existing PAT can also be configured manually in the plugin settings."
     },
