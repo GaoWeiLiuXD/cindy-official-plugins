@@ -152,7 +152,7 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.4');
+  assert.equal(manifest.version, '2.1.5');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
