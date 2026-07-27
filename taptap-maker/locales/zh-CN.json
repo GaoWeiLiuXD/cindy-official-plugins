@@ -11,6 +11,9 @@
         }
       }
     },
+    "maker_ads_guide": {
+      "description": "只读获取插件随附官方 Runtime 的 TapTap Maker 广告接入指南。任何广告、激励视频、广告位或 ShowRewardVideoAd 请求都应在检查项目状态、调用 get_ad_config 或修改广告代码前先调用；不会修改项目。"
+    },
     "maker_login": {
       "description": "通过 TapTap Maker 官方 CLI 打开浏览器授权并连接账号。也可在插件设置页手动配置已有 PAT。"
     },

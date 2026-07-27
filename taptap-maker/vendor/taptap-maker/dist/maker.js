@@ -3233,8 +3233,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path22) {
-      let input2 = path22;
+    function removeDotSegments(path23) {
+      let input2 = path23;
       const output2 = [];
       let nextSlash = -1;
       let len = 0;
@@ -3433,8 +3433,8 @@ var require_schemes = __commonJS({
         wsComponent.secure = void 0;
       }
       if (wsComponent.resourceName) {
-        const [path22, query] = wsComponent.resourceName.split("?");
-        wsComponent.path = path22 && path22 !== "/" ? path22 : void 0;
+        const [path23, query] = wsComponent.resourceName.split("?");
+        wsComponent.path = path23 && path23 !== "/" ? path23 : void 0;
         wsComponent.query = query;
         wsComponent.resourceName = void 0;
       }
@@ -12491,12 +12491,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs20, exportName) {
+    function addFormats(ajv, list, fs21, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs20[f]);
+        ajv.addFormat(f, fs21[f]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12509,8 +12509,8 @@ var require_windows = __commonJS({
   "node_modules/isexe/windows.js"(exports, module) {
     module.exports = isexe;
     isexe.sync = sync;
-    var fs20 = __require("fs");
-    function checkPathExt(path22, options) {
+    var fs21 = __require("fs");
+    function checkPathExt(path23, options) {
       var pathext = options.pathExt !== void 0 ? options.pathExt : process.env.PATHEXT;
       if (!pathext) {
         return true;
@@ -12521,25 +12521,25 @@ var require_windows = __commonJS({
       }
       for (var i = 0; i < pathext.length; i++) {
         var p = pathext[i].toLowerCase();
-        if (p && path22.substr(-p.length).toLowerCase() === p) {
+        if (p && path23.substr(-p.length).toLowerCase() === p) {
           return true;
         }
       }
       return false;
     }
-    function checkStat(stat, path22, options) {
+    function checkStat(stat, path23, options) {
       if (!stat.isSymbolicLink() && !stat.isFile()) {
         return false;
       }
-      return checkPathExt(path22, options);
+      return checkPathExt(path23, options);
     }
-    function isexe(path22, options, cb) {
-      fs20.stat(path22, function(er, stat) {
-        cb(er, er ? false : checkStat(stat, path22, options));
+    function isexe(path23, options, cb) {
+      fs21.stat(path23, function(er, stat) {
+        cb(er, er ? false : checkStat(stat, path23, options));
       });
     }
-    function sync(path22, options) {
-      return checkStat(fs20.statSync(path22), path22, options);
+    function sync(path23, options) {
+      return checkStat(fs21.statSync(path23), path23, options);
     }
   }
 });
@@ -12549,14 +12549,14 @@ var require_mode = __commonJS({
   "node_modules/isexe/mode.js"(exports, module) {
     module.exports = isexe;
     isexe.sync = sync;
-    var fs20 = __require("fs");
-    function isexe(path22, options, cb) {
-      fs20.stat(path22, function(er, stat) {
+    var fs21 = __require("fs");
+    function isexe(path23, options, cb) {
+      fs21.stat(path23, function(er, stat) {
         cb(er, er ? false : checkStat(stat, options));
       });
     }
-    function sync(path22, options) {
-      return checkStat(fs20.statSync(path22), options);
+    function sync(path23, options) {
+      return checkStat(fs21.statSync(path23), options);
     }
     function checkStat(stat, options) {
       return stat.isFile() && checkMode(stat, options);
@@ -12580,7 +12580,7 @@ var require_mode = __commonJS({
 // node_modules/isexe/index.js
 var require_isexe = __commonJS({
   "node_modules/isexe/index.js"(exports, module) {
-    var fs20 = __require("fs");
+    var fs21 = __require("fs");
     var core;
     if (process.platform === "win32" || global.TESTING_WINDOWS) {
       core = require_windows();
@@ -12589,7 +12589,7 @@ var require_isexe = __commonJS({
     }
     module.exports = isexe;
     isexe.sync = sync;
-    function isexe(path22, options, cb) {
+    function isexe(path23, options, cb) {
       if (typeof options === "function") {
         cb = options;
         options = {};
@@ -12599,7 +12599,7 @@ var require_isexe = __commonJS({
           throw new TypeError("callback not provided");
         }
         return new Promise(function(resolve, reject) {
-          isexe(path22, options || {}, function(er, is) {
+          isexe(path23, options || {}, function(er, is) {
             if (er) {
               reject(er);
             } else {
@@ -12608,7 +12608,7 @@ var require_isexe = __commonJS({
           });
         });
       }
-      core(path22, options || {}, function(er, is) {
+      core(path23, options || {}, function(er, is) {
         if (er) {
           if (er.code === "EACCES" || options && options.ignoreErrors) {
             er = null;
@@ -12618,9 +12618,9 @@ var require_isexe = __commonJS({
         cb(er, is);
       });
     }
-    function sync(path22, options) {
+    function sync(path23, options) {
       try {
-        return core.sync(path22, options || {});
+        return core.sync(path23, options || {});
       } catch (er) {
         if (options && options.ignoreErrors || er.code === "EACCES") {
           return false;
@@ -12636,7 +12636,7 @@ var require_isexe = __commonJS({
 var require_which = __commonJS({
   "node_modules/which/which.js"(exports, module) {
     var isWindows = process.platform === "win32" || process.env.OSTYPE === "cygwin" || process.env.OSTYPE === "msys";
-    var path22 = __require("path");
+    var path23 = __require("path");
     var COLON = isWindows ? ";" : ":";
     var isexe = require_isexe();
     var getNotFoundError = (cmd) => Object.assign(new Error(`not found: ${cmd}`), { code: "ENOENT" });
@@ -12674,7 +12674,7 @@ var require_which = __commonJS({
           return opt.all && found.length ? resolve(found) : reject(getNotFoundError(cmd));
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path22.join(pathPart, cmd);
+        const pCmd = path23.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         resolve(subStep(p, i, 0));
       });
@@ -12701,7 +12701,7 @@ var require_which = __commonJS({
       for (let i = 0; i < pathEnv.length; i++) {
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path22.join(pathPart, cmd);
+        const pCmd = path23.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         for (let j = 0; j < pathExt.length; j++) {
           const cur = p + pathExt[j];
@@ -12749,7 +12749,7 @@ var require_path_key = __commonJS({
 var require_resolveCommand = __commonJS({
   "node_modules/cross-spawn/lib/util/resolveCommand.js"(exports, module) {
     "use strict";
-    var path22 = __require("path");
+    var path23 = __require("path");
     var which = require_which();
     var getPathKey = require_path_key();
     function resolveCommandAttempt(parsed, withoutPathExt) {
@@ -12767,7 +12767,7 @@ var require_resolveCommand = __commonJS({
       try {
         resolved = which.sync(parsed.command, {
           path: env[getPathKey({ env })],
-          pathExt: withoutPathExt ? path22.delimiter : void 0
+          pathExt: withoutPathExt ? path23.delimiter : void 0
         });
       } catch (e) {
       } finally {
@@ -12776,7 +12776,7 @@ var require_resolveCommand = __commonJS({
         }
       }
       if (resolved) {
-        resolved = path22.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
+        resolved = path23.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
       }
       return resolved;
     }
@@ -12830,8 +12830,8 @@ var require_shebang_command = __commonJS({
       if (!match) {
         return null;
       }
-      const [path22, argument] = match[0].replace(/#! ?/, "").split(" ");
-      const binary = path22.split("/").pop();
+      const [path23, argument] = match[0].replace(/#! ?/, "").split(" ");
+      const binary = path23.split("/").pop();
       if (binary === "env") {
         return argument;
       }
@@ -12844,16 +12844,16 @@ var require_shebang_command = __commonJS({
 var require_readShebang = __commonJS({
   "node_modules/cross-spawn/lib/util/readShebang.js"(exports, module) {
     "use strict";
-    var fs20 = __require("fs");
+    var fs21 = __require("fs");
     var shebangCommand = require_shebang_command();
     function readShebang(command) {
       const size = 150;
       const buffer = Buffer.alloc(size);
       let fd;
       try {
-        fd = fs20.openSync(command, "r");
-        fs20.readSync(fd, buffer, 0, size, 0);
-        fs20.closeSync(fd);
+        fd = fs21.openSync(command, "r");
+        fs21.readSync(fd, buffer, 0, size, 0);
+        fs21.closeSync(fd);
       } catch (e) {
       }
       return shebangCommand(buffer.toString());
@@ -12866,7 +12866,7 @@ var require_readShebang = __commonJS({
 var require_parse = __commonJS({
   "node_modules/cross-spawn/lib/parse.js"(exports, module) {
     "use strict";
-    var path22 = __require("path");
+    var path23 = __require("path");
     var resolveCommand = require_resolveCommand();
     var escape2 = require_escape();
     var readShebang = require_readShebang();
@@ -12891,7 +12891,7 @@ var require_parse = __commonJS({
       const needsShell = !isExecutableRegExp.test(commandFile);
       if (parsed.options.forceShell || needsShell) {
         const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
-        parsed.command = path22.normalize(parsed.command);
+        parsed.command = path23.normalize(parsed.command);
         parsed.command = escape2.command(parsed.command);
         parsed.args = parsed.args.map((arg) => escape2.argument(arg, needsDoubleEscapeMetaChars));
         const shellCommand = [parsed.command].concat(parsed.args).join(" ");
@@ -13366,8 +13366,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path22, errorMaps, issueData } = params;
-  const fullPath = [...path22, ...issueData.path || []];
+  const { data, path: path23, errorMaps, issueData } = params;
+  const fullPath = [...path23, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -13482,11 +13482,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path22, key) {
+  constructor(parent, value, path23, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path22;
+    this._path = path23;
     this._key = key;
   }
   get path() {
@@ -17135,10 +17135,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path22) {
-  if (!path22)
+function getElementAtPath(obj, path23) {
+  if (!path23)
     return obj;
-  return path22.reduce((acc, key) => acc == null ? void 0 : acc[key], obj);
+  return path23.reduce((acc, key) => acc == null ? void 0 : acc[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -17523,11 +17523,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path22, issues) {
+function prefixIssues(path23, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path22);
+    iss.path.unshift(path23);
     return iss;
   });
 }
@@ -29163,9 +29163,9 @@ var MAKER_CAPABILITY_ROUTING_INDEX = `TapTap Maker routing index:
   maker://status; use maker_status_lite when resources are unavailable.
 - Build, preview, run, submit, or push: after checking project status, use
   maker_build_current_directory.
-- Tap flows: test QR -> generate_test_qrcode; ads or ad code -> first check
-  Maker project status, then use get_ad_config when primary configs are ready;
-  online player feedback, logs, or screenshots -> get_debug_feedbacks.
+- Ads: read maker://ads-integration-guide before any ad-related work.
+- Tap flows: test QR -> generate_test_qrcode; online player feedback, logs, or
+  screenshots -> get_debug_feedbacks.
 - Game assets: Maker MCP also provides image, video, music, sound-effect,
   dialogue/voice, and 3D generation tools when exposed.
 
@@ -29283,12 +29283,15 @@ function createMakerAgentsPolicyBody() {
     "- Attempt `npx -y -p @taptap/maker taptap-maker mcp verify --json`; on Windows use",
     "  `npx.cmd -y -p @taptap/maker taptap-maker mcp verify --json`. Record command failure as",
     "  diagnostic evidence instead of skipping the check.",
-    "- This verifies only the standard `@taptap/maker` npx/CLI launch path and returns command,",
-    "  status, signal, stdout, stderr, error, and failure_type. It does not start the Maker MCP server",
-    "  and does not read or validate the client's active MCP config, WorkBuddy trust, cwd, or Roots.",
-    "  A successful verify result does not prove that the client MCP config works.",
-    "- Then inspect and reproduce the active config path, command, ordered args, cwd, WorkBuddy",
-    "  enable/trust state, workspace/Roots, Node/npm/npx paths, client PATH, exit status, and stderr.",
+    "- This uses the same resolved launcher as MCP install, starts `@taptap/maker`, completes MCP",
+    "  initialize and tools/list, and returns launcher_kind, command, stage, tools, stderr, error,",
+    "  and failure_type. It does not read the client's active config or validate client trust,",
+    "  client config caching, or Roots.",
+    "- First identify the active AI client from reliable evidence, then inspect only that client's",
+    "  active config path, command, ordered args, cwd, workspace/Roots, Node/npm/npx paths,",
+    "  client PATH, exit status, and stderr.",
+    "- Only when the active client is confirmed to be WorkBuddy, inspect its enable/trust state.",
+    "- Never use one client's configuration or trust state to diagnose another client.",
     "- Classify the root cause from evidence before repairing it. Do not automatically change trust",
     "  storage, PATH, cwd, credentials, or game code.",
     "- Treat `taptap-maker mcp install --ide <client>` as an optional recovery only after evidence",
@@ -29308,20 +29311,24 @@ function createMakerAgentsPolicyBody() {
     "- If the MCP connection is established but a tool or resource call fails, including `-32003`,",
     "  use a separate evidence-first runtime-error workflow. Do not assign a fixed meaning to the",
     "  error code; preserve the exact client error.",
-    "- `mcp verify` is not the primary check for an already connected session because it only tests",
-    "  the standard npx/CLI launch path.",
+    "- `mcp verify` is not the primary check for an already connected session because it tests only",
+    "  the local launcher and stdio MCP path.",
     "- Collect the failed tool/resource, redacted request parameters, current `tools/list`, exact",
     "  error code/message/data, complete sanitized `remote_result`, request/correlation IDs,",
     "  timestamp with timezone, OS/architecture, AI client and `@taptap/maker` package versions,",
     "  and stable reproduction steps. Preserve useful nested fields while removing credentials.",
+    "- Python and maker-lua-lsp affect local Lua diagnostics, not MCP connection or remote build.",
+    "- Dev-kit, package update, and AGENTS policy checks are maintenance checks, not proof of a",
+    "  client connection failure.",
     "- Do not rewrite command, cwd, PATH, trust state, credentials, or game code unless the",
     "  collected evidence identifies that cause.",
     "",
     "Maker ad workflow:",
     "",
-    "- For any ad-related request or code touching ads, first inspect Maker project status. Call",
-    "  `get_ad_config` only after primary local project configs are initialized and before reading",
-    "  local SDK docs, editing ad code, or testing ad behavior. Triggers include 广告, 激励视频,",
+    "- For any ad-related request or code touching ads, first read",
+    "  `maker://ads-integration-guide`, then follow it to inspect Maker project status, call",
+    "  `get_ad_config`, and read the project engine document before editing ad code or testing",
+    "  ad behavior. Triggers include 广告, 激励视频,",
     "  播放广告, ad ID, ad placement, ad status, ad config, and `ShowRewardVideoAd`.",
     "- Treat `get_ad_config` as the source of truth for current project ad activation status and",
     "  ad config. Do not infer ad readiness from local SDK docs, `.maker-mcp/config.json`, or",
@@ -32432,7 +32439,7 @@ function formatMakerSkillStatus(_options = {}) {
     "- Voice audition previews are not saved to the project.",
     "- Local MCP does not transcode generated audio to OGG.",
     "- Use create_3d_asset with start/query/continue/post_process for game 3D model assets.",
-    "- For any ad-related request, inspect Maker project status first and call get_ad_config only after primary local project configs are initialized.",
+    "- For any ad-related request, first read `maker://ads-integration-guide`, then follow it to inspect Maker project status, call get_ad_config, and read the project engine document.",
     "- Do not infer ad readiness from local SDK docs, .maker-mcp/config.json, or runtime callbacks.",
     "- If primary local project configs are missing, keep ad config unavailable. Build only for an explicit user build/submit/preview request, and do not automatically rebuild when local configs remain missing after success.",
     "- If get_ad_config reports missing app_id or developer_id, call generate_test_qrcode once, then call get_ad_config again.",
@@ -36132,7 +36139,7 @@ var MAKER_REMOTE_PROXY_PUBLIC_DESCRIPTIONS = {
     "Call it only with the TapTap user_id explicitly provided by the user; never infer an account ID."
   ].join(" "),
   get_ad_config: [
-    "After Maker project status confirms the primary local project configs are initialized, use this as the first remote step for ad-related requests.",
+    "For any ad-related request, read maker://ads-integration-guide first. After Maker project status confirms the primary local project configs are initialized, use this as the first remote step.",
     "It is the source of truth for current ad activation and configuration, and synchronizes the result into .project/settings.json at @runtime.ad.",
     "The local preflight does not call the remote tool while project.json or settings.json is missing. Missing local configs do not authorize an automatic build.",
     "Use maker_build_current_directory only for an explicit user build, submit, or preview request, then check project status again. If configs remain missing, report the limitation and do not rebuild automatically.",
@@ -36297,7 +36304,7 @@ function applyDefaults(config2) {
 var MAKER_MCP_TRACKING_ACTION = "tapmaker_mcp_call";
 var MAKER_MCP_TRACKING_SOURCE = "local_mcp";
 var MAKER_MCP_TRACKING_TIMEOUT_MS = 1500;
-var MAKER_MCP_VERSION = "0.0.26".trim() ? "0.0.26".trim() : "dev";
+var MAKER_MCP_VERSION = "0.0.27".trim() ? "0.0.27".trim() : "dev";
 var TRACKING_ERROR_MAX_LENGTH = 500;
 function buildMakerMcpTrackingPayload(event) {
   var _a3, _b, _c;
@@ -36373,8 +36380,34 @@ async function reportMakerMcpActivity(event) {
   }
 }
 
+// src/maker/server/adIntegrationGuide.ts
+var MAKER_ADS_INTEGRATION_GUIDE_URI = "maker://ads-integration-guide";
+function formatMakerAdsIntegrationGuide() {
+  return `TapTap Maker ads integration guide
+
+Use the MCP tool and the project engine document as consecutive steps in one workflow. They are
+not competing ad integrations.
+
+1. Read maker://status, or call maker_status_lite when resources are unavailable, and confirm the
+   primary Maker project configs are initialized.
+2. Call get_ad_config before reading ad readiness from any local file or writing ad code. This tool
+   checks activation and synchronizes the current ad configuration into
+   .project/settings.json at @runtime.ad.
+3. If get_ad_config reports that app_id or developer_id is missing, call generate_test_qrcode once
+   and then retry get_ad_config. If ad.status is not 1, report warning and ad.url and wait for the
+   user to complete the returned action before retrying.
+4. After get_ad_config returns a usable configuration, read the project-local engine document
+   engine-docs/recipes/sdk.md. Treat that document as the source of truth for Maker ad code and do
+   not search the web for an alternative integration.
+5. Implement rewarded video ads with sdk:ShowRewardVideoAd as documented there. Grant the reward
+   only when result.success is true.
+
+Do not build automatically just because local project configs are missing. Use
+maker_build_current_directory only when the user explicitly requests build, submit, or preview.`;
+}
+
 // src/maker/server/mcp.ts
-var VERSION = true ? "0.0.26" : "dev";
+var VERSION = true ? "0.0.27" : "dev";
 var DEFAULT_BUILD_TIMEOUT_MS = 10 * 60 * 1e3;
 var DEFAULT_PROXY_RETRY_ATTEMPTS = 5;
 var DEFAULT_PROXY_RETRY_DELAY_MS = 30 * 1e3;
@@ -36537,6 +36570,12 @@ var resources = [
     uri: "maker://status",
     name: "Maker status",
     description: "Local TapTap Maker project status, including Git, PAT/TapTap auth, project binding, AI dev kit status, and bundled workflow guide document paths. Maker initialization next_step: taptap-maker init. Standard init/clone/download flow: show the Maker app list first and let the user choose an existing app or 0/new. Create-new-project flow: use taptap-maker init --create only when the user clearly asks to create a new Maker project.",
+    mimeType: "text/plain"
+  },
+  {
+    uri: MAKER_ADS_INTEGRATION_GUIDE_URI,
+    name: "Maker ads integration guide",
+    description: "Canonical entry document for Maker ads. Connects get_ad_config activation and configuration checks with the project-local engine-docs/recipes/sdk.md implementation guide.",
     mimeType: "text/plain"
   }
 ];
@@ -36935,7 +36974,7 @@ async function startMakerMcpServer() {
   });
   server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
     const uri = request.params.uri;
-    if (uri !== "maker://status") {
+    if (uri !== "maker://status" && uri !== MAKER_ADS_INTEGRATION_GUIDE_URI) {
       throw new McpError(ErrorCode.InvalidParams, `Unknown Maker resource: ${uri}`);
     }
     const startedAt = Date.now();
@@ -36947,7 +36986,7 @@ async function startMakerMcpServer() {
           {
             uri,
             mimeType: "text/plain",
-            text: await formatStatus({ listClientRoots })
+            text: uri === MAKER_ADS_INTEGRATION_GUIDE_URI ? formatMakerAdsIntegrationGuide() : await formatStatus({ listClientRoots })
           }
         ]
       };
@@ -39133,9 +39172,9 @@ function indent2(value) {
 // src/maker/cli/commands.ts
 import { spawnSync as spawnSync7 } from "node:child_process";
 import crypto3 from "node:crypto";
-import fs18 from "node:fs";
+import fs19 from "node:fs";
 import os4 from "node:os";
-import path19 from "node:path";
+import path20 from "node:path";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 
@@ -39280,8 +39319,160 @@ function formatError2(error2) {
   return error2 instanceof Error ? error2.message : String(error2);
 }
 
+// src/maker/cli/mcpLauncher.ts
+import fs18 from "node:fs";
+import path19 from "node:path";
+var DEFAULT_VERIFY_TIMEOUT_MS = 9e4;
+var VERIFY_CLIENT_VERSION = "1.0.0";
+var REQUIRED_TOOL_NAME = "maker_status_lite";
+function resolveMakerMcpLauncher(options) {
+  const platform = options.platform ?? process.platform;
+  if (platform !== "win32") {
+    const args = ["-y", "-p", options.packageName, "taptap-maker"];
+    return {
+      kind: "path_npx",
+      command: "npx",
+      args,
+      commandAndArgs: ["npx", ...args]
+    };
+  }
+  const existsSync2 = options.existsSync ?? fs18.existsSync;
+  const execPath = options.execPath ?? process.execPath;
+  const npmExecPath = options.npmExecPath ?? process.env.npm_execpath;
+  const windowsPath = path19.win32;
+  const npmCliCandidates = uniqueStrings([
+    npmExecPath,
+    windowsPath.join(windowsPath.dirname(execPath), "node_modules", "npm", "bin", "npm-cli.js")
+  ]).filter(
+    (candidate) => windowsPath.isAbsolute(candidate) && windowsPath.basename(candidate).toLowerCase() === "npm-cli.js" && existsSync2(candidate)
+  );
+  if (windowsPath.isAbsolute(execPath) && existsSync2(execPath) && npmCliCandidates[0]) {
+    const args = [
+      npmCliCandidates[0],
+      "exec",
+      "--yes",
+      "--package",
+      options.packageName,
+      "--",
+      "taptap-maker"
+    ];
+    return {
+      kind: "node_npm_cli",
+      command: execPath,
+      args,
+      commandAndArgs: [execPath, ...args]
+    };
+  }
+  throw new Error(
+    "No runnable absolute Node/npm launcher was found. Install Node.js with npm, then rerun taptap-maker mcp install."
+  );
+}
+async function verifyMakerMcpLauncher(launcher, options = {}) {
+  var _a3;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_VERIFY_TIMEOUT_MS;
+  const transport = new StdioClientTransport({
+    command: launcher.command,
+    args: launcher.args,
+    cwd: options.cwd,
+    env: options.env,
+    stderr: "pipe"
+  });
+  const client = new Client(
+    { name: "taptap-maker-launcher-verifier", version: VERIFY_CLIENT_VERSION },
+    { capabilities: {} }
+  );
+  let stderr = "";
+  (_a3 = transport.stderr) == null ? void 0 : _a3.on("data", (chunk) => {
+    stderr += chunk.toString();
+  });
+  let stage = "initialize";
+  try {
+    await withTimeout(client.connect(transport), timeoutMs, stage);
+    stage = "tools_list";
+    const result = await withTimeout(client.listTools(), timeoutMs, stage);
+    const toolNames = result.tools.map((tool) => tool.name);
+    if (!toolNames.includes(REQUIRED_TOOL_NAME)) {
+      return failureResult(
+        launcher,
+        stage,
+        stderr,
+        "missing_required_tool",
+        `MCP tools/list did not include ${REQUIRED_TOOL_NAME}.`,
+        toolNames
+      );
+    }
+    return {
+      ok: true,
+      stage,
+      launcherKind: launcher.kind,
+      command: formatCommand(launcher),
+      toolNames,
+      ...stderr.trim() ? { stderr: stderr.trim() } : {}
+    };
+  } catch (error2) {
+    const message = error2 instanceof Error ? error2.message : String(error2);
+    return failureResult(launcher, stage, stderr, classifyVerificationFailure(message), message);
+  } finally {
+    await closeClient(client);
+  }
+}
+function failureResult(launcher, stage, stderr, failureType, error2, toolNames = []) {
+  return {
+    ok: false,
+    stage,
+    launcherKind: launcher.kind,
+    command: formatCommand(launcher),
+    toolNames,
+    ...stderr.trim() ? { stderr: stderr.trim() } : {},
+    error: error2,
+    failureType
+  };
+}
+function classifyVerificationFailure(message) {
+  if (/timed out/i.test(message)) {
+    return "timeout";
+  }
+  if (/ENOENT|not recognized|spawn/i.test(message)) {
+    return "spawn_error";
+  }
+  return "protocol_error";
+}
+async function withTimeout(promise2, timeoutMs, stage) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise2,
+      new Promise((_resolve, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`Maker MCP launcher verification timed out during ${stage}.`)),
+          timeoutMs
+        );
+      })
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+}
+async function closeClient(client) {
+  try {
+    await withTimeout(client.close(), 5e3, "close");
+  } catch {
+  }
+}
+function formatCommand(launcher) {
+  return launcher.commandAndArgs.map(quoteCommandArgument).join(" ");
+}
+function quoteCommandArgument(value) {
+  return /\s/.test(value) ? JSON.stringify(value) : value;
+}
+function uniqueStrings(values) {
+  return Array.from(new Set(values.filter((value) => Boolean(value))));
+}
+
 // src/maker/cli/commands.ts
-var VERSION2 = true ? "0.0.26" : "dev";
+var VERSION2 = true ? "0.0.27" : "dev";
 var DEFAULT_MCP_NAME = "taptap-maker";
 var MAKER_NPM_PACKAGE = "@taptap/maker";
 var TWO_PART_COMMANDS = /* @__PURE__ */ new Set(["pat", "mcp", "dev-kit", "logs", "python", "lua-lsp", "agents"]);
@@ -39416,7 +39607,7 @@ function toOptionKey(value) {
 }
 async function runInit(parsed, ctx) {
   rejectPackageOption(parsed);
-  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path20.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const env = makerEnvOption(parsed);
   const skipConfirm = booleanOption(parsed, "skip_confirm");
   const skipMcpInstall = booleanOption(parsed, "skip_mcp_install");
@@ -39485,14 +39676,35 @@ async function runInit(parsed, ctx) {
   });
   if (!skipMcpInstall) {
     const ides = parseIdeList(stringOption(parsed, "register_mcp") || "");
+    const prepared = await prepareMcpLauncher({ env });
+    if (!prepared.ok) {
+      emit(ctx, "mcp_install", formatMcpLauncherFailure(prepared), prepared);
+      throw new Error(prepared.error);
+    }
     const installResults = installMcpConfigs({
       ides: ides.length > 0 ? ides : getDefaultMcpInstallIdes(),
       env,
-      pkg: MAKER_NPM_PACKAGE,
-      mcpName: DEFAULT_MCP_NAME
+      mcpName: DEFAULT_MCP_NAME,
+      launcher: prepared.launcher
     });
     for (const result of installResults) {
       emit(ctx, "mcp_install", result.message, result);
+    }
+    const failedInstalls = installResults.filter((result) => !result.ok);
+    if (failedInstalls.length > 0) {
+      saveInitState(targetDir, {
+        status: "mcp_install_failed",
+        target_dir: targetDir,
+        env,
+        selected_app_id: selected.id,
+        mcp_install_failures: failedInstalls.map((result) => ({
+          ide: result.ide,
+          message: result.message
+        }))
+      });
+      throw new Error(
+        `Maker project checkout completed, but MCP config installation failed for: ${failedInstalls.map((result) => result.ide).join(", ")}. Fix the reported client config issue, then rerun taptap-maker mcp install.`
+      );
     }
   }
   saveInitState(targetDir, {
@@ -39509,7 +39721,7 @@ async function runInit(parsed, ctx) {
 }
 async function runDoctor(parsed, ctx) {
   var _a3, _b;
-  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path20.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const env = makerEnvOption(parsed);
   const git = checkGitEnvironment();
   const python = checkMakerPythonEnvironment();
@@ -39528,12 +39740,11 @@ async function runDoctor(parsed, ctx) {
   });
   const agentsPolicy = isProjectBound ? inspectMakerAgentsPolicy(projectRoot) : void 0;
   const orphanProcessCheck = inspectMakerOrphanProcesses();
-  const mcpToolsAvailability = inspectMakerMcpToolsAvailability({
+  const doctorExecutionContext = inspectMakerDoctorExecutionContext({
     makerProjectDir: identify.projectRoot
   });
   const projectInitialization = isProjectBound ? inspectMakerProjectInitialization(projectRoot) : void 0;
   const projectSettings = isProjectBound ? inspectMakerProjectSettings(projectRoot) : void 0;
-  const workBuddyTrust = shouldShowWorkBuddyTrustInspection() ? inspectWorkBuddyTrustState(DEFAULT_MCP_NAME) : void 0;
   if (ctx.json) {
     writeJson({
       env,
@@ -39551,8 +39762,7 @@ async function runDoctor(parsed, ctx) {
       package_update: packageUpdate,
       project_initialization: projectInitialization,
       project_settings: projectSettings,
-      mcp_tools_availability: mcpToolsAvailability,
-      ...workBuddyTrust ? { workbuddy_trust: workBuddyTrust } : {},
+      doctor_execution_context: doctorExecutionContext,
       orphan_process_check: orphanProcessCheck
     });
     return;
@@ -39592,9 +39802,8 @@ async function runDoctor(parsed, ctx) {
       "",
       formatMakerPackageUpdateStatus(packageUpdate),
       "",
-      formatMakerMcpToolsAvailability(mcpToolsAvailability),
+      formatMakerDoctorExecutionContext(doctorExecutionContext),
       "",
-      workBuddyTrust ? formatWorkBuddyTrustInspection(workBuddyTrust) : "",
       formatMakerOrphanProcessStatus(orphanProcessCheck),
       "",
       formatMakerSkillStatus({ projectRoot }),
@@ -39602,44 +39811,36 @@ async function runDoctor(parsed, ctx) {
     ].filter(Boolean).join("\n")
   );
 }
-function inspectMakerMcpToolsAvailability(options) {
-  const aiPwd = path19.resolve(process.cwd());
-  const aiPwdIdentify = identifyMakerProject({ cwd: aiPwd });
-  const makerProjectDir = options.makerProjectDir ? path19.resolve(options.makerProjectDir) : void 0;
+function inspectMakerDoctorExecutionContext(options) {
+  const doctorCwd = path20.resolve(process.cwd());
+  const makerProjectDir = options.makerProjectDir ? path20.resolve(options.makerProjectDir) : void 0;
   if (!makerProjectDir) {
     return {
-      tools_visibility: "refresh_ai_client_if_missing",
-      pwd_alignment: "not_bound",
-      ai_pwd: aiPwd,
-      ai_pwd_project_dir: aiPwdIdentify.projectRoot
+      active_client_session: "not_checked",
+      tools_visibility: "not_checked",
+      doctor_cwd: doctorCwd,
+      doctor_cwd_alignment: "not_bound"
     };
   }
   return {
-    tools_visibility: "refresh_ai_client_if_missing",
-    pwd_alignment: aiPwdIdentify.projectRoot && samePath2(aiPwdIdentify.projectRoot, makerProjectDir) ? "same_project" : "cwd_mismatch",
-    maker_project_dir: makerProjectDir,
-    ai_pwd: aiPwd,
-    ai_pwd_project_dir: aiPwdIdentify.projectRoot
+    active_client_session: "not_checked",
+    tools_visibility: "not_checked",
+    target_dir: makerProjectDir,
+    doctor_cwd: doctorCwd,
+    doctor_cwd_alignment: samePath2(doctorCwd, makerProjectDir) ? "same_project" : "different_from_target"
   };
 }
-function formatMakerMcpToolsAvailability(availability) {
+function formatMakerDoctorExecutionContext(context) {
   const lines = [
-    "Maker MCP tools availability",
-    `- tools_visibility: ${availability.tools_visibility}`,
-    "- hint: If Maker proxy tools are missing in this AI chat, this is common after install.",
-    "- next_action: Restart the AI client or open a new AI conversation; /mcp clients can Reconnect taptap-maker.",
-    `- pwd_alignment: ${availability.pwd_alignment}`
+    "Doctor execution context",
+    `- active_client_session: ${context.active_client_session}`,
+    `- tools_visibility: ${context.tools_visibility}`,
+    "- note: doctor cannot inspect the active AI client's loaded tools or configuration.",
+    `- doctor_cwd_alignment: ${context.doctor_cwd_alignment}`,
+    `- doctor_cwd: ${context.doctor_cwd}`
   ];
-  if (availability.pwd_alignment === "cwd_mismatch") {
-    lines.push(`- maker_project_dir: ${availability.maker_project_dir}`);
-    lines.push(`- ai_pwd: ${availability.ai_pwd}`);
-    lines.push(`- ai_pwd_project_dir: ${availability.ai_pwd_project_dir || "(none)"}`);
-    lines.push(
-      "- impact: Maker proxy tools may not appear because tools/list uses the AI client pwd."
-    );
-    lines.push(
-      "- next_action: Run the AI client from the Maker project directory, or reinstall MCP with --target-dir."
-    );
+  if (context.target_dir) {
+    lines.push(`- target_dir: ${context.target_dir}`);
   }
   return lines.join("\n");
 }
@@ -39647,9 +39848,9 @@ function samePath2(left, right) {
   return normalizePathForCompare3(left) === normalizePathForCompare3(right);
 }
 function normalizePathForCompare3(value) {
-  const resolved = path19.resolve(value);
+  const resolved = path20.resolve(value);
   try {
-    return fs18.realpathSync.native(resolved);
+    return fs19.realpathSync.native(resolved);
   } catch {
     return resolved;
   }
@@ -39967,7 +40168,7 @@ async function runPatSet(parsed, ctx) {
 }
 async function resolvePatSet(parsed, ctx) {
   if (booleanOption(parsed, "pat_stdin") || booleanOption(parsed, "pat_from_stdin")) {
-    const pat = fs18.readFileSync(0, "utf8").trim();
+    const pat = fs19.readFileSync(0, "utf8").trim();
     if (!pat) {
       throw new Error("No PAT found on stdin.");
     }
@@ -39992,13 +40193,24 @@ async function runMcpInstall(parsed, ctx) {
   rejectPackageOption(parsed);
   const ides = parseIdeList(stringOption(parsed, "ide") || stringOption(parsed, "ides") || "");
   const explicitTargetDir = stringOption(parsed, "target_dir");
+  const env = makerEnvOption(parsed);
+  const cwd = explicitTargetDir ? path20.resolve(explicitTargetDir) : void 0;
+  const prepared = await prepareMcpLauncher({ env, cwd });
+  if (!prepared.ok) {
+    writeMcpLauncherFailure(ctx, prepared);
+    return;
+  }
   const results = installMcpConfigs({
     ides: ides.length > 0 ? ides : getDefaultMcpInstallIdes(),
-    env: makerEnvOption(parsed),
-    pkg: MAKER_NPM_PACKAGE,
+    env,
     mcpName: stringOption(parsed, "name") || DEFAULT_MCP_NAME,
-    cwd: explicitTargetDir ? path19.resolve(explicitTargetDir) : void 0
+    cwd,
+    launcher: prepared.launcher
   });
+  const ok = results.every((result) => result.ok);
+  if (!ok) {
+    process.exitCode = 1;
+  }
   if (ctx.json) {
     writeJson(results);
     return;
@@ -40006,43 +40218,103 @@ async function runMcpInstall(parsed, ctx) {
   process.stdout.write(`${results.map((result) => result.message).join("\n")}
 `);
 }
+async function prepareMcpLauncher(options) {
+  let launcher;
+  try {
+    launcher = resolveMakerMcpLauncher({ packageName: MAKER_NPM_PACKAGE });
+  } catch (error2) {
+    return createMcpLauncherResolutionFailure(error2);
+  }
+  const verification = await verifyMakerMcpLauncher(launcher, {
+    cwd: options.cwd,
+    env: options.env === "production" ? void 0 : { TAPTAP_MCP_ENV: options.env }
+  });
+  if (!verification.ok) {
+    return {
+      ok: false,
+      stage: verification.stage,
+      launcher_kind: verification.launcherKind,
+      command: verification.command,
+      failure_type: verification.failureType || "protocol_error",
+      error: verification.error || "Maker MCP launcher connectivity check failed.",
+      stderr: verification.stderr,
+      tools: verification.toolNames
+    };
+  }
+  return { ok: true, launcher, verification };
+}
+function createMcpLauncherResolutionFailure(error2) {
+  return {
+    ok: false,
+    stage: "resolve",
+    failure_type: "launcher_not_found",
+    error: error2 instanceof Error ? error2.message : String(error2),
+    tools: []
+  };
+}
+function writeMcpLauncherFailure(ctx, failure) {
+  process.exitCode = 1;
+  if (ctx.json) {
+    writeJson(failure);
+    return;
+  }
+  process.stdout.write(`${formatMcpLauncherFailure(failure)}
+`);
+}
+function formatMcpLauncherFailure(failure) {
+  return [
+    "✗ Maker MCP launcher connectivity check failed; no client config was changed",
+    `- stage: ${failure.stage}`,
+    failure.launcher_kind ? `- launcher_kind: ${failure.launcher_kind}` : "",
+    failure.command ? `- command: ${failure.command}` : "",
+    `- failure_type: ${failure.failure_type}`,
+    `- error: ${failure.error}`,
+    failure.stderr ? `- stderr:
+${indent3(failure.stderr)}` : "",
+    "- next_action: Fix the launcher shown above, then rerun taptap-maker mcp install."
+  ].filter(Boolean).join("\n");
+}
 async function runMcpVerify(parsed, ctx) {
-  var _a3;
   rejectPackageOption(parsed);
   const mode = mcpVerifyModeOption(parsed);
-  const command = mode === "npx" ? getNpxCliCommand(MAKER_NPM_PACKAGE) : getCurrentCliCommand();
-  const result = spawnSync7(command.command, [...command.args, "help"], {
-    encoding: "utf8"
-  });
-  const failureType = classifyMcpVerifyFailure(result);
-  const commandText = formatShellCommand([command.command, ...command.args, "help"]);
+  let launcher;
+  try {
+    launcher = mode === "npx" ? resolveMakerMcpLauncher({ packageName: MAKER_NPM_PACKAGE }) : getCurrentCliCommand();
+  } catch (error2) {
+    writeMcpLauncherFailure(ctx, createMcpLauncherResolutionFailure(error2));
+    return;
+  }
+  const result = await verifyMakerMcpLauncher(launcher);
   const payload = {
     mode,
     package: mode === "npx" ? MAKER_NPM_PACKAGE : void 0,
-    command: commandText,
-    status: result.status,
-    signal: result.signal,
-    ok: result.status === 0,
-    stdout: result.stdout,
+    launcher_kind: result.launcherKind,
+    command: result.command,
+    stage: result.stage,
+    ok: result.ok,
+    tools: result.toolNames,
     stderr: result.stderr,
-    error: (_a3 = result.error) == null ? void 0 : _a3.message,
-    failure_type: failureType,
-    explanation: failureType ? getMcpVerifyFailureExplanation(mode, failureType) : void 0,
-    next_steps: failureType ? getMcpVerifyNextSteps(mode, commandText) : void 0,
-    is_maker_mcp_started: false
+    error: result.error,
+    failure_type: result.failureType,
+    explanation: result.ok ? void 0 : getMcpVerifyFailureExplanation(mode, result),
+    next_steps: result.ok ? void 0 : getMcpVerifyNextSteps(mode, result.command),
+    is_maker_mcp_started: result.stage === "tools_list"
   };
+  if (!payload.ok) {
+    process.exitCode = 1;
+  }
   if (ctx.json) {
     writeJson(payload);
     return;
   }
   process.stdout.write(
     [
-      payload.ok ? "✓ MCP config command can spawn taptap-maker" : "✗ MCP config command check failed before Maker MCP started",
+      payload.ok ? "✓ Maker MCP launcher connectivity verified" : payload.stage === "tools_list" ? "✗ Maker MCP started but tools/list validation failed" : "✗ MCP config command check failed before Maker MCP started",
       `- mode: ${payload.mode}`,
       `- command: ${payload.command}`,
-      mode === "npx" ? "- scope: verifies the npx command written by taptap-maker mcp install" : "- scope: verifies only the currently running CLI binary",
-      `- status: ${payload.status}`,
-      payload.signal ? `- signal: ${payload.signal}` : "",
+      mode === "npx" ? "- scope: verifies the package launcher written by taptap-maker mcp install" : "- scope: verifies only the currently running CLI binary",
+      `- launcher_kind: ${payload.launcher_kind}`,
+      `- stage: ${payload.stage}`,
       payload.failure_type ? `- failure_type: ${payload.failure_type}` : "",
       payload.explanation ? `- explanation: ${payload.explanation}` : "",
       payload.error ? `- error: ${payload.error}` : "",
@@ -40056,7 +40328,7 @@ ${indent3(payload.stderr)}` : "",
   );
 }
 async function runAgentsUpdate(parsed, ctx) {
-  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path20.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const result = updateMakerAgentsPolicy(targetDir);
   if (ctx.json) {
     writeJson(result);
@@ -40075,32 +40347,42 @@ async function runAgentsUpdate(parsed, ctx) {
 async function runUpgrade(parsed, ctx) {
   rejectPackageOption(parsed);
   const explicitTargetDir = stringOption(parsed, "target_dir");
-  const targetDir = path19.resolve(explicitTargetDir || process.cwd());
+  const targetDir = path20.resolve(explicitTargetDir || process.cwd());
   const env = makerEnvOption(parsed);
   const ides = parseIdeList(stringOption(parsed, "ide") || stringOption(parsed, "ides") || "");
+  const cwd = explicitTargetDir ? targetDir : void 0;
+  const prepared = await prepareMcpLauncher({ env, cwd });
+  if (!prepared.ok) {
+    writeMcpLauncherFailure(ctx, prepared);
+    return;
+  }
   const installResults = installMcpConfigs({
     ides: ides.length > 0 ? ides : getDefaultMcpInstallIdes(),
     env,
-    pkg: MAKER_NPM_PACKAGE,
     mcpName: stringOption(parsed, "name") || DEFAULT_MCP_NAME,
-    cwd: explicitTargetDir ? targetDir : void 0
+    cwd,
+    launcher: prepared.launcher
   });
   const identify = identifyMakerProject({ cwd: targetDir });
   const agentsResult = identify.projectRoot ? updateMakerAgentsPolicy(identify.projectRoot) : void 0;
   const payload = {
+    ok: installResults.every((result) => result.ok),
     target_dir: targetDir,
     env,
     mcp_install: installResults,
     agents_policy: agentsResult,
     restart_required: true
   };
+  if (!payload.ok) {
+    process.exitCode = 1;
+  }
   if (ctx.json) {
     writeJson(payload);
     return;
   }
   process.stdout.write(
     [
-      "TapTap Maker upgrade completed",
+      payload.ok ? "TapTap Maker upgrade completed" : "TapTap Maker upgrade completed with errors",
       "",
       ...installResults.map((result) => result.message),
       "",
@@ -40115,39 +40397,17 @@ async function runUpgrade(parsed, ctx) {
     ].join("\n")
   );
 }
-function classifyMcpVerifyFailure(result) {
-  if (result.status === 0) {
-    return void 0;
-  }
-  if (result.error) {
-    return "spawn_error";
-  }
-  if (result.signal) {
-    return "signal";
-  }
-  if (typeof result.status === "number") {
-    return "non_zero_exit";
-  }
-  return "unknown_no_status";
-}
-function getMcpVerifyFailureExplanation(mode, failureType) {
+function getMcpVerifyFailureExplanation(mode, result) {
   if (mode === "self") {
     return [
       "The current taptap-maker CLI help command did not exit cleanly.",
       "This is a local CLI startup check, not a Maker MCP business error."
     ].join(" ");
   }
-  const base = "This is a local Node/npm/npx startup check, not a Maker MCP business error.";
-  if (failureType === "non_zero_exit") {
-    return `The configured npx command exited with a non-zero status. ${base}`;
-  }
-  if (failureType === "spawn_error") {
-    return `The configured npx command could not be spawned. ${base}`;
-  }
-  if (failureType === "signal") {
-    return `The configured npx command was terminated by a signal. ${base}`;
-  }
-  return `The configured npx command did not exit normally. ${base}`;
+  return [
+    `The configured package launcher failed during MCP ${result.stage}.`,
+    "This is a local Node/npm/npx and stdio MCP connectivity check, not a Maker business tool error."
+  ].join(" ");
 }
 function getMcpVerifyNextSteps(mode, commandText) {
   if (mode === "self") {
@@ -40156,11 +40416,11 @@ function getMcpVerifyNextSteps(mode, commandText) {
   return [
     `Run the command above directly: ${commandText}`,
     "Run `taptap-maker mcp verify --mode self` to verify the current CLI binary.",
-    "If direct npx also fails, check `where.exe npx`, `where.exe node`, `where.exe npm`, `node -v`, and `npm -v`."
+    "On Windows, check the absolute node/npm paths shown above; do not repair cwd with `cd && npx.cmd`."
   ];
 }
 async function runDevKitUpdate(parsed, ctx) {
-  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path20.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const result = await installAiDevKit({
     targetDir,
     preserveExisting: false,
@@ -40172,7 +40432,7 @@ async function runDevKitUpdate(parsed, ctx) {
   emitDevKitSkillInstallerFailure(ctx, result.skillInstaller, "AI skills install failed");
 }
 async function runLogsWatch(parsed, ctx) {
-  const targetDir = path19.resolve(stringOption(parsed, "target_dir") || process.cwd());
+  const targetDir = path20.resolve(stringOption(parsed, "target_dir") || process.cwd());
   const intervalMs = parseDurationMs(stringOption(parsed, "interval") || "5s");
   const timeoutMs = numberOption(parsed, "timeout_ms") ?? DEFAULT_TOOL_CALL_TIMEOUT_MS;
   const maxPolls = numberOption(parsed, "max_polls");
@@ -40182,9 +40442,9 @@ async function runLogsWatch(parsed, ctx) {
     serverUrl: stringOption(parsed, "server_url"),
     env: makerEnvOption(parsed)
   });
-  const runtimeDir = path19.join(proxy.projectRoot, ".maker", "logs", "runtime");
-  const runtimeLog = path19.join(runtimeDir, "runtime.log");
-  const pidFile = path19.join(runtimeDir, "watcher.pid");
+  const runtimeDir = path20.join(proxy.projectRoot, ".maker", "logs", "runtime");
+  const runtimeLog = path20.join(runtimeDir, "runtime.log");
+  const pidFile = path20.join(runtimeDir, "watcher.pid");
   const replacedWatcher = registerRuntimeLogWatcherProcess(pidFile);
   const runtimeLogClient = createRemoteRuntimeLogClient(proxy, timeoutMs);
   emit(ctx, "logs_watch_start", "Maker runtime log watcher started", {
@@ -40229,10 +40489,10 @@ async function runLogsWatch(parsed, ctx) {
   }
 }
 function registerRuntimeLogWatcherProcess(pidFile) {
-  fs18.mkdirSync(path19.dirname(pidFile), { recursive: true });
+  fs19.mkdirSync(path20.dirname(pidFile), { recursive: true });
   const existingPid = readPidFile(pidFile);
   const previous = existingPid && existingPid !== process.pid ? stopExistingRuntimeLogWatcher(pidFile) : {};
-  fs18.writeFileSync(
+  fs19.writeFileSync(
     pidFile,
     `${JSON.stringify(
       {
@@ -40250,10 +40510,10 @@ function registerRuntimeLogWatcherProcess(pidFile) {
   return previous;
 }
 function readPidFile(pidFile) {
-  if (!fs18.existsSync(pidFile)) {
+  if (!fs19.existsSync(pidFile)) {
     return void 0;
   }
-  const raw = fs18.readFileSync(pidFile, "utf8").trim();
+  const raw = fs19.readFileSync(pidFile, "utf8").trim();
   let pid = Number(raw);
   if (!Number.isInteger(pid) || pid <= 0) {
     try {
@@ -40273,7 +40533,7 @@ function installRuntimeLogWatcherPidCleanup(pidFile) {
     }
     cleaned = true;
     if (readPidFile(pidFile) === process.pid) {
-      fs18.rmSync(pidFile, { force: true });
+      fs19.rmSync(pidFile, { force: true });
     }
   };
   process.once("exit", cleanup);
@@ -40424,7 +40684,7 @@ async function prepareDevKit(targetDir, ctx, options = {}) {
         onStart: (event) => emitSkillInstallerStart(ctx, event)
       });
       writeDevKitStagedGitignore(
-        path19.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
+        path20.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
         listPresentDevKitManagedEntries(targetDir)
       );
       if (options.finalizeGitignore) {
@@ -40441,7 +40701,7 @@ async function prepareDevKit(targetDir, ctx, options = {}) {
       );
     } catch (error2) {
       writeDevKitStagedGitignore(
-        path19.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
+        path20.join(targetDir, DEV_KIT_GITIGNORE_STAGING_FILE),
         listPresentDevKitManagedEntries(targetDir)
       );
       if (options.finalizeGitignore) {
@@ -40514,7 +40774,11 @@ function isPatValidationFailure(message) {
   ) || /(?:过期|失效)/.test(message);
 }
 function installMcpConfigs(options) {
-  return uniqueStrings(options.ides).flatMap((ide) => installMcpConfig(ide, options));
+  return uniqueStrings2(options.ides).flatMap((ide) => installMcpConfig(ide, options)).map((result) => ({
+    ...result,
+    launcher_kind: options.launcher.kind,
+    verified: true
+  }));
 }
 function installMcpConfig(ide, options) {
   try {
@@ -40531,12 +40795,12 @@ function installMcpConfig(ide, options) {
 }
 function installMcpConfigUnsafe(ide, options) {
   if (ide === "codex") {
-    const configPath = path19.join(os4.homedir(), ".codex", "config.toml");
+    const configPath = path20.join(os4.homedir(), ".codex", "config.toml");
     const write = mergeCodexMcpConfig(configPath, withClientIde(options, "codex"));
     return [createMcpInstallResult(ide, "Codex", configPath, write)];
   }
   if (ide === "cursor") {
-    const configPath = path19.join(os4.homedir(), ".cursor", "mcp.json");
+    const configPath = path20.join(os4.homedir(), ".cursor", "mcp.json");
     const write = mergeJsonMcpConfig(configPath, withClientIde(options, "cursor"));
     return [createMcpInstallResult(ide, "Cursor", configPath, write)];
   }
@@ -40554,7 +40818,7 @@ function installMcpConfigUnsafe(ide, options) {
         ];
       }
     }
-    const configPath = path19.join(os4.homedir(), ".claude.json");
+    const configPath = path20.join(os4.homedir(), ".claude.json");
     const write = mergeJsonMcpConfig(configPath, claudeOptions);
     return [createMcpInstallResult(ide, "Claude fallback", configPath, write)];
   }
@@ -40568,7 +40832,7 @@ function installMcpConfigUnsafe(ide, options) {
   }
   if (ide === "opencode") {
     const configPath = getOpenCodeMcpConfigPath();
-    if (!fs18.existsSync(configPath)) {
+    if (!fs19.existsSync(configPath)) {
       return [{ ide, ok: false, message: "Skipped OpenCode: no supported config file found" }];
     }
     const write = mergeOpenCodeMcpConfig(configPath, withClientIde(options, "opencode"));
@@ -40636,7 +40900,7 @@ function getDefaultMcpInstallIdes() {
   if (getTraeMcpInstallPaths().length > 0) {
     ides.push("trae");
   }
-  if (fs18.existsSync(getOpenCodeMcpConfigPath())) {
+  if (fs19.existsSync(getOpenCodeMcpConfigPath())) {
     ides.push("opencode");
   }
   if (getWorkBuddyMcpInstallPaths().length > 0) {
@@ -40647,13 +40911,13 @@ function getDefaultMcpInstallIdes() {
 function getTraeMcpInstallPaths() {
   const soloPaths = getExistingTraeUserConfigPaths(getTraeSoloMcpConfigPaths());
   const unverifiedPaths = getExistingConfigPaths(getTraeUnverifiedMcpConfigPaths());
-  return uniqueStrings([...soloPaths, ...unverifiedPaths]);
+  return uniqueStrings2([...soloPaths, ...unverifiedPaths]);
 }
 function getExistingTraeUserConfigPaths(paths) {
   const seen = /* @__PURE__ */ new Set();
   return paths.filter((configPath) => {
     const key = normalizeConfigPathKey(configPath);
-    if (seen.has(key) || !fs18.existsSync(path19.dirname(configPath))) {
+    if (seen.has(key) || !fs19.existsSync(path20.dirname(configPath))) {
       return false;
     }
     seen.add(key);
@@ -40664,7 +40928,7 @@ function getExistingConfigPaths(paths) {
   const seen = /* @__PURE__ */ new Set();
   return paths.filter((configPath) => {
     const key = normalizeConfigPathKey(configPath);
-    if (seen.has(key) || !fs18.existsSync(configPath)) {
+    if (seen.has(key) || !fs19.existsSync(configPath)) {
       return false;
     }
     seen.add(key);
@@ -40672,65 +40936,62 @@ function getExistingConfigPaths(paths) {
   });
 }
 function normalizeConfigPathKey(configPath) {
-  const resolved = path19.resolve(configPath);
+  const resolved = path20.resolve(configPath);
   return process.platform === "win32" || process.platform === "darwin" ? resolved.toLowerCase() : resolved;
 }
 function getTraeSoloMcpConfigPaths() {
   if (process.platform === "win32") {
-    const roaming = process.env.APPDATA || path19.join(os4.homedir(), "AppData", "Roaming");
+    const roaming = process.env.APPDATA || path20.join(os4.homedir(), "AppData", "Roaming");
     return [
-      path19.join(roaming, "TRAE SOLO", "User", "mcp.json"),
-      path19.join(roaming, "TRAE SOLO CN", "User", "mcp.json")
+      path20.join(roaming, "TRAE SOLO", "User", "mcp.json"),
+      path20.join(roaming, "TRAE SOLO CN", "User", "mcp.json")
     ];
   }
-  const appSupport = path19.join(os4.homedir(), "Library", "Application Support");
+  const appSupport = path20.join(os4.homedir(), "Library", "Application Support");
   return [
-    path19.join(appSupport, "TRAE SOLO CN", "User", "mcp.json"),
-    path19.join(appSupport, "TRAE SOLO", "User", "mcp.json")
+    path20.join(appSupport, "TRAE SOLO CN", "User", "mcp.json"),
+    path20.join(appSupport, "TRAE SOLO", "User", "mcp.json")
   ];
 }
 function getTraeUnverifiedMcpConfigPaths() {
   if (process.platform === "win32") {
-    const roaming = process.env.APPDATA || path19.join(os4.homedir(), "AppData", "Roaming");
+    const roaming = process.env.APPDATA || path20.join(os4.homedir(), "AppData", "Roaming");
     return [
-      path19.join(roaming, "Trae", "User", "mcp.json"),
-      path19.join(roaming, "TRAE", "User", "mcp.json"),
-      path19.join(roaming, "Trae CN", "User", "mcp.json")
+      path20.join(roaming, "Trae", "User", "mcp.json"),
+      path20.join(roaming, "TRAE", "User", "mcp.json"),
+      path20.join(roaming, "Trae CN", "User", "mcp.json")
     ];
   }
-  const appSupport = path19.join(os4.homedir(), "Library", "Application Support");
+  const appSupport = path20.join(os4.homedir(), "Library", "Application Support");
   return [
-    path19.join(appSupport, "Trae", "User", "mcp.json"),
-    path19.join(appSupport, "TRAE", "User", "mcp.json"),
-    path19.join(appSupport, "Trae CN", "User", "mcp.json")
+    path20.join(appSupport, "Trae", "User", "mcp.json"),
+    path20.join(appSupport, "TRAE", "User", "mcp.json"),
+    path20.join(appSupport, "Trae CN", "User", "mcp.json")
   ];
 }
 function getOpenCodeMcpConfigPath() {
-  return path19.join(os4.homedir(), ".config", "opencode", "opencode.jsonc");
+  return path20.join(os4.homedir(), ".config", "opencode", "opencode.jsonc");
 }
 function getWorkBuddyHome() {
-  return path19.join(os4.homedir(), ".workbuddy");
-}
-function shouldShowWorkBuddyTrustInspection() {
-  return fs18.existsSync(getWorkBuddyHome());
+  return path20.join(os4.homedir(), ".workbuddy");
 }
 function getWorkBuddyMcpInstallPaths(options = {}) {
-  const primary = path19.join(getWorkBuddyHome(), "mcp.json");
-  if (fs18.existsSync(primary) || options.createPrimary) {
+  const primary = path20.join(getWorkBuddyHome(), "mcp.json");
+  if (fs19.existsSync(primary) || options.createPrimary) {
     return [primary];
   }
-  const legacy = path19.join(getWorkBuddyHome(), ".mcp.json");
-  if (fs18.existsSync(legacy)) {
+  const legacy = path20.join(getWorkBuddyHome(), ".mcp.json");
+  if (fs19.existsSync(legacy)) {
     return [legacy];
   }
   return [];
 }
 function inspectWorkBuddyTrustState(mcpName) {
   const workbuddyHome = getWorkBuddyHome();
-  const connectorsDir = path19.join(workbuddyHome, "connectors");
+  const connectorsDir = path20.join(workbuddyHome, "connectors");
   const accounts = [];
   const stateFiles = [];
-  if (!fs18.existsSync(connectorsDir)) {
+  if (!fs19.existsSync(connectorsDir)) {
     return {
       status: "not_found",
       mcp_name: mcpName,
@@ -40740,12 +41001,12 @@ function inspectWorkBuddyTrustState(mcpName) {
       accounts
     };
   }
-  for (const entry of fs18.readdirSync(connectorsDir, { withFileTypes: true })) {
+  for (const entry of fs19.readdirSync(connectorsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
       continue;
     }
-    const statePath = path19.join(connectorsDir, entry.name, "connector-states.json");
-    if (!fs18.existsSync(statePath)) {
+    const statePath = path20.join(connectorsDir, entry.name, "connector-states.json");
+    if (!fs19.existsSync(statePath)) {
       continue;
     }
     stateFiles.push(statePath);
@@ -40820,7 +41081,7 @@ function mergeJsonMcpConfig(configPath, options) {
   );
 }
 function mergeOpenCodeMcpConfig(configPath, options) {
-  const rawContent = fs18.readFileSync(configPath, "utf8");
+  const rawContent = fs19.readFileSync(configPath, "utf8");
   const rewroteJsonc = normalizeJsonConfigContent(rawContent, { jsonc: true }) !== rawContent;
   const existing = readJsonObject(configPath, { jsonc: true });
   const mcp = asObject(existing.mcp);
@@ -40847,10 +41108,10 @@ function mergeOpenCodeMcpConfig(configPath, options) {
   return { ...write, rewroteJsonc: write.changed && rewroteJsonc };
 }
 function mergeCodexMcpConfig(configPath, options) {
-  const existing = fs18.existsSync(configPath) ? fs18.readFileSync(configPath, "utf8") : "";
+  const existing = fs19.existsSync(configPath) ? fs19.readFileSync(configPath, "utf8") : "";
   const sectionPattern = createCodexMcpSectionPattern(options.mcpName);
   const withoutOld = existing.replace(sectionPattern, "").trimEnd();
-  const launch = getNpxCliCommand(options.pkg);
+  const launch = options.launcher;
   const envValues = createMcpEnvironmentValues(options.env, options.clientIde);
   const envSection = Object.keys(envValues).length === 0 ? [] : [
     "",
@@ -40921,7 +41182,7 @@ function normalizeCodexMcpTablePath(tablePath, mcpName) {
   return `mcp_servers.${mcpName}${match[1] || ""}`;
 }
 function tryClaudeMcpAdd(options) {
-  const npxLaunch = getNpxCliCommand(options.pkg);
+  const npxLaunch = options.launcher;
   const claudeArgs = [
     "mcp",
     "add",
@@ -40944,7 +41205,7 @@ function tryClaudeMcpAdd(options) {
   return { ok: result.status === 0 };
 }
 function createJsonMcpServerConfig(options) {
-  const launch = getNpxCliCommand(options.pkg);
+  const launch = options.launcher;
   return {
     command: launch.command,
     args: launch.args,
@@ -40956,7 +41217,7 @@ function createJsonMcpServerConfig(options) {
 function createOpenCodeMcpServerConfig(options) {
   return {
     type: "local",
-    command: getOpenCodeNpxCliCommand(options.pkg),
+    command: options.launcher.commandAndArgs,
     ...options.cwd ? { cwd: options.cwd } : {},
     ...createOptionalMcpEnvironment(options.env, "environment", options.clientIde),
     enabled: true
@@ -40981,30 +41242,17 @@ function createMcpEnvironmentValues(env, clientIde) {
   }
   return values;
 }
-function getOpenCodeNpxCliCommand(pkg) {
-  const executable = process.platform === "win32" ? "npx.cmd" : "npx";
-  return [executable, "-y", "-p", pkg, "taptap-maker"];
-}
 function getCurrentCliCommand() {
   if (process.argv[1]) {
-    return { command: process.execPath, args: [process.argv[1]] };
-  }
-  return { command: process.platform === "win32" ? "taptap-maker.cmd" : "taptap-maker", args: [] };
-}
-function getNpxCliCommand(pkg) {
-  return resolveNpxCliCommand(pkg);
-}
-function resolveNpxCliCommand(pkg, platform = process.platform) {
-  const npxArgs = ["-y", "-p", pkg, "taptap-maker"];
-  if (platform === "win32") {
-    const launch = getWindowsCmdLaunchCommand("npx.cmd", npxArgs);
     return {
-      command: launch.command,
-      args: launch.args,
-      commandAndArgs: [launch.command, ...launch.args]
+      kind: "current_cli",
+      command: process.execPath,
+      args: [process.argv[1]],
+      commandAndArgs: [process.execPath, process.argv[1]]
     };
   }
-  return { command: "npx", args: npxArgs, commandAndArgs: ["npx", ...npxArgs] };
+  const command = process.platform === "win32" ? "taptap-maker.cmd" : "taptap-maker";
+  return { kind: "current_cli", command, args: [], commandAndArgs: [command] };
 }
 function getWindowsCmdLaunchCommand(command, args) {
   return { command: "cmd.exe", args: ["/d", "/s", "/c", command, ...args] };
@@ -41017,10 +41265,10 @@ function rejectPackageOption(parsed) {
   }
 }
 function readJsonObject(filePath, options = {}) {
-  if (!fs18.existsSync(filePath)) {
+  if (!fs19.existsSync(filePath)) {
     return {};
   }
-  const raw = fs18.readFileSync(filePath, "utf8");
+  const raw = fs19.readFileSync(filePath, "utf8");
   try {
     const normalized = normalizeJsonConfigContent(raw, options);
     const parsed = JSON.parse(normalized);
@@ -41040,25 +41288,25 @@ function asObject(value) {
   return {};
 }
 function writeConfigWithTapTapBackupIfChanged(filePath, nextContent, validate) {
-  const existed = fs18.existsSync(filePath);
-  const previousContent = existed ? fs18.readFileSync(filePath, "utf8") : void 0;
+  const existed = fs19.existsSync(filePath);
+  const previousContent = existed ? fs19.readFileSync(filePath, "utf8") : void 0;
   if (previousContent === nextContent) {
     return { changed: false };
   }
   const backupPath = existed ? `${filePath}.taptap-maker.bak.latest` : void 0;
-  fs18.mkdirSync(path19.dirname(filePath), { recursive: true });
+  fs19.mkdirSync(path20.dirname(filePath), { recursive: true });
   if (previousContent !== void 0 && backupPath) {
-    fs18.writeFileSync(backupPath, previousContent, "utf8");
+    fs19.writeFileSync(backupPath, previousContent, "utf8");
   }
   try {
-    fs18.writeFileSync(filePath, nextContent, "utf8");
-    validate == null ? void 0 : validate(fs18.readFileSync(filePath, "utf8"));
+    fs19.writeFileSync(filePath, nextContent, "utf8");
+    validate == null ? void 0 : validate(fs19.readFileSync(filePath, "utf8"));
     return { changed: true, backupPath };
   } catch (error2) {
     if (previousContent !== void 0) {
-      fs18.writeFileSync(filePath, previousContent, "utf8");
+      fs19.writeFileSync(filePath, previousContent, "utf8");
     } else {
-      fs18.rmSync(filePath, { force: true });
+      fs19.rmSync(filePath, { force: true });
     }
     throw error2;
   }
@@ -41205,10 +41453,10 @@ function formatMcpInstallMessage(label, configPath, write) {
   ].filter(Boolean).join("\n");
 }
 function saveInitState(targetDir, state) {
-  fs18.mkdirSync(getMakerHome(), { recursive: true });
-  const key = crypto3.createHash("sha256").update(path19.resolve(targetDir)).digest("hex").slice(0, 16);
-  fs18.writeFileSync(
-    path19.join(getMakerHome(), `init-state-${key}.json`),
+  fs19.mkdirSync(getMakerHome(), { recursive: true });
+  const key = crypto3.createHash("sha256").update(path20.resolve(targetDir)).digest("hex").slice(0, 16);
+  fs19.writeFileSync(
+    path20.join(getMakerHome(), `init-state-${key}.json`),
     `${JSON.stringify({ ...state, updated_at: (/* @__PURE__ */ new Date()).toISOString() }, null, 2)}
 `,
     "utf8"
@@ -41356,7 +41604,7 @@ function makerEnvOption(parsed) {
     return env;
   }
   const targetDir = stringOption(parsed, "target_dir");
-  return getMakerEnvironment(void 0, targetDir ? path19.resolve(targetDir) : process.cwd());
+  return getMakerEnvironment(void 0, targetDir ? path20.resolve(targetDir) : process.cwd());
 }
 function mcpVerifyModeOption(parsed) {
   const mode = stringOption(parsed, "mode") || "npx";
@@ -41368,7 +41616,7 @@ function mcpVerifyModeOption(parsed) {
 function parseIdeList(value) {
   return value.split(/[\s,]+/).map((item) => item.trim().toLowerCase()).filter(Boolean);
 }
-function uniqueStrings(values) {
+function uniqueStrings2(values) {
   return Array.from(new Set(values));
 }
 function mask(value) {
@@ -41432,16 +41680,15 @@ function printHelp() {
       "  taptap-maker dev-kit update [--target-dir DIR] [--json]",
       "  taptap-maker logs watch [--target-dir DIR] [--interval 5s] [--reset] [--json]",
       "",
-      "MCP verify defaults to the npx command written into AI client config.",
-      "Maker MCP configs and npx verification use @taptap/maker.",
+      "MCP install and verify use the same validated @taptap/maker package launcher.",
       "",
       "MCP install defaults:",
       "  Writes Codex, Cursor, Claude, detected Trae/OpenCode/WorkBuddy configs,",
       "  unless --ide is specified. It does not create missing Trae config files.",
       "",
       "Windows note:",
-      "  mcpServers configs wrap npx.cmd with cmd.exe on Windows for spawn compatibility.",
-      "  OpenCode uses its own mcp schema and writes a command array with npx.cmd.",
+      "  MCP configs use an absolute node.exe + npm-cli.js launcher on Windows.",
+      "  Missing absolute Node/npm launchers fail without changing client configs.",
       ""
     ].join("\n")
   );
@@ -42858,7 +43105,7 @@ var StreamableHTTPClientTransport = class {
 };
 
 // src/mcp-proxy/proxy.ts
-import * as path21 from "node:path";
+import * as path22 from "node:path";
 import * as crypto6 from "node:crypto";
 
 // src/mcp-proxy/cookieJar.ts
@@ -43040,8 +43287,8 @@ function createCookieFetch(cookieJar) {
 }
 
 // src/core/utils/logWriter.ts
-import * as fs19 from "node:fs";
-import * as path20 from "node:path";
+import * as fs20 from "node:fs";
+import * as path21 from "node:path";
 import * as crypto5 from "node:crypto";
 
 // src/core/types/log.ts
@@ -43082,7 +43329,7 @@ var LogWriter = class {
       return;
     }
     try {
-      await fs19.promises.mkdir(this.config.logDir, { recursive: true });
+      await fs20.promises.mkdir(this.config.logDir, { recursive: true });
       await this.cleanupOldLogs();
       this.initialized = true;
     } catch (error2) {
@@ -43105,7 +43352,7 @@ var LogWriter = class {
    */
   getLogFilePath(date5) {
     const d = date5 || this.getCurrentDate();
-    return path20.join(this.config.logDir, `${this.config.prefix}-${d}.log`);
+    return path21.join(this.config.logDir, `${this.config.prefix}-${d}.log`);
   }
   /**
    * 获取或创建写入流
@@ -43120,7 +43367,7 @@ var LogWriter = class {
       }
       this.currentDate = date5;
       try {
-        this.writeStream = fs19.createWriteStream(this.getLogFilePath(date5), {
+        this.writeStream = fs20.createWriteStream(this.getLogFilePath(date5), {
           flags: "a",
           encoding: "utf8"
         });
@@ -43172,11 +43419,11 @@ var LogWriter = class {
     if (this.shouldWriteToFile(level) && this.initialized && this.config.enabled) {
       try {
         const filePath = this.getLogFilePath();
-        const dir = path20.dirname(filePath);
-        if (!fs19.existsSync(dir)) {
-          fs19.mkdirSync(dir, { recursive: true });
+        const dir = path21.dirname(filePath);
+        if (!fs20.existsSync(dir)) {
+          fs20.mkdirSync(dir, { recursive: true });
         }
-        fs19.appendFileSync(filePath, message, "utf8");
+        fs20.appendFileSync(filePath, message, "utf8");
       } catch {
       }
     }
@@ -43187,7 +43434,7 @@ var LogWriter = class {
   async cleanupOldLogs() {
     if (this.config.maxDays <= 0) return;
     try {
-      const files = await fs19.promises.readdir(this.config.logDir);
+      const files = await fs20.promises.readdir(this.config.logDir);
       const cutoffDate = /* @__PURE__ */ new Date();
       cutoffDate.setDate(cutoffDate.getDate() - this.config.maxDays);
       const prefix = this.config.prefix;
@@ -43202,7 +43449,7 @@ var LogWriter = class {
           if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
             const fileDate = new Date(year, month - 1, day);
             if (fileDate < cutoffDate) {
-              await fs19.promises.unlink(path20.join(this.config.logDir, file2));
+              await fs20.promises.unlink(path21.join(this.config.logDir, file2));
               process.stderr.write(`[LogWriter] Deleted old log: ${file2}
 `);
             }
@@ -43323,10 +43570,10 @@ var TapTapMCPProxy = class {
     const { user_id, project_id } = this.config.tenant;
     let logDir;
     if (user_id && project_id) {
-      logDir = path21.join(logRoot, "proxy", user_id, project_id);
+      logDir = path22.join(logRoot, "proxy", user_id, project_id);
     } else {
       const kidHash = crypto6.createHash("sha256").update(this.config.auth.kid).digest("hex").substring(0, 8);
-      logDir = path21.join(logRoot, "proxy", kidHash);
+      logDir = path22.join(logRoot, "proxy", kidHash);
     }
     return new LogWriter({
       logDir,
@@ -44052,11 +44299,12 @@ function printHelp2() {
       "  taptap-maker dev-kit update [--target-dir DIR] [--json]",
       "  taptap-maker logs watch [--target-dir DIR] [--interval 5s] [--reset] [--json]",
       "",
-      "MCP verify defaults to the npx command written into AI client config.",
-      "Maker MCP configs and npx verification use @taptap/maker.",
+      "MCP install verifies initialize + tools/list before writing AI client config.",
+      "Maker MCP configs and launcher verification use @taptap/maker.",
       "",
       "Windows note:",
-      "  Generated MCP configs wrap npx.cmd with cmd.exe on Windows for spawn compatibility.",
+      "  Generated MCP configs prefer absolute node.exe + npm-cli.js on Windows.",
+      "  Project cwd is always structured; the CLI never generates cd && npx commands.",
       ""
     ].join("\n")
   );

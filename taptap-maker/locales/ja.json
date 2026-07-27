@@ -11,6 +11,9 @@
         }
       }
     },
+    "maker_ads_guide": {
+      "description": "同梱の公式 Runtime に含まれる TapTap Maker 広告導入ガイドを読み取ります。広告、リワード動画、広告枠、ShowRewardVideoAd に関する作業では、プロジェクト状態の確認、get_ad_config の呼び出し、広告コードの変更より先に呼び出してください。プロジェクトは変更しません。"
+    },
     "maker_login": {
       "description": "TapTap Maker 公式 CLI からブラウザ認証を開き、アカウントを接続します。既存の PAT をプラグイン設定で手動設定することもできます。"
     },
