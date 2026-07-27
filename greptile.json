@@ -4,7 +4,7 @@
     "description": "Cindy 官方插件仓。每个子目录是一个沙箱插件:ghost.json 是身份卡(id/version/slots/network 能力声明/tool 契约),main.js 是沙箱内运行的入口,无 Node 能力(除 taptap-maker 显式声明 node slot)。审查标准以 README.md 的设计原则为准:默认纯沙箱、能力显式声明、密钥由主机注入、tool description 即契约、错误信息说人话。"
   },
   "rules": [
-    "【安全红线·最高优先级】密钥与凭证:代码中禁止出现 token/密钥的硬编码字面量;凭证只能通过 ghost.json 的 network.secrets[].inject 由主机按 hosts 白名单注入,插件代码不得读取、复制、转存凭证到 KV/localStorage/日志/页面状态/网络请求体;OAuth clientSecret 只允许出现在 ghost.json 声明中,不得出现在 main.js/settings.js",
+    "【安全红线·最高优先级】密钥与凭证:代码中禁止出现 token/密钥的硬编码字面量;凭证注入只认可本仓三种已声明机制——普通插件的 network.secrets[].inject、GitLab 类多实例插件的 network.connections[].inject、Node 插件(邮件类)的 node.secretBindings[];三者都由主机保管并注入,插件代码不得读取、复制、转存凭证到 KV/localStorage/日志/页面状态/网络请求体;OAuth clientSecret 只允许出现在 ghost.json 声明中,不得出现在 main.js/settings.js;出现上述三种之外的注入字段、或绕过主机注入自行处理凭证,均按违规处理",
     "【网络边界】main.js/settings.js 中的所有网络访问目标必须命中 ghost.json 的 network.hosts 白名单;发现未声明的域名/IP、硬编码内网或调试地址(localhost/127.x/192.168.x/10.x)、或绕过 cindy.fetch 的直连(原生 fetch 到外部域名/XMLHttpRequest/WebSocket/EventSource)必须作为严重问题指出",
     "【能力最小化】ghost.json 变更时:slots/node/network.hosts 只能最小化声明,新增能力必须在 PR 描述中有对应必要性;声明 node slot 的插件必须固定 entry/entries 入口,childSpawn 产生的子进程边界必须最小(固定命令、参数不可注入外部输入)",
     "【tool description 即契约】ghost.json 里每个 tool 的 description 是给 Agent 看的使用说明:代码行为边界改变(做什么/不做什么/返回什么/副作用)而 description 未同步更新、或 description 夸大能力、漏报副作用(写操作/外发数据/不可逆动作)时必须指出",
@@ -13,18 +13,12 @@
     "【vendor/dist 供应链安全】vendor/、dist/ 等第三方或生成物不得被单独篡改:除 README 声明的整体升级(如 taptap-maker/vendor 随 @taptap/maker 官方包整体替换)外,其中任何文件的新增/修改/删除都必须作为高危审查点,重点排查混淆代码、eval/Function 动态执行、可疑外联域名、隐藏的网络/子进程调用——这类目录体积大,容易被用来藏毒,绝不能跳过审查",
     "【安装受众】provisioning.json 的 audience/tier 变更直接影响插件安装范围,必须显式标注并确认是有意为之",
     "【发布流水线】.github/workflows 变更涉及 OIDC 发布、环境 URL、secrets 时按高危变更审查:权限最小化、不可注入未审查的代码路径",
-    "【图片资源】PR 中新增/替换的图片(icon/截图等)只核对:文件位于正确 assets 目录、尺寸/体积合理(icon 不应为数 MB)、文件名无不雅词汇;图片内容合规性由人工 reviewer 在 GitHub 预览中目检,Greptile 无需对二进制 diff 发表评论",
-    "【同版本元信息更新契约】version 不变时,ghost.json 仅允许修改 name/description/author/icon 这四个纯展示字段;同版本下 whenToUse/entry/launch/slots/tools/agent/node/network/subscribe/panel/settingsHtml/command/cindy/preview 或任何包内运行文件(main.js/settings.js)发生变化,必须标记为严重问题并要求 bump version——这是防止同版本静默改变模型行为或权限的硬门禁"
+    "【图片资源】PR 中新增/替换的图片(icon/截图等):Greptile 无法读取像素内容,只需核对文本可见信息——文件位于正确 assets 目录、文件体积合理(icon 不应为数 MB)、文件名无不雅词汇、ghost.json 的 icon 路径引用有效;图片血腥/暴力/色情等内容合规性由人工 reviewer 在 GitHub 预览中目检,Greptile 不对图片内容本身下结论",
+    "【同版本元信息更新契约】version 不变时,ghost.json 仅允许修改 name/description/author/icon 这四个纯展示字段,其余字段(whenToUse/entry/launch/slots/tools/agent/node/network/subscribe/panel/settingsHtml/command/cindy/preview)或任何包内运行文件(main.js/settings.js)变化都必须 bump version——这是防止同版本静默改变模型行为或权限的硬门禁。注意:该同版本豁免依赖服务端尚未上线的能力(见插件同版本元信息更新计划),在服务端支持 RELEASE_VERSION_CONFLICT 放行之前,任何插件内容变更(含这四个展示字段)仍必须 bump version,否则发布会因版本冲突被拒绝"
   ],
   "files": {
     "ignore": [
       "**/.DS_Store",
-      "**/*.png",
-      "**/*.jpg",
-      "**/*.jpeg",
-      "**/*.gif",
-      "**/*.webp",
-      "**/*.ico",
       "**/THIRD-PARTY-LICENSES.txt"
     ]
   },
