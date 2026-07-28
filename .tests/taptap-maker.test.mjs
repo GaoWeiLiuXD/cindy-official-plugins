@@ -27,6 +27,16 @@ const vendorPackage = JSON.parse(
 );
 const requireFromTest = createRequire(import.meta.url);
 
+function readSettingsMessages() {
+  const match = settingsSource.match(
+    /var MESSAGES = (\{[\s\S]*?\n  \});\n  var currentLocale/,
+  );
+  assert.ok(match, 'settings.js must declare MESSAGES');
+  const context = createContext({ messages: null });
+  new Script(`messages = ${match[1]}`).runInContext(context);
+  return context.messages;
+}
+
 class FakeBroadcastChannel {
   static instances = [];
 
@@ -193,14 +203,26 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
 });
 
 test('设置页跟随宿主四语言并以英文回退', () => {
+  const messages = readSettingsMessages();
+  const englishKeys = Object.keys(messages.en).sort();
+  assert.deepEqual(Object.keys(messages).sort(), ['en', 'ja', 'ko', 'zh-CN']);
+  for (const locale of ['zh-CN', 'ja', 'ko']) {
+    assert.deepEqual(Object.keys(messages[locale]).sort(), englishKeys, locale);
+  }
   assert.match(settingsHtml, /<html lang="en">/);
-  assert.match(settingsSource, /fetch\('\/app-context'\)/);
+  assert.match(settingsSource, /fetch\('\/app-context', \{ signal: controller\.signal \}\)/);
+  assert.match(settingsSource, /new AbortController\(\)/);
+  assert.match(settingsSource, /signal: controller\.signal/);
+  assert.match(settingsSource, /controller\.abort\(\)/);
   assert.doesNotMatch(settingsSource, /navigator\.(?:language|languages)/);
   for (const locale of ['en', 'zh-CN', 'ja', 'ko']) {
     assert.match(settingsSource, new RegExp(`(?:^|\\n)    ['"]?${locale.replace('-', '\\-')}['"]?: \\{`));
   }
   assert.match(settingsSource, /currentLocale = 'en'/);
   assert.match(settingsSource, /document\.documentElement\.lang = currentLocale/);
+  assert.match(mainSource, /errorCode: settingsErrorCode\(message\.action, error\)/);
+  assert.doesNotMatch(settingsSource, /response\.message\s*\|\|/);
+  assert.doesNotMatch(settingsSource, /item\.message/);
 });
 
 test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {

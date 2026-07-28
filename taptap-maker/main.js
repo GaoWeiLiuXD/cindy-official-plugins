@@ -551,6 +551,25 @@ function settingsText(locale, key) {
   return SETTINGS_LOCALE_TEXT[normalized][key];
 }
 
+function settingsError(code, message) {
+  var error = new Error(message);
+  error.settingsCode = code;
+  return error;
+}
+
+function settingsErrorCode(action, error) {
+  if (error && typeof error.settingsCode === 'string') return error.settingsCode;
+  var codes = {
+    status: 'STATUS_FAILED',
+    login: 'LOGIN_FAILED',
+    open_pat_page: 'PAT_PAGE_FAILED',
+    set_pat: 'PAT_SAVE_FAILED',
+    projects: 'PROJECTS_FAILED',
+    sync_projects: 'SYNC_FAILED',
+  };
+  return codes[action] || 'UNKNOWN_ACTION';
+}
+
 async function handleSettingsRequest(action, payload, locale) {
   if (action === 'status') return accountRequest('status', {}, false);
   if (action === 'login') return accountRequest('login', {}, true);
@@ -566,17 +585,20 @@ async function handleSettingsRequest(action, payload, locale) {
     });
     if (!picked || picked.ok !== true) {
       if (picked && picked.errorCode === 'CANCELLED') return { ok: true, canceled: true };
-      throw new Error(picked && picked.message ? picked.message : settingsText(locale, 'pickFailed'));
+      throw settingsError(
+        'PICK_FAILED',
+        picked && picked.message ? picked.message : settingsText(locale, 'pickFailed'),
+      );
     }
     if (typeof picked.path !== 'string' || !picked.path) {
-      throw new Error(settingsText(locale, 'missingPath'));
+      throw settingsError('MISSING_PATH', settingsText(locale, 'missingPath'));
     }
     return accountRequest('sync_projects', {
       parentDir: picked.path,
       projectIds: payload && payload.projectIds,
     }, true);
   }
-  throw new Error(settingsText(locale, 'unknownAction') + String(action));
+  throw settingsError('UNKNOWN_ACTION', settingsText(locale, 'unknownAction') + String(action));
 }
 
 var settingsChannel = typeof BroadcastChannel === 'function'
@@ -614,6 +636,7 @@ if (settingsChannel) {
           type: 'settings-result',
           reqId: message.reqId,
           ok: false,
+          errorCode: settingsErrorCode(message.action, error),
           message: redactSensitiveText(errorMessage(error), true).slice(0, 2000),
         };
       });

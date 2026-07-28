@@ -35,6 +35,11 @@
       syncFailure: 'Sync failed. Try again.', syncSuccess: 'Synced {count} projects to {path}',
       syncPartial: 'Synced {success}; {failed} failed{details}',
       syncFailed: 'Could not sync TapTap Maker projects. Try again.',
+      syncAuthRequired: 'TapTap Maker sign-in expired. Reconnect the account and try again.',
+      syncTargetOccupied: 'The project folder already contains unrelated files. Choose another parent folder or resolve the folder manually.',
+      syncGitMissing: 'Git was not found. Install Git, restart Cindy, and try again.',
+      syncPythonSetupFailed: 'Maker could not prepare Python. Check the network, proxy, and folder permissions, then try again.',
+      syncNetworkError: 'Could not connect to TapTap Maker. Check the network and try again.',
       operationFailed: 'TapTap Maker settings operation failed.',
       responseTimeout: 'The TapTap Maker plugin timed out. Try again.',
     },
@@ -64,6 +69,11 @@
       syncSuccess: '已同步 {count} 个项目到 {path}',
       syncPartial: '已同步 {success} 个，失败 {failed} 个{details}',
       syncFailed: 'TapTap Maker 项目同步失败，请重试',
+      syncAuthRequired: 'TapTap Maker 登录已失效，请重新连接账号后重试',
+      syncTargetOccupied: '目标子目录已有其他内容，请改选父目录或手动处理该子目录',
+      syncGitMissing: '本机未检测到 Git，请安装 Git 并重启 Cindy 后重试',
+      syncPythonSetupFailed: 'Maker 自动准备 Python 环境失败，请检查网络、代理和目录权限后重试',
+      syncNetworkError: '连接 TapTap Maker 失败，请检查网络后重试',
       operationFailed: 'TapTap Maker 设置操作失败', responseTimeout: 'TapTap Maker 插件响应超时，请稍后重试',
     },
     ja: {
@@ -92,6 +102,11 @@
       syncFailure: '同期に失敗しました。再試行してください。', syncSuccess: '{count} 件を {path} に同期しました',
       syncPartial: '{success} 件を同期、{failed} 件が失敗しました{details}',
       syncFailed: 'プロジェクトを同期できませんでした。再試行してください。',
+      syncAuthRequired: 'TapTap Maker のログインが期限切れです。アカウントを再接続してから再試行してください。',
+      syncTargetOccupied: 'プロジェクトフォルダに別のファイルがあります。別の親フォルダを選ぶか、フォルダを手動で整理してください。',
+      syncGitMissing: 'Git が見つかりません。Git をインストールし、Cindy を再起動してから再試行してください。',
+      syncPythonSetupFailed: 'Maker が Python 環境を準備できませんでした。ネットワーク、プロキシ、フォルダ権限を確認して再試行してください。',
+      syncNetworkError: 'TapTap Maker に接続できませんでした。ネットワークを確認して再試行してください。',
       operationFailed: 'TapTap Maker の設定操作に失敗しました。', responseTimeout: 'TapTap Maker プラグインがタイムアウトしました。再試行してください。',
     },
     ko: {
@@ -120,6 +135,11 @@
       syncFailure: '동기화에 실패했습니다. 다시 시도하세요.', syncSuccess: '{count}개 프로젝트를 {path}에 동기화했습니다',
       syncPartial: '{success}개 동기화, {failed}개 실패{details}',
       syncFailed: '프로젝트를 동기화하지 못했습니다. 다시 시도하세요.',
+      syncAuthRequired: 'TapTap Maker 로그인이 만료되었습니다. 계정을 다시 연결한 뒤 시도하세요.',
+      syncTargetOccupied: '프로젝트 폴더에 관련 없는 파일이 있습니다. 다른 상위 폴더를 선택하거나 폴더를 직접 정리하세요.',
+      syncGitMissing: 'Git을 찾을 수 없습니다. Git을 설치하고 Cindy를 다시 시작한 뒤 시도하세요.',
+      syncPythonSetupFailed: 'Maker가 Python 환경을 준비하지 못했습니다. 네트워크, 프록시, 폴더 권한을 확인한 뒤 시도하세요.',
+      syncNetworkError: 'TapTap Maker에 연결하지 못했습니다. 네트워크를 확인하고 다시 시도하세요.',
       operationFailed: 'TapTap Maker 설정 작업에 실패했습니다.', responseTimeout: 'TapTap Maker 플러그인 응답 시간이 초과되었습니다. 다시 시도하세요.',
     },
   };
@@ -171,14 +191,56 @@
   }
 
   async function loadHostLocale() {
+    var controller = new AbortController();
+    var timeout = setTimeout(function abortLocaleRequest() {
+      controller.abort();
+    }, 2000);
     try {
-      var response = await fetch('/app-context');
+      var response = await fetch('/app-context', { signal: controller.signal });
+      if (!response.ok) throw new Error('Could not load app context');
       var result = await response.json();
       currentLocale = normalizeLocale(result && result.context && result.context.locale);
     } catch (_error) {
       currentLocale = 'en';
+    } finally {
+      clearTimeout(timeout);
     }
     applyStaticTranslations();
+  }
+
+  function requestFailureText(action, response) {
+    var code = response && typeof response.errorCode === 'string' ? response.errorCode : '';
+    var keysByCode = {
+      STATUS_FAILED: 'unknownStatus',
+      LOGIN_FAILED: 'loginFailed',
+      PAT_PAGE_FAILED: 'patPageFailed',
+      PAT_SAVE_FAILED: 'patSaveFailed',
+      PROJECTS_FAILED: 'projectListFailed',
+      PICK_FAILED: 'syncFailed',
+      MISSING_PATH: 'syncFailed',
+      SYNC_FAILED: 'syncFailed',
+      UNKNOWN_ACTION: 'operationFailed',
+    };
+    var keysByAction = {
+      status: 'unknownStatus',
+      login: 'loginFailed',
+      open_pat_page: 'patPageFailed',
+      set_pat: 'patSaveFailed',
+      projects: 'projectListFailed',
+      sync_projects: 'syncFailed',
+    };
+    return t(keysByCode[code] || keysByAction[action] || 'operationFailed');
+  }
+
+  function syncFailureText(item) {
+    var keysByCode = {
+      AUTH_REQUIRED: 'syncAuthRequired',
+      TARGET_OCCUPIED: 'syncTargetOccupied',
+      GIT_NOT_FOUND: 'syncGitMissing',
+      PYTHON_SETUP_FAILED: 'syncPythonSetupFailed',
+      NETWORK_ERROR: 'syncNetworkError',
+    };
+    return t(keysByCode[item && item.code] || 'syncFailure');
   }
 
   function request(action, payload, longRunning) {
@@ -201,7 +263,7 @@
         settled = true;
         cleanup();
         if (response.ok === true) resolve(response.result || {});
-        else reject(new Error(response.message || t('operationFailed')));
+        else reject(new Error(requestFailureText(action, response)));
       }
 
       function post() {
@@ -470,13 +532,15 @@
       } else {
         var failures = failed.map(function failureText(item) {
           var name = item && typeof item.name === 'string' ? item.name : t('unknownProject');
-          var reason = item && typeof item.message === 'string' ? item.message : t('syncFailure');
-          return name + '：' + reason;
+          var separator = currentLocale === 'en' || currentLocale === 'ko' ? ': ' : '：';
+          return name + separator + syncFailureText(item);
         }).join(currentLocale === 'en' || currentLocale === 'ko' ? '; ' : '；');
         projectMessage.textContent = t('syncPartial', {
           success: succeeded.length,
           failed: failed.length,
-          details: failures ? (currentLocale === 'en' ? ': ' : '。') + failures : '',
+          details: failures
+            ? (currentLocale === 'en' || currentLocale === 'ko' ? ': ' : '。') + failures
+            : '',
         });
       }
     } catch (error) {
