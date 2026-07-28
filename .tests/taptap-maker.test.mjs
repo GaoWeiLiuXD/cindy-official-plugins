@@ -19,11 +19,23 @@ const mainSource = readFileSync(new URL('main.js', pluginRoot), 'utf8');
 const accountSource = readFileSync(new URL('node/account.cjs', pluginRoot), 'utf8');
 const manifest = JSON.parse(readFileSync(new URL('ghost.json', pluginRoot), 'utf8'));
 const skillMd = readFileSync(new URL('skills/taptap-maker/SKILL.md', pluginRoot), 'utf8');
+const settingsHtml = readFileSync(new URL('settings.html', pluginRoot), 'utf8');
+const settingsSource = readFileSync(new URL('settings.js', pluginRoot), 'utf8');
 const provisioning = JSON.parse(readFileSync(new URL('../provisioning.json', import.meta.url), 'utf8'));
 const vendorPackage = JSON.parse(
   readFileSync(new URL('vendor/taptap-maker/package.json', pluginRoot), 'utf8'),
 );
 const requireFromTest = createRequire(import.meta.url);
+
+function readSettingsMessages() {
+  const match = settingsSource.match(
+    /var MESSAGES = (\{[\s\S]*?\n  \});\n  var currentLocale/,
+  );
+  assert.ok(match, 'settings.js must declare MESSAGES');
+  const context = createContext({ messages: null });
+  new Script(`messages = ${match[1]}`).runInContext(context);
+  return context.messages;
+}
 
 class FakeBroadcastChannel {
   static instances = [];
@@ -152,7 +164,7 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.6');
+  assert.equal(manifest.version, '2.1.7');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
@@ -188,6 +200,30 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.deepEqual(provisioning.ghosts['taptap-maker'], { audience: 'all' });
   assert.equal(vendorPackage.name, '@taptap/maker');
   assert.equal(vendorPackage.version, '0.0.27');
+});
+
+test('设置页跟随宿主四语言并以英文回退', () => {
+  const messages = readSettingsMessages();
+  const englishKeys = Object.keys(messages.en).sort();
+  assert.deepEqual(Object.keys(messages).sort(), ['en', 'ja', 'ko', 'zh-CN']);
+  for (const locale of ['zh-CN', 'ja', 'ko']) {
+    assert.deepEqual(Object.keys(messages[locale]).sort(), englishKeys, locale);
+  }
+  assert.match(settingsHtml, /<html lang="en">/);
+  assert.match(settingsSource, /fetch\('\/app-context', \{ signal: controller\.signal \}\)/);
+  assert.match(settingsSource, /new AbortController\(\)/);
+  assert.match(settingsSource, /signal: controller\.signal/);
+  assert.match(settingsSource, /controller\.abort\(\)/);
+  assert.doesNotMatch(settingsSource, /navigator\.(?:language|languages)/);
+  for (const locale of ['en', 'zh-CN', 'ja', 'ko']) {
+    assert.match(settingsSource, new RegExp(`(?:^|\\n)    ['"]?${locale.replace('-', '\\-')}['"]?: \\{`));
+  }
+  assert.match(settingsSource, /currentLocale = 'en'/);
+  assert.match(settingsSource, /document\.documentElement\.lang = currentLocale/);
+  assert.match(mainSource, /errorCode: settingsErrorCode\(message\.action, error\)/);
+  assert.match(settingsSource, /GIT_REQUIRED: 'syncGitMissing'/);
+  assert.doesNotMatch(settingsSource, /response\.message\s*\|\|/);
+  assert.doesNotMatch(settingsSource, /item\.message/);
 });
 
 test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {

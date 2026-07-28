@@ -517,7 +517,60 @@ async function sendToolResult(message) {
   }
 }
 
-async function handleSettingsRequest(action, payload) {
+var SETTINGS_LOCALE_TEXT = {
+  en: {
+    pickParent: 'Choose a parent folder for TapTap Maker projects',
+    pickFailed: 'Could not choose a parent folder',
+    missingPath: 'The host did not return a usable parent folder path',
+    unknownAction: 'Unknown settings action: ',
+  },
+  'zh-CN': {
+    pickParent: '选择 TapTap Maker 项目父目录',
+    pickFailed: '父目录选择失败',
+    missingPath: '宿主没有返回可用的父目录路径',
+    unknownAction: '未知设置动作：',
+  },
+  ja: {
+    pickParent: 'TapTap Maker プロジェクトの親フォルダを選択',
+    pickFailed: '親フォルダを選択できませんでした',
+    missingPath: 'ホストから有効な親フォルダのパスが返されませんでした',
+    unknownAction: '不明な設定操作：',
+  },
+  ko: {
+    pickParent: 'TapTap Maker 프로젝트의 상위 폴더 선택',
+    pickFailed: '상위 폴더를 선택하지 못했습니다',
+    missingPath: '호스트가 사용 가능한 상위 폴더 경로를 반환하지 않았습니다',
+    unknownAction: '알 수 없는 설정 작업: ',
+  },
+};
+
+function settingsText(locale, key) {
+  var normalized = Object.prototype.hasOwnProperty.call(SETTINGS_LOCALE_TEXT, locale)
+    ? locale
+    : 'en';
+  return SETTINGS_LOCALE_TEXT[normalized][key];
+}
+
+function settingsError(code, message) {
+  var error = new Error(message);
+  error.settingsCode = code;
+  return error;
+}
+
+function settingsErrorCode(action, error) {
+  if (error && typeof error.settingsCode === 'string') return error.settingsCode;
+  var codes = {
+    status: 'STATUS_FAILED',
+    login: 'LOGIN_FAILED',
+    open_pat_page: 'PAT_PAGE_FAILED',
+    set_pat: 'PAT_SAVE_FAILED',
+    projects: 'PROJECTS_FAILED',
+    sync_projects: 'SYNC_FAILED',
+  };
+  return codes[action] || 'UNKNOWN_ACTION';
+}
+
+async function handleSettingsRequest(action, payload, locale) {
   if (action === 'status') return accountRequest('status', {}, false);
   if (action === 'login') return accountRequest('login', {}, true);
   if (action === 'open_pat_page') return accountRequest('open_pat_page', {}, false);
@@ -528,21 +581,24 @@ async function handleSettingsRequest(action, payload) {
   if (action === 'sync_projects') {
     var picked = await cindy.pick({
       mode: 'directory',
-      title: '选择 TapTap Maker 项目父目录',
+      title: settingsText(locale, 'pickParent'),
     });
     if (!picked || picked.ok !== true) {
       if (picked && picked.errorCode === 'CANCELLED') return { ok: true, canceled: true };
-      throw new Error(picked && picked.message ? picked.message : '父目录选择失败');
+      throw settingsError(
+        'PICK_FAILED',
+        picked && picked.message ? picked.message : settingsText(locale, 'pickFailed'),
+      );
     }
     if (typeof picked.path !== 'string' || !picked.path) {
-      throw new Error('宿主没有返回可用的父目录路径');
+      throw settingsError('MISSING_PATH', settingsText(locale, 'missingPath'));
     }
     return accountRequest('sync_projects', {
       parentDir: picked.path,
       projectIds: payload && payload.projectIds,
     }, true);
   }
-  throw new Error('未知设置动作：' + String(action));
+  throw settingsError('UNKNOWN_ACTION', settingsText(locale, 'unknownAction') + String(action));
 }
 
 var settingsChannel = typeof BroadcastChannel === 'function'
@@ -567,7 +623,11 @@ if (settingsChannel) {
       return;
     }
     var entry = { response: null };
-    var promise = handleSettingsRequest(message.action, isObject(message.payload) ? message.payload : {})
+    var promise = handleSettingsRequest(
+      message.action,
+      isObject(message.payload) ? message.payload : {},
+      typeof message.locale === 'string' ? message.locale : 'en',
+    )
       .then(function success(result) {
         return { type: 'settings-result', reqId: message.reqId, ok: true, result: result };
       })
@@ -576,6 +636,7 @@ if (settingsChannel) {
           type: 'settings-result',
           reqId: message.reqId,
           ok: false,
+          errorCode: settingsErrorCode(message.action, error),
           message: redactSensitiveText(errorMessage(error), true).slice(0, 2000),
         };
       });

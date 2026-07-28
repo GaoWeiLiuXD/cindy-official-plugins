@@ -65,8 +65,8 @@ cindy-art/
 4. **错误信息说人话**：面向用户的报错要可行动（例如 401 → 提示去哪里填 token），不要裸抛 HTTP 状态码。
 
 官方插件已接入宿主驱动的 `zh-CN / en / ja / ko` locale 资源；语言选择与英文兜底契约见
-[`docs/localization.zh-CN.md`](./docs/localization.zh-CN.md)。注意目前只覆盖清单层（插件名／描述与
-工具描述）—— 设置页和运行时报错文案仍是中文单语，欢迎贡献补齐。
+[`docs/localization.zh-CN.md`](./docs/localization.zh-CN.md)。共享资源覆盖清单层；
+自绘设置页正独立迁移到同一套宿主语言契约，运行时报错文案目前仍以中文单语为主。
 
 ## 本地开发
 
