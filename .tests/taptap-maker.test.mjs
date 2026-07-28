@@ -221,6 +221,7 @@ test('设置页跟随宿主四语言并以英文回退', () => {
   assert.match(settingsSource, /currentLocale = 'en'/);
   assert.match(settingsSource, /document\.documentElement\.lang = currentLocale/);
   assert.match(mainSource, /errorCode: settingsErrorCode\(message\.action, error\)/);
+  assert.match(settingsSource, /GIT_REQUIRED: 'syncGitMissing'/);
   assert.doesNotMatch(settingsSource, /response\.message\s*\|\|/);
   assert.doesNotMatch(settingsSource, /item\.message/);
 });

@@ -237,6 +237,7 @@
       AUTH_REQUIRED: 'syncAuthRequired',
       TARGET_OCCUPIED: 'syncTargetOccupied',
       GIT_NOT_FOUND: 'syncGitMissing',
+      GIT_REQUIRED: 'syncGitMissing',
       PYTHON_SETUP_FAILED: 'syncPythonSetupFailed',
       NETWORK_ERROR: 'syncNetworkError',
     };
