@@ -86,10 +86,10 @@ them:
 
 Official plugins are wired into host-driven `zh-CN / en / ja / ko` locale
 resources; see [`docs/localization.md`](./docs/localization.md) for
-language selection and the English-fallback contract. Note that this currently
-covers the catalog layer only (plugin name/description and tool descriptions) —
-settings pages and runtime error copy are still Chinese-only. Contributions that
-localize them are welcome.
+language selection and the English-fallback contract. The shared resources cover
+the catalog layer; self-rendered settings pages are being migrated independently
+to the same host-driven locale contract, while runtime error copy is still
+primarily Chinese-only.
 
 ## Local development
 

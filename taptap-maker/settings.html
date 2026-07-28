@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <style>
@@ -79,49 +79,49 @@
 </head>
 <body>
   <div class="label-row">
-    <span class="name">TapTap Maker 账号</span>
-    <span class="badge">官方 Runtime</span>
+    <span class="name" data-i18n="accountTitle">TapTap Maker account</span>
+    <span class="badge" data-i18n="officialRuntime">Official Runtime</span>
   </div>
   <div class="account">
     <span id="state-dot" class="dot"></span>
-    <span id="account-state">正在检查登录状态…</span>
+    <span id="account-state">Checking sign-in status...</span>
   </div>
 
   <section class="option">
-    <div class="option-title">方式一：浏览器授权</div>
+    <div class="option-title" data-i18n="browserAuthTitle">Option 1: Browser authorization</div>
     <div class="option-row">
-      <button id="connect" class="btn" type="button">打开浏览器授权</button>
+      <button id="connect" class="btn" type="button" data-i18n="openBrowserAuth">Authorize in browser</button>
     </div>
-    <p class="hint">由官方 CLI 打开 TapTap 页面，授权完成后自动连接。</p>
+    <p class="hint" data-i18n="browserAuthHint">The official CLI opens TapTap and connects automatically after authorization.</p>
   </section>
 
   <form id="pat-form" class="option">
-    <div class="option-title">方式二：手动 PAT</div>
+    <div class="option-title" data-i18n="manualPatTitle">Option 2: Manual PAT</div>
     <div class="option-row">
-      <button id="get-pat" class="btn" type="button">获取 PAT</button>
-      <input id="pat" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="粘贴 TapTap Maker PAT" aria-label="TapTap Maker PAT">
-      <button id="save-pat" class="btn" type="submit">保存 PAT</button>
+      <button id="get-pat" class="btn" type="button" data-i18n="getPat">Get PAT</button>
+      <input id="pat" class="input" type="password" autocomplete="off" spellcheck="false" placeholder="Paste TapTap Maker PAT" aria-label="TapTap Maker PAT" data-i18n-placeholder="patPlaceholder">
+      <button id="save-pat" class="btn" type="submit" data-i18n="savePat">Save PAT</button>
     </div>
-    <p class="hint">“获取 PAT”会在系统默认浏览器打开 TapTap Maker 页面；PAT 由 TapTap Maker Runtime 验证和保存，设置页只显示脱敏摘要。</p>
+    <p class="hint" data-i18n="patHint">"Get PAT" opens TapTap Maker in your default browser. The Runtime validates and stores the PAT; this page only shows a masked summary.</p>
   </form>
 
   <p id="message" class="hint"></p>
 
   <section class="option project-section">
     <div class="section-head">
-      <div class="option-title">同步 Maker 项目到本地</div>
-      <button id="refresh-projects" class="btn" type="button">刷新项目</button>
+      <div class="option-title" data-i18n="syncTitle">Sync Maker projects locally</div>
+      <button id="refresh-projects" class="btn" type="button" data-i18n="refreshProjects">Refresh projects</button>
     </div>
-    <p class="hint">筛选并选择最近项目（最多 5 个），再选择一个父目录；每个项目会初始化到独立子目录。</p>
+    <p class="hint" data-i18n="syncHint">Filter and select up to 5 recent projects, then choose a parent folder. Each project is initialized in its own subfolder.</p>
     <div class="option-row">
-      <input id="project-filter" class="input" type="search" autocomplete="off" placeholder="按项目名称或 ID 筛选" aria-label="筛选 TapTap Maker 项目">
+      <input id="project-filter" class="input" type="search" autocomplete="off" placeholder="Filter by project name or ID" aria-label="Filter TapTap Maker projects" data-i18n-placeholder="projectFilterPlaceholder" data-i18n-aria-label="projectFilterAria">
     </div>
     <div id="projects" class="projects">
-      <div class="empty">连接账号后加载项目</div>
+      <div class="empty">Connect an account to load projects</div>
     </div>
     <div class="sync-actions">
-      <span id="selected-count" class="hint">已选择 0 个</span>
-      <button id="sync-projects" class="btn primary" type="button" disabled>选择父目录并同步</button>
+      <span id="selected-count" class="hint">0 selected</span>
+      <button id="sync-projects" class="btn primary" type="button" disabled data-i18n="chooseFolderAndSync">Choose parent folder and sync</button>
     </div>
     <p id="project-message" class="hint"></p>
   </section>

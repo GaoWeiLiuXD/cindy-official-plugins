@@ -97,16 +97,15 @@ only** — `ghost.json`'s `name` / `description` / `whenToUse` and each tool's
 
 Not yet covered:
 
-- **Settings pages and self-rendered panels** (each plugin's `settings.html` /
-  `panel.html`) are hardcoded Simplified Chinese. No plugin currently implements
-  the `locale` / `host-context-changed` contract described above.
+- **Settings pages and self-rendered panels** are migrated independently. Each
+  migrated page reads `/app-context`, supports all four host locales, and falls
+  back to English; migration of the existing pages is in progress.
 - **User-facing runtime error copy** (inside each plugin's `main.js`) is likewise
   hardcoded Simplified Chinese.
 
-A non-Chinese host user therefore sees an English tool list alongside Chinese
-settings screens and Chinese error messages. The self-rendered-page contract
-above is the *target* contract — new plugins should implement it; retrofitting
-the existing ones is not done.
+Non-Chinese host users can therefore still encounter Chinese runtime errors or
+unmigrated settings screens. New plugins should implement the self-rendered-page
+contract above, and existing plugins should migrate incrementally.
 
 ## Repository gate
 

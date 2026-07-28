@@ -19,6 +19,8 @@ const mainSource = readFileSync(new URL('main.js', pluginRoot), 'utf8');
 const accountSource = readFileSync(new URL('node/account.cjs', pluginRoot), 'utf8');
 const manifest = JSON.parse(readFileSync(new URL('ghost.json', pluginRoot), 'utf8'));
 const skillMd = readFileSync(new URL('skills/taptap-maker/SKILL.md', pluginRoot), 'utf8');
+const settingsHtml = readFileSync(new URL('settings.html', pluginRoot), 'utf8');
+const settingsSource = readFileSync(new URL('settings.js', pluginRoot), 'utf8');
 const provisioning = JSON.parse(readFileSync(new URL('../provisioning.json', import.meta.url), 'utf8'));
 const vendorPackage = JSON.parse(
   readFileSync(new URL('vendor/taptap-maker/package.json', pluginRoot), 'utf8'),
@@ -152,7 +154,7 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.6');
+  assert.equal(manifest.version, '2.1.7');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
@@ -188,6 +190,17 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.deepEqual(provisioning.ghosts['taptap-maker'], { audience: 'all' });
   assert.equal(vendorPackage.name, '@taptap/maker');
   assert.equal(vendorPackage.version, '0.0.27');
+});
+
+test('设置页跟随宿主四语言并以英文回退', () => {
+  assert.match(settingsHtml, /<html lang="en">/);
+  assert.match(settingsSource, /fetch\('\/app-context'\)/);
+  assert.doesNotMatch(settingsSource, /navigator\.(?:language|languages)/);
+  for (const locale of ['en', 'zh-CN', 'ja', 'ko']) {
+    assert.match(settingsSource, new RegExp(`(?:^|\\n)    ['"]?${locale.replace('-', '\\-')}['"]?: \\{`));
+  }
+  assert.match(settingsSource, /currentLocale = 'en'/);
+  assert.match(settingsSource, /document\.documentElement\.lang = currentLocale/);
 });
 
 test('项目目录名跨批次稳定，并用 project id 区分清洗后同名项目', () => {
