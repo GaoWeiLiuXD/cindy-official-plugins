@@ -24,3 +24,4 @@ description: 使用 Cindy 的 TapTap Maker 插件完成账号连接、项目检�
 - `missing_taptap_identity` 由插件自动初始化并重试一次；仍失败时把插件返回的可操作提示交给用户，不自行反复重试。
 - 只有完整错误 `MCP error -32600: INSUFFICIENT_BALANCE` 表示 Maker 积分不足。此时提示用户，并在获得确认后再建议使用 Art 插件替代；其它错误不要按积分不足处理。
 - 不回显 PAT、令牌、本地凭证路径或插件已脱敏掉的内部信息。
+- 生成或修改 UrhoX Lua 代码时，避开沙箱中不可用的标准库（如 `os.clock()`、`io.*`）：这类调用会让预览静默卡死且无错误提示。计时逻辑默认用 Update 事件的 `eventData["TimeStep"]:GetFloat()` 累积；预览「卡住」而无报错时，优先用 Maker 运行日志排查是否命中了沙箱不可用函数。
