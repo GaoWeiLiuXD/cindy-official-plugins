@@ -158,61 +158,6 @@ function isMakerCliOutputComplete(args, output) {
 }
 
 /**
- * Maker build 会启动长驻 `logs watch`。在插件仍有 MCP 活动时保留它；
- * 空闲后主动结束，宿主才能按 node.idleTimeoutSeconds 回收外层 worker。
- */
-function createRuntimeLogWatcherIdleController(options) {
-  const idleTimeoutMs = options && options.idleTimeoutMs
-    ? options.idleTimeoutMs
-    : 10 * 60 * 1000;
-  const schedule = options && options.setTimeout ? options.setTimeout : setTimeout;
-  const cancel = options && options.clearTimeout ? options.clearTimeout : clearTimeout;
-  let watcher = null;
-  let idleTimer = null;
-
-  function clearIdleTimer() {
-    if (idleTimer === null) return;
-    cancel(idleTimer);
-    idleTimer = null;
-  }
-
-  function forget(expected) {
-    if (watcher !== expected) return;
-    watcher = null;
-    clearIdleTimer();
-  }
-
-  function touch() {
-    if (!watcher) return;
-    clearIdleTimer();
-    idleTimer = schedule(function stopIdleWatcher() {
-      idleTimer = null;
-      const current = watcher;
-      watcher = null;
-      if (current) current.kill();
-    }, idleTimeoutMs);
-    if (idleTimer && typeof idleTimer.unref === 'function') idleTimer.unref();
-  }
-
-  function track(nextWatcher) {
-    watcher = nextWatcher;
-    // 原 Runtime 把 watcher stdio 指向文件；childSpawn 只提供管道，这里持续
-    // 消费无人读取的状态输出，避免 10 分钟窗口内在内存积压。
-    nextWatcher.stdout.resume();
-    nextWatcher.stderr.resume();
-    nextWatcher.once('exit', function onExit() {
-      forget(nextWatcher);
-    });
-    nextWatcher.once('close', function onClose() {
-      forget(nextWatcher);
-    });
-    touch();
-  }
-
-  return { touch, track };
-}
-
-/**
  * 只接管 Maker 对自身入口的 `spawn(process.execPath, ...)`。
  * 其它脚本失败关闭，避免适配器退化成任意 Node 命令执行器。
  */
@@ -237,6 +182,16 @@ function installMakerSpawnAdapter(options) {
     }
 
     const childArgs = argv.slice(1);
+    if (childArgs[0] === 'logs' && childArgs[1] === 'watch') {
+      // Watcher 必须在真实 Node 下管理自己的 PID 和子 proxy。Node 不可用时
+      // 原生 spawn 错误会由 Maker 降级处理，不回退 spawnEntry，避免执行 Cindy.exe。
+      return realSpawn.call(
+        childProcess,
+        'node',
+        argv,
+        spawnOptions,
+      );
+    }
     if (
       childArgs[0] === '__maker-proxy'
       && childArgs.length === 1
@@ -248,18 +203,10 @@ function installMakerSpawnAdapter(options) {
       // 改用 Runtime 已支持的命令行 JSON 配置入口。
       childArgs.push(spawnOptions.env.PROXY_CONFIG);
     }
-    const child = createDeferredChild(
+    return createDeferredChild(
       options.spawnEntry(options.childEntry, childArgs),
       spawnOptions,
     );
-    if (
-      childArgs[0] === 'logs'
-      && childArgs[1] === 'watch'
-      && typeof options.onRuntimeLogWatcher === 'function'
-    ) {
-      options.onRuntimeLogWatcher(child);
-    }
-    return child;
   };
   syncBuiltinESMExports();
 
@@ -271,7 +218,6 @@ function installMakerSpawnAdapter(options) {
 
 module.exports = {
   createDeferredChild,
-  createRuntimeLogWatcherIdleController,
   isMakerCliOutputComplete,
   installMakerSpawnAdapter,
 };

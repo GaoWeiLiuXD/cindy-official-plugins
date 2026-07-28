@@ -3,7 +3,7 @@ import childProcess from 'node:child_process';
 import { EventEmitter, once } from 'node:events';
 import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { createRequire } from 'node:module';
+import { createRequire, syncBuiltinESMExports } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { PassThrough } from 'node:stream';
@@ -164,7 +164,7 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.7');
+  assert.equal(manifest.version, '2.1.8');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
@@ -1209,62 +1209,103 @@ test('spawn adapter 只改道固定 Maker 入口并用参数传递 proxy 配置'
   }
 });
 
-test('spawn adapter 只把固定 logs watch 子进程交给空闲回收器', async () => {
+test('logs watch 在 Cindy 中使用系统 Node 且不调用 spawnEntry', () => {
   const makerEntry = path.resolve('/tmp/vendor/maker.js');
-  const handle = fakeChildHandle();
-  let watcher = null;
-  const restore = adapter.installMakerSpawnAdapter({
-    makerEntry,
-    childEntry: 'node/maker-child.cjs',
-    spawnEntry: async () => handle,
-    onRuntimeLogWatcher(child) {
-      watcher = child;
-    },
-  });
+  const originalSpawn = childProcess.spawn;
+  const nativeChild = fakeChildHandle();
+  const nativeCalls = [];
+  let spawnEntryCalls = 0;
+  childProcess.spawn = function fakeNativeSpawn(command, args, options) {
+    nativeCalls.push({ command, args, options });
+    return nativeChild;
+  };
+  syncBuiltinESMExports();
+  let restore;
 
   try {
+    restore = adapter.installMakerSpawnAdapter({
+      makerEntry,
+      childEntry: 'node/maker-child.cjs',
+      spawnEntry: async () => {
+        spawnEntryCalls += 1;
+        return fakeChildHandle();
+      },
+    });
+    const spawnOptions = {
+      cwd: '/tmp/project',
+      detached: true,
+      stdio: ['ignore', 7, 8],
+    };
     const child = childProcess.spawn(
+      process.execPath,
+      [makerEntry, 'logs', 'watch', '--target-dir', '/tmp/project'],
+      spawnOptions,
+    );
+
+    assert.equal(child, nativeChild);
+    assert.equal(spawnEntryCalls, 0);
+    assert.deepEqual(nativeCalls, [{
+      command: 'node',
+      args: [makerEntry, 'logs', 'watch', '--target-dir', '/tmp/project'],
+      options: spawnOptions,
+    }]);
+  } finally {
+    if (restore) restore();
+    childProcess.spawn = originalSpawn;
+    syncBuiltinESMExports();
+  }
+});
+
+test('logs watch 系统 Node 启动失败只报错一次且不影响其他 Maker 子进程', async () => {
+  const makerEntry = path.resolve('/tmp/vendor/maker.js');
+  const originalSpawn = childProcess.spawn;
+  const failedWatcher = fakeChildHandle();
+  failedWatcher.pid = undefined;
+  let nativeSpawnCalls = 0;
+  let spawnEntryCalls = 0;
+  childProcess.spawn = function fakeNativeSpawn() {
+    nativeSpawnCalls += 1;
+    return failedWatcher;
+  };
+  syncBuiltinESMExports();
+  let restore;
+
+  try {
+    restore = adapter.installMakerSpawnAdapter({
+      makerEntry,
+      childEntry: 'node/maker-child.cjs',
+      spawnEntry: async () => {
+        spawnEntryCalls += 1;
+        return fakeChildHandle();
+      },
+    });
+    const watcher = childProcess.spawn(
       process.execPath,
       [makerEntry, 'logs', 'watch', '--target-dir', '/tmp/project'],
       {},
     );
-    await once(child, 'spawn');
-    assert.equal(watcher, child);
+    const watcherErrors = [];
+    watcher.on('error', (error) => watcherErrors.push(error));
+    failedWatcher.emit('error', new Error('spawn node ENOENT'));
+
+    assert.equal(nativeSpawnCalls, 1);
+    assert.equal(spawnEntryCalls, 0);
+    assert.equal(watcherErrors.length, 1);
+    assert.match(watcherErrors[0].message, /ENOENT/);
+
+    const proxy = childProcess.spawn(
+      process.execPath,
+      [makerEntry, '__maker-proxy'],
+      { env: { PROXY_CONFIG: '{}' } },
+    );
+    await once(proxy, 'spawn');
+    assert.equal(nativeSpawnCalls, 1);
+    assert.equal(spawnEntryCalls, 1);
   } finally {
-    restore();
+    if (restore) restore();
+    childProcess.spawn = originalSpawn;
+    syncBuiltinESMExports();
   }
-});
-
-test('Maker MCP 活动续期日志 watcher，空闲到期后主动回收', () => {
-  const timers = [];
-  const cleared = new Set();
-  const controller = adapter.createRuntimeLogWatcherIdleController({
-    idleTimeoutMs: 600_000,
-    setTimeout(callback, timeoutMs) {
-      const timer = { callback, timeoutMs, unref() {} };
-      timers.push(timer);
-      return timer;
-    },
-    clearTimeout(timer) {
-      cleared.add(timer);
-    },
-  });
-  const watcher = fakeChildHandle();
-  let killCount = 0;
-  watcher.kill = () => {
-    killCount += 1;
-    return true;
-  };
-
-  controller.track(watcher);
-  assert.equal(timers.length, 1);
-  assert.equal(timers[0].timeoutMs, 600_000);
-  controller.touch();
-  assert.equal(timers.length, 2);
-  assert.equal(cleared.has(timers[0]), true);
-
-  timers[1].callback();
-  assert.equal(killCount, 1);
 });
 
 test('只在 Maker CLI 最终 JSON 到达后判定完成', () => {
