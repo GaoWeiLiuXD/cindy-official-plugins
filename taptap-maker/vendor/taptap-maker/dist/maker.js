@@ -29164,8 +29164,10 @@ var MAKER_CAPABILITY_ROUTING_INDEX = `TapTap Maker routing index:
 - Build, preview, run, submit, or push: after checking project status, use
   maker_build_current_directory.
 - Ads: read maker://ads-integration-guide before any ad-related work.
-- Tap flows: test QR -> generate_test_qrcode; online player feedback, logs, or
-  screenshots -> get_debug_feedbacks.
+- Tap flows: test QR -> generate_test_qrcode; current Maker game's online player feedback
+  (including player-submitted game bug reports, real-device game logs, or screenshots), or
+  server/Lua logs for a specified game session -> call get_debug_feedbacks only when it is
+  exposed by the current Maker tool list.
 - Game assets: Maker MCP also provides image, video, music, sound-effect,
   dialogue/voice, and 3D generation tools when exposed.
 
@@ -29343,16 +29345,20 @@ function createMakerAgentsPolicyBody() {
     "",
     "Maker feedback workflow:",
     "",
-    "- For user requests about online player feedback, problem reports, issue reports, debug",
-    "  feedback, real-device logs, screenshots, 问题反馈, 问题上报, 真机日志, or 玩家反馈, call",
-    "  the Maker proxy `get_debug_feedbacks` tool when it is available.",
+    "- For user requests about the current Maker game's online player feedback, including",
+    "  player-submitted game bug reports, real-device game logs, or screenshots, or server/Lua",
+    "  logs for a specified game session, call the Maker proxy `get_debug_feedbacks` tool only",
+    "  when it is exposed by the current Maker tool list.",
+    "- This includes 当前 Maker 游戏的玩家反馈、玩家提交的游戏故障、真机游戏日志或截图、",
+    "  指定游戏会话的服务端/Lua 日志. It does not include AI client, plugin, or other product",
+    "  feedback.",
     "- Use local runtime log files only for the current local build/runtime session. Do not use",
     "  local logs as a substitute for remote player-submitted feedback.",
     "- Follow the remote tool schema and return the feedback records, logs, screenshots, and",
     "  full error payloads as provided by the remote Maker MCP server.",
     "",
-    "For game asset generation or editing in this project, the local AI/Agent should prefer",
-    "Maker MCP proxy tools when they are available:",
+    "Maker MCP provides the following game asset generation and editing tools when they are",
+    "exposed in the current session:",
     "",
     "- `generate_image` for one image asset.",
     "- `batch_generate_images` for multiple image assets.",
@@ -29374,16 +29380,12 @@ function createMakerAgentsPolicyBody() {
     "  option inspection, and post-processing.",
     "- Never automatically continue a 3D review step. Show returned previews and wait for explicit",
     '  user approval before calling `create_3d_asset` with `action="continue"`.',
+    "- Follow the selected tool schema when one of these tools is used.",
     "",
     "Follow each Maker tool schema for supported local path, remote URL, and data URL inputs.",
     "If the user references attached/local media, inspect the attachment or workspace file path",
     "before calling the tool. Local proxy may convert resolvable local reference media to data URLs",
     "before forwarding to the remote Maker MCP server.",
-    "",
-    "If the required Maker proxy tool is not exposed in the current AI session, explain that the",
-    "Maker proxy tool is unavailable and suggest checking/reconnecting the Maker MCP session.",
-    "Other client media tools may still be usable when their output is passed back through a supported",
-    "local path, remote URL, or data URL input.",
     "",
     "Generated Maker proxy assets should stay in the Maker project asset workflow under",
     "`assets/image`, `assets/video`, `assets/audio`, or `assets/model`, with remote mappings",
@@ -32424,8 +32426,8 @@ function formatMakerSkillStatus(_options = {}) {
     "",
     "Maker proxy tool policy",
     `- entry: ${MAKER_LOCAL_SKILL_NAME} > Maker Creative Asset Tool Policy`,
-    "- Prefer Maker MCP proxy tools over native AI image/video/audio tools for bound Maker projects.",
-    "- If Maker proxy tools are missing, explain the session/configuration issue and available alternatives.",
+    "- Maker MCP provides image, video, music, sound-effect, dialogue/voice, and 3D asset tools for Maker projects.",
+    "- Follow the selected tool schema when one of these tools is used.",
     "- Use generate_image, batch_generate_images, edit_image for game image assets.",
     "- Use create_video_task and query_video_task for game video assets.",
     "- Use text_to_music for game music.",
@@ -32443,7 +32445,7 @@ function formatMakerSkillStatus(_options = {}) {
     "- Do not infer ad readiness from local SDK docs, .maker-mcp/config.json, or runtime callbacks.",
     "- If primary local project configs are missing, keep ad config unavailable. Build only for an explicit user build/submit/preview request, and do not automatically rebuild when local configs remain missing after success.",
     "- If get_ad_config reports missing app_id or developer_id, call generate_test_qrcode once, then call get_ad_config again.",
-    "- For online player feedback, issue reports, real-device logs, or screenshots, call get_debug_feedbacks.",
+    "- For the current Maker game's online player feedback, including player-submitted game bug reports, real-device game logs, or screenshots, or server/Lua logs for a specified game session, call get_debug_feedbacks only when it is exposed by the current Maker tool list.",
     "- Use local runtime logs only for the current local build/runtime session.",
     "- Generated assets are saved under assets/image, assets/video, assets/audio, or assets/model with remote mappings.",
     "- Follow each tool schema for supported local path, remote URL, and data URL inputs.",
@@ -36304,7 +36306,7 @@ function applyDefaults(config2) {
 var MAKER_MCP_TRACKING_ACTION = "tapmaker_mcp_call";
 var MAKER_MCP_TRACKING_SOURCE = "local_mcp";
 var MAKER_MCP_TRACKING_TIMEOUT_MS = 1500;
-var MAKER_MCP_VERSION = "0.0.27".trim() ? "0.0.27".trim() : "dev";
+var MAKER_MCP_VERSION = "0.0.28".trim() ? "0.0.28".trim() : "dev";
 var TRACKING_ERROR_MAX_LENGTH = 500;
 function buildMakerMcpTrackingPayload(event) {
   var _a3, _b, _c;
@@ -36406,8 +36408,218 @@ Do not build automatically just because local project configs are missing. Use
 maker_build_current_directory only when the user explicitly requests build, submit, or preview.`;
 }
 
+// src/maker/server/remoteProxyManager.ts
+import { createHash } from "node:crypto";
+function createContextKey(context) {
+  const identity = JSON.stringify({
+    projectRoot: context.projectRoot,
+    serverUrl: context.serverUrl,
+    env: context.env,
+    userId: context.userId,
+    projectId: context.projectId,
+    projectPath: context.projectPath,
+    command: context.command,
+    args: context.args,
+    proxyConfigJson: context.proxyConfigJson
+  });
+  return createHash("sha256").update(identity).digest("hex");
+}
+function mergeStringEnv(...sources) {
+  const result = {};
+  for (const source of sources) {
+    for (const [key, value] of Object.entries(source || {})) {
+      if (typeof value === "string") {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+}
+function isConnectionClosedError(error2) {
+  return typeof error2 === "object" && error2 !== null && "code" in error2 && error2.code === ErrorCode.ConnectionClosed;
+}
+function createDefaultTransport(context) {
+  return trackMakerChildTransport(
+    new StdioClientTransport({
+      command: context.command,
+      args: context.args,
+      env: mergeStringEnv(process.env, context.envVars),
+      stderr: "pipe"
+    })
+  );
+}
+function createDefaultClient(_context, handlers) {
+  return new Client(
+    { name: "taptap-maker-persistent-proxy", version: "dev" },
+    {
+      capabilities: {},
+      listChanged: {
+        tools: {
+          onChanged: (error2, tools2) => {
+            void handlers.onToolsChanged(error2, tools2);
+          }
+        }
+      }
+    }
+  );
+}
+function createMakerRemoteProxyManager(options = {}) {
+  const connections = /* @__PURE__ */ new Map();
+  const retiredEntries = /* @__PURE__ */ new Set();
+  const cachedTools = /* @__PURE__ */ new Map();
+  const createClient = options.createClient || createDefaultClient;
+  const createTransport = options.createTransport || createDefaultTransport;
+  let closed = false;
+  let closePromise;
+  const closeEntry = (entry) => {
+    if (connections.get(entry.key) === entry) {
+      connections.delete(entry.key);
+    }
+    entry.retiring = true;
+    if (entry.closePromise) {
+      return entry.closePromise;
+    }
+    retiredEntries.add(entry);
+    entry.closing = true;
+    entry.closePromise = Promise.resolve().then(async () => await entry.client.close()).catch(() => {
+    }).finally(() => {
+      retiredEntries.delete(entry);
+    });
+    return entry.closePromise;
+  };
+  const retireEntry = (entry) => {
+    if (connections.get(entry.key) === entry) {
+      connections.delete(entry.key);
+    }
+    entry.retiring = true;
+    retiredEntries.add(entry);
+    if (entry.activeOperations > 0) {
+      return;
+    }
+    void closeEntry(entry);
+  };
+  const releaseEntry = async (entry) => {
+    entry.activeOperations = Math.max(0, entry.activeOperations - 1);
+    if (entry.retiring && entry.activeOperations === 0) {
+      await closeEntry(entry);
+    }
+  };
+  const acquire = async (context) => {
+    if (closed) {
+      throw new Error("Maker remote proxy manager is closed.");
+    }
+    const key = createContextKey(context);
+    const existing = connections.get(key);
+    if (existing) {
+      existing.lastUsedAt = Date.now();
+      existing.activeOperations += 1;
+      try {
+        await existing.connectPromise;
+        return existing;
+      } catch (error2) {
+        await releaseEntry(existing);
+        throw error2;
+      }
+    }
+    const staleProjectEntries = [...connections.entries()].filter(
+      ([entryKey, entry2]) => entryKey !== key && entry2.projectRoot === context.projectRoot
+    );
+    for (const [entryKey, entry2] of staleProjectEntries) {
+      cachedTools.delete(entryKey);
+      retireEntry(entry2);
+    }
+    const transport = createTransport(context);
+    const handlers = {
+      async onToolsChanged(error2, tools2) {
+        var _a3, _b;
+        if (error2 || !tools2 || ((_a3 = connections.get(key)) == null ? void 0 : _a3.client) !== client) {
+          return;
+        }
+        const definitions = tools2;
+        cachedTools.set(key, definitions);
+        try {
+          await ((_b = options.onToolsChanged) == null ? void 0 : _b.call(options, context, definitions));
+        } catch {
+        }
+      }
+    };
+    const client = createClient(context, handlers);
+    const entry = {
+      key,
+      projectRoot: context.projectRoot,
+      client,
+      transport,
+      connectPromise: Promise.resolve(client),
+      lastUsedAt: Date.now(),
+      activeOperations: 1,
+      retiring: false,
+      closing: false
+    };
+    connections.set(key, entry);
+    client.onclose = () => {
+      if (!entry.closing && connections.get(key) === entry) {
+        connections.delete(key);
+      }
+    };
+    entry.connectPromise = client.connect(transport).then(() => client);
+    try {
+      await entry.connectPromise;
+      return entry;
+    } catch (error2) {
+      entry.activeOperations -= 1;
+      await closeEntry(entry);
+      throw error2;
+    }
+  };
+  const run = async (context, operation) => {
+    const entry = await acquire(context);
+    entry.lastUsedAt = Date.now();
+    try {
+      return await operation(entry.client);
+    } catch (error2) {
+      if (isConnectionClosedError(error2)) {
+        await closeEntry(entry);
+      }
+      throw error2;
+    } finally {
+      await releaseEntry(entry);
+    }
+  };
+  return {
+    async listTools(context) {
+      const key = createContextKey(context);
+      const result = await run(context, async (client) => await client.listTools());
+      const tools2 = result.tools;
+      cachedTools.set(key, tools2);
+      return tools2;
+    },
+    async callTool(context, request, requestOptions) {
+      return await run(
+        context,
+        async (client) => await client.callTool(request, void 0, requestOptions)
+      );
+    },
+    getCachedTools(context) {
+      return cachedTools.get(createContextKey(context));
+    },
+    async closeAll() {
+      if (closePromise) {
+        return await closePromise;
+      }
+      closed = true;
+      const entries = /* @__PURE__ */ new Set([...connections.values(), ...retiredEntries]);
+      connections.clear();
+      retiredEntries.clear();
+      closePromise = Promise.allSettled(
+        [...entries].map(async (entry) => await closeEntry(entry))
+      ).then(() => void 0);
+      return await closePromise;
+    }
+  };
+}
+
 // src/maker/server/mcp.ts
-var VERSION = true ? "0.0.27" : "dev";
+var VERSION = true ? "0.0.28" : "dev";
 var DEFAULT_BUILD_TIMEOUT_MS = 10 * 60 * 1e3;
 var DEFAULT_PROXY_RETRY_ATTEMPTS = 5;
 var DEFAULT_PROXY_RETRY_DELAY_MS = 30 * 1e3;
@@ -36580,6 +36792,7 @@ var resources = [
   }
 ];
 async function listMakerTools(options) {
+  var _a3;
   let remoteTools = [];
   try {
     const context = await resolveMakerProjectContext({
@@ -36592,9 +36805,19 @@ async function listMakerTools(options) {
       serverUrl: options.serverUrl,
       env: options.env
     }));
-    remoteTools = filterExposedRemoteProxyTools(await listedRemoteTools()).map(
-      decorateRemoteProxyToolDefinition
-    );
+    try {
+      remoteTools = filterExposedRemoteProxyTools(await listedRemoteTools()).map(
+        decorateRemoteProxyToolDefinition
+      );
+    } catch (error2) {
+      const cachedTools = (_a3 = options.getCachedRemoteTools) == null ? void 0 : _a3.call(options);
+      if (!cachedTools) {
+        throw error2;
+      }
+      remoteTools = filterExposedRemoteProxyTools(cachedTools).map(
+        decorateRemoteProxyToolDefinition
+      );
+    }
   } catch (error2) {
     if (isMakerProjectContextAmbiguousError(error2)) {
       logLifecycleEvent("maker-tools-list-roots-ambiguous", String(error2));
@@ -36724,37 +36947,33 @@ function remoteProxyToolGuidance(toolName) {
     case "generate_image":
     case "batch_generate_images":
       return [
-        "**Maker asset workflow hint:** In a bound Maker project, prefer this Maker MCP proxy tool for Maker project assets. Successful results are downloaded into the Maker project and recorded with remote mapping for later edits or video references.",
+        "**Maker asset workflow hint:** Successful results are downloaded into the Maker project and recorded with remote mapping for later edits or video references.",
         localMediaSizeHint,
         failurePolicy
       ].join(" ");
     case "edit_image":
-      return [
-        "**Maker asset workflow hint:** In a bound Maker project, prefer this Maker MCP proxy tool for image editing.",
-        localMediaSizeHint,
-        failurePolicy
-      ].join(" ");
+      return [localMediaSizeHint, failurePolicy].join(" ");
     case "create_video_task":
       return [
-        "**Maker asset workflow hint:** Prefer this Maker MCP proxy tool for Maker video generation. Image, video, and audio references may use remote URLs, existing data URLs, or resolvable local files that the local proxy can forward as data URLs.",
+        "**Maker asset workflow hint:** Image, video, and audio references may use remote URLs, existing data URLs, or resolvable local files that the local proxy can forward as data URLs.",
         localMediaSizeHint,
         failurePolicy
       ].join(" ");
     case "query_video_task":
       return [
-        "**Maker asset workflow hint:** Prefer this Maker MCP proxy tool to refresh video task status, release completed task quota, and materialize successful video results into the Maker project.",
+        "**Maker asset workflow hint:** Refreshing video task status releases completed task quota and materializes successful video results into the Maker project.",
         "Use this Maker MCP proxy tool to refresh video task status when create_video_task returns a task_id or reports video concurrency limits.",
         failurePolicy
       ].join(" ");
     case "text_to_music":
       return [
-        "**Maker asset workflow hint:** Prefer this Maker MCP proxy tool for Maker music generation so generated audio can be materialized into the project and recorded for later Maker references.",
+        "**Maker asset workflow hint:** Generated audio can be materialized into the project and recorded for later Maker references.",
         failurePolicy
       ].join(" ");
     case "text_to_sound_effect":
     case "batch_sound_effects":
       return [
-        "**Maker asset workflow hint:** Prefer this Maker MCP proxy tool for game sound effects. Successful audio is materialized in its original format under assets/audio/sfx and recorded for later Maker references.",
+        "**Maker asset workflow hint:** Successful audio is materialized in its original format under assets/audio/sfx and recorded for later Maker references.",
         failurePolicy
       ].join(" ");
     case "text_to_dialogue":
@@ -36818,7 +37037,7 @@ async function listRemoteProxyTools(options) {
     new StdioClientTransport({
       command: proxy.command,
       args: proxy.args,
-      env: mergeStringEnv(process.env, proxy.envVars),
+      env: mergeStringEnv2(process.env, proxy.envVars),
       stderr: "pipe"
     })
   );
@@ -36841,66 +37060,73 @@ async function listRemoteProxyTools(options) {
   }
 }
 async function callRemoteProxyTool(options) {
-  const proxy = createRemoteProxyContext({
+  const createProxy = () => createRemoteProxyContext({
     targetDir: options.targetDir,
     exposedTools: MAKER_REMOTE_PROXY_EXPOSED_TOOL_NAMES
   });
+  let proxy = createProxy();
   const finalArgs = await prepareRemoteProxyToolArgsAsync({
     toolName: options.name,
     targetDir: proxy.projectRoot,
     args: options.args
   });
-  const result = await retryMakerProxyOperation(
-    async () => {
-      const transport = trackMakerChildTransport(
-        new StdioClientTransport({
-          command: proxy.command,
-          args: proxy.args,
-          env: mergeStringEnv(process.env, proxy.envVars),
-          stderr: "pipe"
-        })
-      );
-      const client = new Client(
+  const requestOptions = createRemoteProxyCallToolOptions(options.progressToken, options.extra);
+  const callTool = options.manager ? async () => {
+    proxy = createProxy();
+    return await options.manager.callTool(
+      proxy,
+      { name: options.name, arguments: finalArgs },
+      requestOptions
+    );
+  } : async () => {
+    const transport = trackMakerChildTransport(
+      new StdioClientTransport({
+        command: proxy.command,
+        args: proxy.args,
+        env: mergeStringEnv2(process.env, proxy.envVars),
+        stderr: "pipe"
+      })
+    );
+    const client = new Client(
+      {
+        name: "taptap-maker-tool-call-forwarder",
+        version: VERSION
+      },
+      {
+        capabilities: {}
+      }
+    );
+    try {
+      await client.connect(transport);
+      return await client.callTool(
         {
-          name: "taptap-maker-tool-call-forwarder",
-          version: VERSION
+          name: options.name,
+          arguments: finalArgs
         },
+        void 0,
         {
-          capabilities: {}
+          ...requestOptions
         }
       );
-      try {
-        await client.connect(transport);
-        return await client.callTool(
-          {
-            name: options.name,
-            arguments: finalArgs
-          },
-          void 0,
-          {
-            ...createRemoteProxyCallToolOptions(options.progressToken, options.extra)
-          }
-        );
-      } finally {
-        await client.close().catch(() => {
-        });
-      }
-    },
-    {
-      onRetry: options.progressToken ? (event) => {
-        options.extra.sendNotification({
-          method: "notifications/progress",
-          params: {
-            progressToken: options.progressToken,
-            progress: event.attempt,
-            total: event.attempts,
-            message: event.message
-          }
-        }).catch(() => {
-        });
-      } : void 0
+    } finally {
+      await client.close().catch(() => {
+      });
     }
-  );
+  };
+  const result = await retryMakerProxyOperation(callTool, {
+    onRetry: options.progressToken ? (event) => {
+      options.extra.sendNotification({
+        method: "notifications/progress",
+        params: {
+          progressToken: options.progressToken,
+          progress: event.attempt,
+          total: event.attempts,
+          message: event.message
+        }
+      }).catch(() => {
+      });
+    } : void 0
+  });
   return await materializeRemoteProxyToolAssets({
     toolName: options.name,
     targetDir: proxy.projectRoot,
@@ -36954,18 +37180,46 @@ async function startMakerMcpServer() {
     },
     {
       capabilities: {
-        tools: {},
+        tools: { listChanged: true },
         resources: {}
       },
       instructions: MAKER_CAPABILITY_ROUTING_INDEX
     }
   );
   const listClientRoots = createServerClientRootsProvider(server);
+  const remoteProxyManager = createMakerRemoteProxyManager({
+    onToolsChanged: async (_context, _definitions) => {
+      try {
+        await server.notification({
+          method: "notifications/tools/list_changed",
+          params: {}
+        });
+      } catch (error2) {
+        logLifecycleEvent("maker-tools-list-changed-notification-failed", String(error2));
+      }
+    }
+  });
   const startupReportedProjects = /* @__PURE__ */ new Set();
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     const contextPromise = resolveMakerMcpTrackingContext({ listClientRoots });
     void reportMakerMcpStartupFromPromise(contextPromise, startupReportedProjects);
-    return listMakerTools({ listClientRoots });
+    let context;
+    try {
+      const resolved = await resolveMakerProjectContext({
+        listClientRoots,
+        allowFallbackOnAmbiguousRoots: false
+      });
+      context = createRemoteProxyContext({
+        targetDir: resolved.targetDir,
+        exposedTools: MAKER_REMOTE_PROXY_EXPOSED_TOOL_NAMES
+      });
+    } catch {
+    }
+    return listMakerTools({
+      listClientRoots,
+      listRemoteTools: context ? () => remoteProxyManager.listTools(context) : void 0,
+      getCachedRemoteTools: context ? () => remoteProxyManager.getCachedTools(context) : void 0
+    });
   });
   server.setRequestHandler(ListResourcesRequestSchema, async () => {
     const contextPromise = resolveMakerMcpTrackingContext({ listClientRoots });
@@ -36986,7 +37240,7 @@ async function startMakerMcpServer() {
           {
             uri,
             mimeType: "text/plain",
-            text: uri === MAKER_ADS_INTEGRATION_GUIDE_URI ? formatMakerAdsIntegrationGuide() : await formatStatus({ listClientRoots })
+            text: uri === MAKER_ADS_INTEGRATION_GUIDE_URI ? formatMakerAdsIntegrationGuide() : await formatStatus({ listClientRoots, remoteProxyManager })
           }
         ]
       };
@@ -37028,7 +37282,8 @@ async function startMakerMcpServer() {
               text: await formatStatus({
                 targetDir: args.target_dir,
                 skipRemoteSync: args.skip_remote_sync,
-                listClientRoots
+                listClientRoots,
+                remoteProxyManager
               })
             }
           ]
@@ -37067,6 +37322,7 @@ async function startMakerMcpServer() {
             message: args.message,
             files: args.files,
             confirmRemoteBuildWithoutSubmit: args.confirm_remote_build_without_submit,
+            remoteProxyManager,
             onProgress: progressReporter.report
           });
           progressSummary = progressReporter.finish();
@@ -37142,7 +37398,8 @@ async function startMakerMcpServer() {
           name,
           args: remoteArgs,
           progressToken: (_b = request.params._meta) == null ? void 0 : _b.progressToken,
-          extra
+          extra,
+          manager: remoteProxyManager
         });
         void reportMakerMcpActivityFromPromise(contextPromise, {
           toolName: name,
@@ -37175,7 +37432,7 @@ async function startMakerMcpServer() {
   });
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  installMakerServerExitHandlers();
+  installMakerServerExitHandlers(remoteProxyManager);
 }
 async function resolveMakerMcpTrackingContext(options) {
   var _a3, _b;
@@ -37227,7 +37484,7 @@ async function reportMakerMcpStartupFromPromise(contextPromise, reportedProjects
   }
 }
 var MAKER_SERVER_SHUTDOWN_TIMEOUT_MS = 3e3;
-function installMakerServerExitHandlers() {
+function installMakerServerExitHandlers(remoteProxyManager) {
   let exiting = false;
   const shutdown = async (source) => {
     if (exiting) {
@@ -37240,7 +37497,13 @@ function installMakerServerExitHandlers() {
       const timer = setTimeout(resolve, MAKER_SERVER_SHUTDOWN_TIMEOUT_MS);
       (_a3 = timer.unref) == null ? void 0 : _a3.call(timer);
     });
-    await Promise.race([closeTrackedMakerChildTransports(), timeout]);
+    await Promise.race([
+      Promise.allSettled([
+        (remoteProxyManager == null ? void 0 : remoteProxyManager.closeAll()) || Promise.resolve(),
+        closeTrackedMakerChildTransports()
+      ]).then(() => void 0),
+      timeout
+    ]);
     process.exit(0);
   };
   process.stdin.once("end", () => {
@@ -37346,7 +37609,10 @@ async function formatStatus(options = {}) {
     "",
     remoteSyncText,
     "",
-    identify.projectRoot ? await formatMakerProxyToolsStatusSafely({ targetDir: identify.projectRoot }) : "",
+    identify.projectRoot ? await formatMakerProxyToolsStatusSafely({
+      targetDir: identify.projectRoot,
+      remoteProxyManager: options.remoteProxyManager
+    }) : "",
     "",
     formatAuthNextStep({ hasPat: Boolean(pat), isProjectBound: Boolean(identify.projectRoot) }),
     "",
@@ -37426,7 +37692,12 @@ function formatMakerToolRegistrationCwdStatus(options) {
 }
 async function formatMakerProxyToolsStatusSafely(options) {
   try {
-    const listedRemoteTools = options.listRemoteTools ?? (() => listRemoteProxyTools({
+    const listedRemoteTools = options.listRemoteTools ?? (options.remoteProxyManager ? async () => options.remoteProxyManager.listTools(
+      createRemoteProxyContext({
+        targetDir: options.targetDir,
+        exposedTools: MAKER_REMOTE_PROXY_EXPOSED_TOOL_NAMES
+      })
+    ) : () => listRemoteProxyTools({
       targetDir: options.targetDir
     }));
     const availableTools = filterExposedRemoteProxyTools(await listedRemoteTools()).map(
@@ -38193,71 +38464,80 @@ async function runRemoteBuildCurrentDirectory(options, targetDir) {
       startRuntimeLogWatch: options.startRuntimeLogWatch
     });
   }
-  const proxy = createRemoteProxyContext({
+  const createProxy = () => createRemoteProxyContext({
     targetDir,
     serverUrl: options.serverUrl,
     env: options.env
   });
+  let proxy = createProxy();
   const buildArgs = createBuildArgs(proxy.projectRoot, options);
   const timeoutMs = options.timeoutMs || DEFAULT_BUILD_TIMEOUT_MS;
-  const result = await retryMakerProxyOperation(
-    async () => {
-      const transport = trackMakerChildTransport(
-        new StdioClientTransport({
-          command: proxy.command,
-          args: proxy.args,
-          env: mergeStringEnv(process.env, proxy.envVars),
-          stderr: "pipe"
-        })
-      );
-      const client = new Client(
+  const requestOptions = {
+    timeout: timeoutMs,
+    resetTimeoutOnProgress: true,
+    onprogress: (progress) => {
+      var _a3;
+      (_a3 = options.onProgress) == null ? void 0 : _a3.call(options, {
+        progress: progress.progress,
+        total: progress.total,
+        phase: "remote_build",
+        message: progress.message || "Remote Maker build progress"
+      });
+    }
+  };
+  const callBuild = options.remoteProxyManager ? async () => {
+    proxy = createProxy();
+    return await options.remoteProxyManager.callTool(
+      proxy,
+      { name: "build", arguments: buildArgs },
+      requestOptions
+    );
+  } : async () => {
+    const transport = trackMakerChildTransport(
+      new StdioClientTransport({
+        command: proxy.command,
+        args: proxy.args,
+        env: mergeStringEnv2(process.env, proxy.envVars),
+        stderr: "pipe"
+      })
+    );
+    const client = new Client(
+      {
+        name: "taptap-maker-build-forwarder",
+        version: VERSION
+      },
+      {
+        capabilities: {}
+      }
+    );
+    try {
+      await client.connect(transport);
+      return await client.callTool(
         {
-          name: "taptap-maker-build-forwarder",
-          version: VERSION
+          name: "build",
+          arguments: buildArgs
         },
+        void 0,
         {
-          capabilities: {}
+          ...requestOptions
         }
       );
-      try {
-        await client.connect(transport);
-        return await client.callTool(
-          {
-            name: "build",
-            arguments: buildArgs
-          },
-          void 0,
-          {
-            timeout: timeoutMs,
-            resetTimeoutOnProgress: true,
-            onprogress: (progress) => {
-              var _a3;
-              (_a3 = options.onProgress) == null ? void 0 : _a3.call(options, {
-                progress: progress.progress,
-                total: progress.total,
-                phase: "remote_build",
-                message: progress.message || "Remote Maker build progress"
-              });
-            }
-          }
-        );
-      } finally {
-        await client.close().catch(() => {
-        });
-      }
-    },
-    {
-      onRetry: (event) => {
-        var _a3;
-        (_a3 = options.onProgress) == null ? void 0 : _a3.call(options, {
-          progress: event.attempt,
-          total: event.attempts,
-          phase: "remote_build",
-          message: event.message
-        });
-      }
+    } finally {
+      await client.close().catch(() => {
+      });
     }
-  );
+  };
+  const result = await retryMakerProxyOperation(callBuild, {
+    onRetry: (event) => {
+      var _a3;
+      (_a3 = options.onProgress) == null ? void 0 : _a3.call(options, {
+        progress: event.attempt,
+        total: event.attempts,
+        phase: "remote_build",
+        message: event.message
+      });
+    }
+  });
   if (isRemoteToolError(result)) {
     throw new Error(formatRemoteToolResult(result));
   }
@@ -38379,7 +38659,7 @@ async function startRuntimeLogWatch(buildResult) {
     const child = spawn4(command.command, command.args, {
       cwd: buildResult.projectRoot,
       detached: true,
-      env: mergeStringEnv(process.env, { TAPTAP_MCP_ENV: buildResult.env }),
+      env: mergeStringEnv2(process.env, { TAPTAP_MCP_ENV: buildResult.env }),
       stdio: ["ignore", outFd, errFd],
       windowsHide: true
     });
@@ -38637,7 +38917,7 @@ function createRemoteRuntimeLogClient(proxy, timeoutMs = DEFAULT_TOOL_CALL_TIMEO
     new HiddenStdioClientTransport({
       command: proxy.command,
       args: proxy.args,
-      env: mergeStringEnv(process.env, proxy.envVars),
+      env: mergeStringEnv2(process.env, proxy.envVars),
       stderr: "pipe"
     })
   ));
@@ -38731,7 +39011,7 @@ function createBuildArgs(projectRoot, options) {
   }
   return buildArgs;
 }
-function mergeStringEnv(...sources) {
+function mergeStringEnv2(...sources) {
   const result = {};
   for (const source of sources) {
     if (!source) {
@@ -39472,7 +39752,7 @@ function uniqueStrings(values) {
 }
 
 // src/maker/cli/commands.ts
-var VERSION2 = true ? "0.0.27" : "dev";
+var VERSION2 = true ? "0.0.28" : "dev";
 var DEFAULT_MCP_NAME = "taptap-maker";
 var MAKER_NPM_PACKAGE = "@taptap/maker";
 var TWO_PART_COMMANDS = /* @__PURE__ */ new Set(["pat", "mcp", "dev-kit", "logs", "python", "lua-lsp", "agents"]);
@@ -43554,7 +43834,7 @@ var TapTapMCPProxy = class {
     this.client = this.createClient();
     this.server = new Server(
       { name: "taptap-proxy", version: "1.0.0" },
-      { capabilities: { tools: {}, resources: {} } }
+      { capabilities: { tools: { listChanged: true }, resources: {} } }
     );
   }
   createClient() {
