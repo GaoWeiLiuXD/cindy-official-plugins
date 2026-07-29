@@ -164,7 +164,7 @@ function loadAccountInternals() {
 test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.equal(manifest.id, 'taptap-maker');
   assert.equal(manifest.author, 'Cindy');
-  assert.equal(manifest.version, '2.1.9');
+  assert.equal(manifest.version, '2.1.10');
   assert.match(manifest.whenToUse, /不得通过 Shell、CLI、npx、直接 MCP 或通用浏览器绕行/);
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_build').description,
@@ -173,6 +173,10 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.match(
     manifest.tools.find((tool) => tool.name === 'maker_ads_guide').description,
     /不会修改项目/,
+  );
+  assert.doesNotMatch(
+    manifest.tools.find((tool) => tool.name === 'maker_call_tool').description,
+    /素材能力优先使用 Maker/,
   );
   assert.deepEqual(
     manifest.slots,
@@ -199,7 +203,7 @@ test('manifest、默认播种和官方 Runtime 版本保持一致', () => {
   assert.deepEqual(manifest.preview.hosts, ['maker.taptap.cn']);
   assert.deepEqual(provisioning.ghosts['taptap-maker'], { audience: 'all' });
   assert.equal(vendorPackage.name, '@taptap/maker');
-  assert.equal(vendorPackage.version, '0.0.27');
+  assert.equal(vendorPackage.version, '0.0.28');
 });
 
 test('设置页跟随宿主四语言并以英文回退', () => {

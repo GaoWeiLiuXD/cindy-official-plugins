@@ -32,4 +32,4 @@ or OpenClaw plugin package contents.
 
 Full connection and tool-call troubleshooting guide: `docs/MAKER_MCP_CONNECTION_TROUBLESHOOTING.md`.
 
-Version: 0.0.27
+Version: 0.0.28
