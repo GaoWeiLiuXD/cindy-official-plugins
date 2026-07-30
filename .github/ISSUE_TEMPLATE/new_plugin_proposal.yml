@@ -1,0 +1,54 @@
+name: New plugin proposal / 新插件提案
+description: Propose a new official plugin and align on scope before writing code / 提议新的官方插件，动手写代码前先对齐定位与边界
+labels: [new-plugin]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Plugin name & target service / 插件名与目标服务
+      description: e.g. "Yahoo Mail — IMAP/SMTP mail connector" / 例：「Yahoo 邮箱 —— IMAP/SMTP 邮件连接器」
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario & scope / 场景与边界
+      description: What will users ask Cindy to do with it? What is explicitly out of scope? / 用户会让 Cindy 用它做什么？哪些明确不做？
+    validations:
+      required: true
+
+  - type: textarea
+    id: overlap
+    attributes:
+      label: Overlap check / 与现有插件的查重
+      description: "Which existing plugins are closest, and why is yours different? Same-provider families coexist fine; duplicate generic capabilities (e.g. a second web search) do not. / 与 README 表哪些最相近？差异化或互补理由。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Required capabilities / 所需能力声明
+      description: "Network hosts; credential type (/secrets, OAuth, node.secretBindings); whether Node Runtime is needed and why. Minimal only — security review starting point. / 网络域名、凭证类型、是否需 Node Runtime。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: side-effects
+    attributes:
+      label: Irreversible side effects / 不可逆副作用
+      description: Which tools send, post, delete, or otherwise change external state? / 哪些工具会发送、发帖、删除或以其他方式改变外部状态？
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        A maintainer will confirm positioning here before you invest in code.
+        Once aligned, follow the full path in
+        [README → Submit your plugin](https://github.com/makecindy/cindy-official-plugins#submit-your-plugin).
+
+        维护者会先在这里确认定位，再建议你投入开发。对齐后按
+        [README → 提交你的插件](https://github.com/makecindy/cindy-official-plugins/blob/main/README.zh-CN.md#提交你的插件)
+        的完整路径推进。
