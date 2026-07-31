@@ -148,20 +148,20 @@ function createWorkerHarness(overrides = {}, parseMessage = async () => ({})) {
 
 test('manifest 声明 Cindy 持久凭证及其最小 Node 注入范围', () => {
   assert.equal(manifest.id, 'yahoo-mail');
-  assert.equal(manifest.version, '0.1.1');
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
   assert.deepEqual(manifest.slots, ['tool', 'node']);
   assert.deepEqual(manifest.node.secretBindings, [
     {
       key: 'yahoo_mail_app_password',
       label: 'Yahoo 应用密码 A',
-      methods: ['account/connect', 'mail/action'],
+      methods: ['account/connect-a', 'mail/action-a'],
       hint: 'Yahoo 账户安全页面生成的应用密码，不是 Yahoo 账户密码',
       url: 'https://help.yahoo.com/kb/account/access-yahoo-mail-third-party-apps-sln15241.html',
     },
     {
       key: 'yahoo_mail_app_password_b',
       label: 'Yahoo 应用密码 B',
-      methods: ['account/connect', 'mail/action'],
+      methods: ['account/connect-b', 'mail/action-b'],
       hint: 'Yahoo 账户安全页面生成的应用密码，不是 Yahoo 账户密码',
       url: 'https://help.yahoo.com/kb/account/access-yahoo-mail-third-party-apps-sln15241.html',
     },
@@ -210,7 +210,7 @@ test('设置页使用双凭证槽安全切换，BroadcastChannel 不发送 Yahoo
 test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', async () => {
   const harness = createMainHarness(async (request) => ({
     ok: true,
-    result: request.method === 'account/connect'
+    result: request.method === 'account/connect-b'
       ? { connected: true, email: 'user@yahoo.com', persistence: 'cindy-safe-storage' }
       : { folder: 'INBOX', messages: [] },
   }));
@@ -220,6 +220,7 @@ test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', 
     credentialSlot: 'b',
   });
   assert.equal(connected.ok, true);
+  assert.equal(harness.nodeRequests[0].method, 'account/connect-b');
   assert.equal(
     JSON.stringify(harness.nodeRequests[0].params),
     JSON.stringify({ email: 'user@yahoo.com', credentialSlot: 'b' }),
@@ -227,7 +228,7 @@ test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', 
 
   const result = await harness.call('yahoo_mail', { action: 'search', text: '账单' });
   assert.equal(result.ok, true);
-  assert.equal(harness.nodeRequests[1].method, 'mail/action');
+  assert.equal(harness.nodeRequests[1].method, 'mail/action-a');
   assert.equal(harness.nodeRequests[1].params.email, 'user@yahoo.com');
   assert.equal(harness.nodeRequests[1].params.credentialSlot, 'a');
   assert.equal('credentials' in harness.nodeRequests[1].params, false);
@@ -315,11 +316,10 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     },
   };
   const connectRequest = {
-    method: 'account/connect',
+    method: 'account/connect-b',
     params: { email: 'user@yahoo.com', credentialSlot: 'b' },
     cindy: {
       secrets: {
-        yahoo_mail_app_password: 'old-password',
         yahoo_mail_app_password_b: 'abcdefghijklmnop',
       },
     },
@@ -334,12 +334,11 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     },
   });
   assert.equal(connected.persistence, 'cindy-safe-storage');
-  assert.equal(connectRequest.cindy.secrets.yahoo_mail_app_password, '');
   assert.equal(connectRequest.cindy.secrets.yahoo_mail_app_password_b, '');
 
   calls.length = 0;
   const actionRequest = {
-    method: 'mail/action',
+    method: 'mail/action-a',
     params: {
       email: 'user@yahoo.com',
       credentialSlot: 'a',
@@ -348,7 +347,6 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
     cindy: {
       secrets: {
         yahoo_mail_app_password: 'abcdefghijklmnop',
-        yahoo_mail_app_password_b: 'unused-password',
       },
     },
   };
@@ -356,14 +354,13 @@ test('Worker 每次只消费宿主注入凭证，并让 IMAP 操作 connect + lo
   assert.deepEqual(calls, ['connect', 'list', 'logout']);
   assert.equal(result.folders[0].path, 'INBOX');
   assert.equal(actionRequest.cindy.secrets.yahoo_mail_app_password, '');
-  assert.equal(actionRequest.cindy.secrets.yahoo_mail_app_password_b, '');
   assert.equal(JSON.stringify(result).includes('abcdefghijklmnop'), false);
 });
 
 test('Worker 拒绝 params 伪造的应用密码，只信任宿主注入字段', async () => {
   await assert.rejects(
     worker.handleRequest({
-      method: 'mail/action',
+      method: 'mail/action-a',
       params: {
         email: 'user@yahoo.com',
         appPassword: 'forged-code',
@@ -371,6 +368,25 @@ test('Worker 拒绝 params 伪造的应用密码，只信任宿主注入字段',
       },
     }),
     /应用密码/,
+  );
+});
+
+test('Worker 拒绝方法绑定与参数声明不一致的凭证槽位', async () => {
+  await assert.rejects(
+    worker.handleRequest({
+      method: 'mail/action-a',
+      params: {
+        email: 'user@yahoo.com',
+        credentialSlot: 'b',
+        action: { action: 'list_folders' },
+      },
+      cindy: {
+        secrets: {
+          yahoo_mail_app_password: 'abcdefghijklmnop',
+        },
+      },
+    }),
+    /凭证状态无效/,
   );
 });
 

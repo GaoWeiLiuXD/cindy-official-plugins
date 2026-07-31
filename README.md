@@ -255,6 +255,7 @@ attributed in the corresponding plugin directories:
   embedded in `node/worker.cjs`
 - `163-mail/THIRD-PARTY-LICENSES.txt` — same, for the 163 Mail plugin
 - `icloud-mail/THIRD-PARTY-LICENSES.txt` — same, for the iCloud Mail plugin
+- `yahoo-mail/THIRD-PARTY-LICENSES.txt` — same, for the Yahoo Mail plugin
 - `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker` (MIT)
 
 Apache-2.0 grants no trademark rights. These plugins are unofficial integrations

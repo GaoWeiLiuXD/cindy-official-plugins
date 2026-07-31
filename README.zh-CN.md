@@ -205,6 +205,7 @@ Copyright 2026 心动网络股份有限公司 (X.D. Network Inc.)，见 [`NOTICE
 - `qq-mail/THIRD-PARTY-LICENSES.txt` — `node/worker.cjs` 内嵌依赖的完整许可证文本
 - `163-mail/THIRD-PARTY-LICENSES.txt` — 同上，163 邮箱插件的内嵌依赖
 - `icloud-mail/THIRD-PARTY-LICENSES.txt` — 同上，iCloud Mail 插件的内嵌依赖
+- `yahoo-mail/THIRD-PARTY-LICENSES.txt` — 同上，Yahoo Mail 插件的内嵌依赖
 - `taptap-maker/vendor/taptap-maker/LICENSE` — vendored `@taptap/maker`（MIT）
 
 Apache-2.0 不授予商标权。本仓库插件是对所连接服务的非官方集成，第三方名称与标志归其

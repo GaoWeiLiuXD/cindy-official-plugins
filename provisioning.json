@@ -35,7 +35,9 @@
       "audience": "all"
     },
     "yahoo-mail": {
-      "audience": "all"
+      "audience": {
+        "emails": []
+      }
     },
     "taptap-maker": {
       "audience": "all"
