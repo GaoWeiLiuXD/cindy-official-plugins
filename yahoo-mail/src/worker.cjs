@@ -359,6 +359,33 @@ function mailOptions(credentials, action) {
   };
 }
 
+function isDefinitelyBeforeSmtpData(error) {
+  const code = error && error.code ? String(error.code).toUpperCase() : '';
+  const command = error && error.command ? String(error.command).toUpperCase() : '';
+  const responseCode = Number(error && error.responseCode);
+  if (Number.isInteger(responseCode) && responseCode >= 400) return true;
+  if (['EAUTH', 'EENVELOPE', 'EINVALID', 'ENOTFOUND', 'ECONNREFUSED', 'ENETUNREACH'].includes(code)) {
+    return true;
+  }
+  return ['AUTH', 'CONNECT', 'CONN', 'MAIL', 'RCPT'].includes(command);
+}
+
+function isTransportError(error) {
+  const code = error && error.code ? String(error.code).toUpperCase() : '';
+  const message = error && error.message ? String(error.message).toLowerCase() : '';
+  return [
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'ETIMEDOUT',
+    'ENETUNREACH',
+    'EPIPE',
+    'ERR_STREAM_PREMATURE_CLOSE',
+  ].includes(code)
+    || message.includes('timed out')
+    || message.includes('socket closed')
+    || message.includes('connection closed');
+}
+
 async function sendMessage(credentials, action, deps) {
   const options = mailOptions(credentials, action);
   const transporter = deps.createSmtp(credentials);
@@ -366,7 +393,8 @@ async function sendMessage(credentials, action, deps) {
     let info;
     try {
       info = await transporter.sendMail(options);
-    } catch (_error) {
+    } catch (error) {
+      if (isDefinitelyBeforeSmtpData(error)) throw error;
       throw new Error('SEND_UNCONFIRMED');
     }
     return {
@@ -405,7 +433,8 @@ async function saveDraft(credentials, action, deps) {
       let appended;
       try {
         appended = await client.append(folder, info.message, ['\\Draft'], new Date());
-      } catch (_error) {
+      } catch (error) {
+        if (!isTransportError(error)) throw error;
         throw new Error('DRAFT_SAVE_UNCONFIRMED');
       }
       if (!appended) throw new Error('DRAFT_SAVE_FAILED');
@@ -439,17 +468,26 @@ async function changeFlags(credentials, action, deps, seen) {
 
     const currentFlags = flagsArray(existing.flags);
     if (currentFlags.includes('\\Seen') !== seen) {
-      const updated = seen
-        ? await client.messageFlagsAdd(action.message_uid, ['\\Seen'], { uid: true })
-        : await client.messageFlagsRemove(action.message_uid, ['\\Seen'], { uid: true });
+      let updated;
+      try {
+        updated = seen
+          ? await client.messageFlagsAdd(action.message_uid, ['\\Seen'], { uid: true })
+          : await client.messageFlagsRemove(action.message_uid, ['\\Seen'], { uid: true });
+      } catch (error) {
+        if (!isTransportError(error)) throw error;
+        throw new Error('MESSAGE_UPDATE_UNCONFIRMED');
+      }
       if (!updated) throw new Error('MESSAGE_NOT_FOUND');
 
       const verified = await client.fetchOne(
         action.message_uid,
         { uid: true, flags: true },
         { uid: true },
-      );
-      if (!verified) throw new Error('MESSAGE_NOT_FOUND');
+      ).catch((error) => {
+        if (!isTransportError(error)) throw error;
+        throw new Error('MESSAGE_UPDATE_UNCONFIRMED');
+      });
+      if (!verified) throw new Error('MESSAGE_UPDATE_UNCONFIRMED');
       if (flagsArray(verified.flags).includes('\\Seen') !== seen) {
         throw new Error('MESSAGE_UPDATE_FAILED');
       }
@@ -471,7 +509,13 @@ async function moveMessage(credentials, action, deps) {
     );
     if (!existing) throw new Error('MESSAGE_NOT_FOUND');
 
-    const moved = await client.messageMove(action.message_uid, target, { uid: true });
+    let moved;
+    try {
+      moved = await client.messageMove(action.message_uid, target, { uid: true });
+    } catch (error) {
+      if (!isTransportError(error)) throw error;
+      throw new Error('MESSAGE_MOVE_UNCONFIRMED');
+    }
     if (!moved) throw new Error('MESSAGE_NOT_FOUND');
     const destinationUid = moved.uidMap && moved.uidMap.get
       ? (moved.uidMap.get(action.message_uid) || null)
@@ -580,6 +624,9 @@ function humanizeError(error) {
   if (message === 'TARGET_FOLDER_SAME') return '目标文件夹不能与当前文件夹相同';
   if (message === 'MESSAGE_MOVE_UNCONFIRMED') {
     return '无法确认邮件是否已移动，请重新搜索邮箱后再操作';
+  }
+  if (message === 'MESSAGE_UPDATE_UNCONFIRMED') {
+    return '无法确认邮件的已读状态是否已修改，请重新读取邮件确认当前状态后再操作';
   }
   if (message === 'RECIPIENT_REQUIRED') return '请至少填写一个收件人';
   if (message === 'INVALID_RECIPIENT') return '收件人、抄送或密送地址格式不正确';

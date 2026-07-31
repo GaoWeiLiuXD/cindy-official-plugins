@@ -87,17 +87,39 @@ async function requireConfiguredAccount() {
 }
 
 async function nodeRequest(method, params, timeoutMs) {
-  var response = await cindy.node.request({
-    method: method,
-    params: params,
-    timeoutMs: timeoutMs || 30000,
-  });
+  var response;
+  try {
+    response = await cindy.node.request({
+      method: method,
+      params: params,
+      timeoutMs: timeoutMs || 30000,
+    });
+  } catch (error) {
+    var rpcError = new Error(error && error.message
+      ? error.message
+      : 'Yahoo Mail Worker 通信中断');
+    rpcError.nodeRpcOutcomeUnknown = true;
+    throw rpcError;
+  }
   if (!response || response.ok !== true) {
     throw new Error(response && response.message
       ? response.message
       : 'Yahoo Mail Worker 调用失败，请稍后重试');
   }
   return response.result;
+}
+
+function mutationOutcomeUnknownMessage(action) {
+  if (action === 'send') {
+    return '无法确认邮件是否已发送。请先检查 Yahoo Mail 的“已发送”文件夹，确认未发送前不要重试';
+  }
+  if (action === 'draft') {
+    return '无法确认草稿是否已保存。请先检查 Yahoo Mail 的草稿箱，确认未保存前不要重试';
+  }
+  if (action === 'move') {
+    return '无法确认邮件是否已移动。请重新搜索原文件夹和目标文件夹，确认当前状态后再操作';
+  }
+  return '无法确认邮件的已读状态是否已修改。请重新读取邮件确认当前状态后再操作';
 }
 
 async function handleSettingsRequest(action, payload) {
@@ -233,6 +255,19 @@ async function runMail(args) {
     }, action.action === 'send' || action.action === 'draft' ? 60000 : 45000);
     return { ok: true, result: result };
   } catch (error) {
+    if (
+      error
+      && error.nodeRpcOutcomeUnknown === true
+      && (
+        action.action === 'send'
+        || action.action === 'draft'
+        || action.action === 'move'
+        || action.action === 'mark_read'
+        || action.action === 'mark_unread'
+      )
+    ) {
+      return fail(mutationOutcomeUnknownMessage(action.action));
+    }
     return fail(error && error.message ? error.message : 'Yahoo Mail 操作失败，请稍后重试');
   }
 }

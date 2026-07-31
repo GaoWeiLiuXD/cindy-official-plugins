@@ -7,7 +7,7 @@
       "description": "Check whether Yahoo Mail is configured. Returns only the email address and connection status, never the app password."
     },
     "yahoo_mail": {
-      "description": "Perform Yahoo Mail operations: list folders, search, read, send, save drafts, mark messages read or unread, and move messages. Each operation opens a temporary IMAP/SMTP connection and closes it afterward. Sending, moving, and changing read status require explicit user intent. If sending or saving a draft has an uncertain outcome, inspect the mailbox before retrying."
+      "description": "Perform Yahoo Mail operations: list folders, search, read, send, save drafts, mark messages read or unread, and move messages. Each operation opens a temporary IMAP/SMTP connection and closes it afterward. Sending, moving, and changing read status require explicit user intent. If a mutation has an uncertain outcome, inspect the mailbox before retrying."
     }
   }
 }

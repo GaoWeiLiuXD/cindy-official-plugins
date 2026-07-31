@@ -66404,6 +66404,28 @@ var require_worker = __commonJS({
         disableUrlAccess: true
       };
     }
+    function isDefinitelyBeforeSmtpData(error) {
+      const code = error && error.code ? String(error.code).toUpperCase() : "";
+      const command = error && error.command ? String(error.command).toUpperCase() : "";
+      const responseCode = Number(error && error.responseCode);
+      if (Number.isInteger(responseCode) && responseCode >= 400) return true;
+      if (["EAUTH", "EENVELOPE", "EINVALID", "ENOTFOUND", "ECONNREFUSED", "ENETUNREACH"].includes(code)) {
+        return true;
+      }
+      return ["AUTH", "CONNECT", "CONN", "MAIL", "RCPT"].includes(command);
+    }
+    function isTransportError(error) {
+      const code = error && error.code ? String(error.code).toUpperCase() : "";
+      const message = error && error.message ? String(error.message).toLowerCase() : "";
+      return [
+        "ECONNRESET",
+        "ECONNREFUSED",
+        "ETIMEDOUT",
+        "ENETUNREACH",
+        "EPIPE",
+        "ERR_STREAM_PREMATURE_CLOSE"
+      ].includes(code) || message.includes("timed out") || message.includes("socket closed") || message.includes("connection closed");
+    }
     async function sendMessage(credentials, action, deps) {
       const options = mailOptions(credentials, action);
       const transporter = deps.createSmtp(credentials);
@@ -66411,7 +66433,8 @@ var require_worker = __commonJS({
         let info;
         try {
           info = await transporter.sendMail(options);
-        } catch (_error) {
+        } catch (error) {
+          if (isDefinitelyBeforeSmtpData(error)) throw error;
           throw new Error("SEND_UNCONFIRMED");
         }
         return {
@@ -66447,7 +66470,8 @@ var require_worker = __commonJS({
           let appended;
           try {
             appended = await client.append(folder, info.message, ["\\Draft"], /* @__PURE__ */ new Date());
-          } catch (_error) {
+          } catch (error) {
+            if (!isTransportError(error)) throw error;
             throw new Error("DRAFT_SAVE_UNCONFIRMED");
           }
           if (!appended) throw new Error("DRAFT_SAVE_FAILED");
@@ -66478,14 +66502,23 @@ var require_worker = __commonJS({
         if (!existing) throw new Error("MESSAGE_NOT_FOUND");
         const currentFlags = flagsArray(existing.flags);
         if (currentFlags.includes("\\Seen") !== seen) {
-          const updated = seen ? await client.messageFlagsAdd(action.message_uid, ["\\Seen"], { uid: true }) : await client.messageFlagsRemove(action.message_uid, ["\\Seen"], { uid: true });
+          let updated;
+          try {
+            updated = seen ? await client.messageFlagsAdd(action.message_uid, ["\\Seen"], { uid: true }) : await client.messageFlagsRemove(action.message_uid, ["\\Seen"], { uid: true });
+          } catch (error) {
+            if (!isTransportError(error)) throw error;
+            throw new Error("MESSAGE_UPDATE_UNCONFIRMED");
+          }
           if (!updated) throw new Error("MESSAGE_NOT_FOUND");
           const verified = await client.fetchOne(
             action.message_uid,
             { uid: true, flags: true },
             { uid: true }
-          );
-          if (!verified) throw new Error("MESSAGE_NOT_FOUND");
+          ).catch((error) => {
+            if (!isTransportError(error)) throw error;
+            throw new Error("MESSAGE_UPDATE_UNCONFIRMED");
+          });
+          if (!verified) throw new Error("MESSAGE_UPDATE_UNCONFIRMED");
           if (flagsArray(verified.flags).includes("\\Seen") !== seen) {
             throw new Error("MESSAGE_UPDATE_FAILED");
           }
@@ -66505,7 +66538,13 @@ var require_worker = __commonJS({
           { uid: true }
         );
         if (!existing) throw new Error("MESSAGE_NOT_FOUND");
-        const moved = await client.messageMove(action.message_uid, target, { uid: true });
+        let moved;
+        try {
+          moved = await client.messageMove(action.message_uid, target, { uid: true });
+        } catch (error) {
+          if (!isTransportError(error)) throw error;
+          throw new Error("MESSAGE_MOVE_UNCONFIRMED");
+        }
         if (!moved) throw new Error("MESSAGE_NOT_FOUND");
         const destinationUid = moved.uidMap && moved.uidMap.get ? moved.uidMap.get(action.message_uid) || null : null;
         if (!destinationUid) throw new Error("MESSAGE_MOVE_UNCONFIRMED");
@@ -66596,6 +66635,9 @@ var require_worker = __commonJS({
       if (message === "TARGET_FOLDER_SAME") return "\u76EE\u6807\u6587\u4EF6\u5939\u4E0D\u80FD\u4E0E\u5F53\u524D\u6587\u4EF6\u5939\u76F8\u540C";
       if (message === "MESSAGE_MOVE_UNCONFIRMED") {
         return "\u65E0\u6CD5\u786E\u8BA4\u90AE\u4EF6\u662F\u5426\u5DF2\u79FB\u52A8\uFF0C\u8BF7\u91CD\u65B0\u641C\u7D22\u90AE\u7BB1\u540E\u518D\u64CD\u4F5C";
+      }
+      if (message === "MESSAGE_UPDATE_UNCONFIRMED") {
+        return "\u65E0\u6CD5\u786E\u8BA4\u90AE\u4EF6\u7684\u5DF2\u8BFB\u72B6\u6001\u662F\u5426\u5DF2\u4FEE\u6539\uFF0C\u8BF7\u91CD\u65B0\u8BFB\u53D6\u90AE\u4EF6\u786E\u8BA4\u5F53\u524D\u72B6\u6001\u540E\u518D\u64CD\u4F5C";
       }
       if (message === "RECIPIENT_REQUIRED") return "\u8BF7\u81F3\u5C11\u586B\u5199\u4E00\u4E2A\u6536\u4EF6\u4EBA";
       if (message === "INVALID_RECIPIENT") return "\u6536\u4EF6\u4EBA\u3001\u6284\u9001\u6216\u5BC6\u9001\u5730\u5740\u683C\u5F0F\u4E0D\u6B63\u786E";

@@ -235,6 +235,26 @@ test('main.js 的连接与邮件请求只携带邮箱和非敏感凭证槽位', 
   assert.equal('appPassword' in harness.nodeRequests[1].params, false);
 });
 
+test('main.js 将写操作的 Node RPC 中断转换为结果不确定', async () => {
+  const cases = [
+    { action: 'send', to: 'recipient@example.com', subject: 'Test', body_text: 'Message' },
+    { action: 'draft', to: 'recipient@example.com', subject: 'Test', body_text: 'Draft' },
+    { action: 'move', message_uid: 42, target_folder: 'Archive' },
+    { action: 'mark_read', message_uid: 42 },
+    { action: 'mark_unread', message_uid: 42 },
+  ];
+
+  for (const action of cases) {
+    const harness = createMainHarness(async () => {
+      throw new Error('Worker request timed out');
+    });
+    const result = await harness.call('yahoo_mail', action);
+    assert.equal(result.ok, false);
+    assert.match(result.message, /无法确认/);
+    assert.match(result.message, /不要重试|重新搜索|重新读取/);
+  }
+});
+
 test('状态取自 Cindy 持久存储，不依赖 Worker 是否仍在运行', async () => {
   const harness = createMainHarness(async () => {
     throw new Error('status 不应唤醒 Worker');
@@ -571,6 +591,32 @@ test('Worker 将 SMTP 响应丢失标记为发送结果不确定', async () => {
   assert.match(worker.humanizeError(new Error('SEND_UNCONFIRMED')), /不要重试/);
 });
 
+test('Worker 保留发送前明确失败的 SMTP 错误', async () => {
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@yahoo.com', appPassword: 'abcdefghijklmnop' },
+      {
+        action: 'send',
+        to: 'recipient@example.com',
+        subject: 'Test',
+        body_text: 'Message',
+      },
+      {
+        ...createWorkerHarness().deps,
+        createSmtp() {
+          return {
+            async sendMail() {
+              throw Object.assign(new Error('authentication failed'), { code: 'EAUTH' });
+            },
+            close() {},
+          };
+        },
+      },
+    ),
+    (error) => error && error.code === 'EAUTH',
+  );
+});
+
 test('Worker 将 IMAP APPEND 响应丢失标记为草稿结果不确定', async () => {
   await assert.rejects(
     worker.performAction(
@@ -610,6 +656,42 @@ test('Worker 将 IMAP APPEND 响应丢失标记为草稿结果不确定', async 
   );
   assert.match(worker.humanizeError(new Error('DRAFT_SAVE_UNCONFIRMED')), /无法确认/);
   assert.match(worker.humanizeError(new Error('DRAFT_SAVE_UNCONFIRMED')), /不要重试/);
+});
+
+test('Worker 将 IMAP 标记和移动的传输中断标记为结果不确定', async () => {
+  const flagHarness = createWorkerHarness({
+    async fetchOne() {
+      return { uid: 42, flags: new Set() };
+    },
+    async messageFlagsAdd() {
+      throw Object.assign(new Error('socket closed'), { code: 'ECONNRESET' });
+    },
+  });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@yahoo.com', appPassword: 'abcdefghijklmnop' },
+      { action: 'mark_read', folder: 'INBOX', message_uid: 42 },
+      flagHarness.deps,
+    ),
+    /MESSAGE_UPDATE_UNCONFIRMED/,
+  );
+
+  const moveHarness = createWorkerHarness({
+    async fetchOne() {
+      return { uid: 42 };
+    },
+    async messageMove() {
+      throw Object.assign(new Error('socket closed'), { code: 'ECONNRESET' });
+    },
+  });
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@yahoo.com', appPassword: 'abcdefghijklmnop' },
+      { action: 'move', folder: 'INBOX', target_folder: 'Archive', message_uid: 42 },
+      moveHarness.deps,
+    ),
+    /MESSAGE_MOVE_UNCONFIRMED/,
+  );
 });
 
 test('Worker 分块读取邮件，并在解析前拒绝超过 12 MiB 的内容', async () => {
