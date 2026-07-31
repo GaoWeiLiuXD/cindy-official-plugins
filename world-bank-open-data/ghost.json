@@ -90,7 +90,7 @@
     },
     {
       "name": "world_bank_data",
-      "description": "按国家/地区和指标查询世界银行数据。countries 最多 25 个，indicator 可传世界银行指标代码或 common 目录中的别名。不传 startYear/endYear 时默认返回每个国家最近一期有效值；传年份范围时返回该区间数据。返回值带指标名称、数据更新时间、国家、年份、数值和单位。只读、无需 API Key，也不代表实时市场行情。",
+      "description": "按国家/地区和指标查询世界银行数据。countries 最多 25 个，indicator 可传世界银行指标代码或 common 目录中的别名。不传 startYear/endYear 时默认返回每个国家最近一期有效值；传年份范围时返回该区间数据。返回值带指标名称、数据更新时间、国家、年份、数值和单位。若单页结果仍过大，会保留结构化元数据和部分 records，并返回 responseTruncated、recordsAvailableInPage、recordsReturned 与缩小查询提示。只读、无需 API Key，也不代表实时市场行情。",
       "parameters": {
         "type": "object",
         "properties": {

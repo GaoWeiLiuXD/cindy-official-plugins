@@ -222,11 +222,33 @@ function compactDataRow(row) {
 function boundedResult(result) {
   var text = JSON.stringify(result);
   if (text.length <= MAX_RESULT_CHARS) return result;
-  return {
-    truncated: true,
-    preview: text.slice(0, MAX_RESULT_CHARS),
-    hint: '结果过大已截断，请缩小年份范围、国家数量或每页数量',
-  };
+  var records = Array.isArray(result.records) ? result.records : [];
+  var bounded = Object.assign({}, result, {
+    records: [],
+    responseTruncated: true,
+    recordsAvailableInPage: records.length,
+    recordsReturned: 0,
+    hint: '单页结果过大，已保留结构化元数据和部分 records；请缩小年份范围、国家数量或每页数量',
+  });
+  for (var i = 0; i < records.length; i++) {
+    bounded.records.push(records[i]);
+    bounded.recordsReturned = bounded.records.length;
+    if (JSON.stringify(bounded).length > MAX_RESULT_CHARS) {
+      bounded.records.pop();
+      bounded.recordsReturned = bounded.records.length;
+      break;
+    }
+  }
+  return bounded;
+}
+
+function applyRecentParams(params, args) {
+  var recent = clampInt(args && args.recent, 1, 1, 20);
+  if (args && args.includeNulls) {
+    params.MRV = recent;
+  } else {
+    params.MRNEV = recent;
+  }
 }
 
 async function countriesTool(args, callId) {
@@ -361,7 +383,7 @@ async function dataTool(args, callId) {
   if (years.start !== undefined) {
     params.date = years.start + ':' + years.end;
   } else {
-    params.MRV = clampInt(args && args.recent, 1, 1, 20);
+    applyRecentParams(params, args);
   }
   var response = await api(
     '/country/' + countries.values.join(';') + '/indicator/' + encodeURIComponent(indicator.code),
@@ -425,6 +447,8 @@ cindy.onHostMessage(async function (message) {
 if (typeof module !== 'undefined') {
   module.exports = {
     COMMON_INDICATORS,
+    applyRecentParams,
+    boundedResult,
     classifyStatus,
     compactCountry,
     compactDataRow,

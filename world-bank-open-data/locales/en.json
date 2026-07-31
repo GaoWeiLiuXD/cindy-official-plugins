@@ -10,7 +10,7 @@
       "description": "Browse common indicators, topics, topic indicators, or the detailed definition of one indicator."
     },
     "world_bank_data": {
-      "description": "Query World Bank observations by country, indicator, and year range; defaults to the latest available observation."
+      "description": "Query World Bank observations by country, indicator, and year range; defaults to the latest available non-empty observation. Oversized pages keep structured metadata and a partial records array, with truncation fields and a hint to narrow the query."
     }
   }
 }

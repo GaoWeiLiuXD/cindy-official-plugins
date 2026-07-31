@@ -49,6 +49,47 @@ test('country code and year inputs are bounded', () => {
   assert.match(plugin.validateYearRange({ startYear: 2020 }).err, /必须一起传/);
 });
 
+test('recent observations use MRNEV unless null rows are explicitly requested', () => {
+  const plugin = loadPlugin();
+  const validOnly = {};
+  plugin.applyRecentParams(validOnly, { recent: 3 });
+  assert.deepEqual(validOnly, { MRNEV: 3 });
+
+  const includingNulls = {};
+  plugin.applyRecentParams(includingNulls, { recent: 2, includeNulls: true });
+  assert.deepEqual(includingNulls, { MRV: 2 });
+});
+
+test('oversized results remain structured and contain only complete records', () => {
+  const plugin = loadPlugin();
+  const records = Array.from({ length: 200 }, (_, index) => ({
+    country: `Country ${index}`,
+    countryCode: `C${index}`,
+    year: '2024',
+    value: index,
+    unit: 'x'.repeat(500),
+    observationStatus: '',
+  }));
+  const result = plugin.boundedResult({
+    indicator: { requested: 'example', code: 'EXAMPLE', name: 'Example' },
+    lastUpdated: '2026-07-31',
+    page: 1,
+    pages: 1,
+    total: records.length,
+    records,
+    note: 'example',
+  });
+
+  assert.equal(result.responseTruncated, true);
+  assert.equal(result.recordsAvailableInPage, records.length);
+  assert.equal(result.recordsReturned, result.records.length);
+  assert.ok(result.records.length > 0);
+  assert.ok(result.records.length < records.length);
+  assert.ok(result.records.every((record) => record && typeof record === 'object'));
+  assert.ok(JSON.stringify(result).length <= 50 * 1000);
+  assert.equal('preview' in result, false);
+});
+
 test('World Bank two-element responses and API errors are classified', () => {
   const plugin = loadPlugin();
   assert.deepEqual(
