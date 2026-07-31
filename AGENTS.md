@@ -27,7 +27,12 @@ experience risks land on real users, so review is strict by design.
 Security highlights (full text in the contract; violations are P1):
 credentials only via the three host-injection channels
 (`network.secrets[].inject` / `network.connections[].inject` /
-`node.secretBindings[]`); network targets ⊆ `ghost.json` allowlist (Node
+`node.secretBindings[]`) — with two approved exceptions that must NOT be
+flagged: a settings page saving the user-entered credential through same-origin
+`PUT /secrets/<key>` (the sanctioned write-only path), and handing credentials
+to an approved third-party runtime (e.g. TapTap Maker) without copying them
+into Cindy KV/Secret or retaining plaintext anywhere else (logs, page state);
+network targets ⊆ `ghost.json` allowlist (Node
 workers reviewed against their fixed endpoints instead); tools with
 irreversible external side effects must distinguish "not executed / executed /
 unknown" on every failure path; no `Math.random` for externally-visible ids;
@@ -43,6 +48,11 @@ vendor/dist changes require itemized evidence, never a bare "looks fine".
   `docs/localization.md` defines the English-fallback contract — do not demand
   translations the contract allows to fall back.
 - DCO: every commit signed off (`git commit -s`), author matching the sign-off.
+  Reviewers: audit ONLY the PR's actual commit list on GitHub
+  (`gh pr view <N> --json commits` or the DCO status check) — never a local
+  `git log`. Commits that exist only in your own sandbox checkout (e.g. a
+  scaffold commit your harness created to materialize the diff) are NOT part
+  of the PR and must not be flagged.
 - Bundled third-party dependencies changed → update that plugin's
   `THIRD-PARTY-LICENSES.txt`.
 - Paired bilingual docs (`README.md` ↔ `README.zh-CN.md`, etc.) must change in
