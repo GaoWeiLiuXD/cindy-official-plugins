@@ -66405,9 +66405,15 @@ var require_worker = __commonJS({
       };
     }
     async function sendMessage(credentials, action, deps) {
+      const options = mailOptions(credentials, action);
       const transporter = deps.createSmtp(credentials);
       try {
-        const info = await transporter.sendMail(mailOptions(credentials, action));
+        let info;
+        try {
+          info = await transporter.sendMail(options);
+        } catch (_error) {
+          throw new Error("SEND_UNCONFIRMED");
+        }
         return {
           sent: true,
           message_id: info.messageId || null,
@@ -66415,7 +66421,12 @@ var require_worker = __commonJS({
           rejected: Array.isArray(info.rejected) ? info.rejected.map(String) : []
         };
       } finally {
-        if (transporter && typeof transporter.close === "function") transporter.close();
+        if (transporter && typeof transporter.close === "function") {
+          try {
+            transporter.close();
+          } catch (_error) {
+          }
+        }
       }
     }
     async function findDraftFolder(client) {
@@ -66433,7 +66444,12 @@ var require_worker = __commonJS({
         if (!info || !Buffer.isBuffer(info.message)) throw new Error("DRAFT_BUILD_FAILED");
         return withImap(credentials, deps, async (client) => {
           const folder = await findDraftFolder(client);
-          const appended = await client.append(folder, info.message, ["\\Draft"], /* @__PURE__ */ new Date());
+          let appended;
+          try {
+            appended = await client.append(folder, info.message, ["\\Draft"], /* @__PURE__ */ new Date());
+          } catch (_error) {
+            throw new Error("DRAFT_SAVE_UNCONFIRMED");
+          }
           if (!appended) throw new Error("DRAFT_SAVE_FAILED");
           return {
             draft: true,
@@ -66443,7 +66459,12 @@ var require_worker = __commonJS({
           };
         });
       } finally {
-        if (composer && typeof composer.close === "function") composer.close();
+        if (composer && typeof composer.close === "function") {
+          try {
+            composer.close();
+          } catch (_error) {
+          }
+        }
       }
     }
     async function changeFlags(credentials, action, deps, seen) {
@@ -66564,6 +66585,12 @@ var require_worker = __commonJS({
       }
       if (message === "DRAFT_SAVE_FAILED") {
         return "Yahoo Mail \u672A\u80FD\u4FDD\u5B58\u8349\u7A3F\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5";
+      }
+      if (message === "SEND_UNCONFIRMED") {
+        return "\u65E0\u6CD5\u786E\u8BA4\u90AE\u4EF6\u662F\u5426\u5DF2\u53D1\u9001\u3002\u8BF7\u5148\u68C0\u67E5 Yahoo Mail \u7684\u201C\u5DF2\u53D1\u9001\u201D\u6587\u4EF6\u5939\uFF0C\u786E\u8BA4\u672A\u53D1\u9001\u524D\u4E0D\u8981\u91CD\u8BD5";
+      }
+      if (message === "DRAFT_SAVE_UNCONFIRMED") {
+        return "\u65E0\u6CD5\u786E\u8BA4\u8349\u7A3F\u662F\u5426\u5DF2\u4FDD\u5B58\u3002\u8BF7\u5148\u68C0\u67E5 Yahoo Mail \u7684\u8349\u7A3F\u7BB1\uFF0C\u786E\u8BA4\u672A\u4FDD\u5B58\u524D\u4E0D\u8981\u91CD\u8BD5";
       }
       if (message === "TARGET_FOLDER_REQUIRED") return "move \u9700\u8981\u76EE\u6807\u6587\u4EF6\u5939";
       if (message === "TARGET_FOLDER_SAME") return "\u76EE\u6807\u6587\u4EF6\u5939\u4E0D\u80FD\u4E0E\u5F53\u524D\u6587\u4EF6\u5939\u76F8\u540C";

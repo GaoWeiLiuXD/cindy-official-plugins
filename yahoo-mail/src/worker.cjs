@@ -360,9 +360,15 @@ function mailOptions(credentials, action) {
 }
 
 async function sendMessage(credentials, action, deps) {
+  const options = mailOptions(credentials, action);
   const transporter = deps.createSmtp(credentials);
   try {
-    const info = await transporter.sendMail(mailOptions(credentials, action));
+    let info;
+    try {
+      info = await transporter.sendMail(options);
+    } catch (_error) {
+      throw new Error('SEND_UNCONFIRMED');
+    }
     return {
       sent: true,
       message_id: info.messageId || null,
@@ -370,7 +376,13 @@ async function sendMessage(credentials, action, deps) {
       rejected: Array.isArray(info.rejected) ? info.rejected.map(String) : [],
     };
   } finally {
-    if (transporter && typeof transporter.close === 'function') transporter.close();
+    if (transporter && typeof transporter.close === 'function') {
+      try {
+        transporter.close();
+      } catch (_error) {
+        // SMTP may have already closed after accepting the message.
+      }
+    }
   }
 }
 
@@ -390,7 +402,12 @@ async function saveDraft(credentials, action, deps) {
     if (!info || !Buffer.isBuffer(info.message)) throw new Error('DRAFT_BUILD_FAILED');
     return withImap(credentials, deps, async (client) => {
       const folder = await findDraftFolder(client);
-      const appended = await client.append(folder, info.message, ['\\Draft'], new Date());
+      let appended;
+      try {
+        appended = await client.append(folder, info.message, ['\\Draft'], new Date());
+      } catch (_error) {
+        throw new Error('DRAFT_SAVE_UNCONFIRMED');
+      }
       if (!appended) throw new Error('DRAFT_SAVE_FAILED');
       return {
         draft: true,
@@ -400,7 +417,13 @@ async function saveDraft(credentials, action, deps) {
       };
     });
   } finally {
-    if (composer && typeof composer.close === 'function') composer.close();
+    if (composer && typeof composer.close === 'function') {
+      try {
+        composer.close();
+      } catch (_error) {
+        // The draft outcome is determined by IMAP APPEND, not composer cleanup.
+      }
+    }
   }
 }
 
@@ -546,6 +569,12 @@ function humanizeError(error) {
   }
   if (message === 'DRAFT_SAVE_FAILED') {
     return 'Yahoo Mail 未能保存草稿，请稍后重试';
+  }
+  if (message === 'SEND_UNCONFIRMED') {
+    return '无法确认邮件是否已发送。请先检查 Yahoo Mail 的“已发送”文件夹，确认未发送前不要重试';
+  }
+  if (message === 'DRAFT_SAVE_UNCONFIRMED') {
+    return '无法确认草稿是否已保存。请先检查 Yahoo Mail 的草稿箱，确认未保存前不要重试';
   }
   if (message === 'TARGET_FOLDER_REQUIRED') return 'move 需要目标文件夹';
   if (message === 'TARGET_FOLDER_SAME') return '目标文件夹不能与当前文件夹相同';

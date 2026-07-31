@@ -539,6 +539,79 @@ test('Worker 不会把 IMAP append 返回 false 误报为草稿保存成功', as
   );
 });
 
+test('Worker 将 SMTP 响应丢失标记为发送结果不确定', async () => {
+  let closed = false;
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@yahoo.com', appPassword: 'abcdefghijklmnop' },
+      {
+        action: 'send',
+        to: 'recipient@example.com',
+        subject: 'Test',
+        body_text: 'Message',
+      },
+      {
+        ...createWorkerHarness().deps,
+        createSmtp() {
+          return {
+            async sendMail() {
+              throw Object.assign(new Error('socket closed'), { code: 'ECONNRESET' });
+            },
+            close() {
+              closed = true;
+            },
+          };
+        },
+      },
+    ),
+    /SEND_UNCONFIRMED/,
+  );
+  assert.equal(closed, true);
+  assert.match(worker.humanizeError(new Error('SEND_UNCONFIRMED')), /无法确认/);
+  assert.match(worker.humanizeError(new Error('SEND_UNCONFIRMED')), /不要重试/);
+});
+
+test('Worker 将 IMAP APPEND 响应丢失标记为草稿结果不确定', async () => {
+  await assert.rejects(
+    worker.performAction(
+      { email: 'user@yahoo.com', appPassword: 'abcdefghijklmnop' },
+      {
+        action: 'draft',
+        to: 'recipient@example.com',
+        subject: 'Test',
+        body_text: 'Draft',
+      },
+      {
+        ...createWorkerHarness().deps,
+        createComposer() {
+          return {
+            async sendMail() {
+              return { message: Buffer.from('Subject: Test\r\n\r\nDraft') };
+            },
+            close() {},
+          };
+        },
+        createImap() {
+          return {
+            async connect() {},
+            async list() {
+              return [{ path: 'Drafts', specialUse: '\\Drafts' }];
+            },
+            async append() {
+              throw new Error('socket closed');
+            },
+            async logout() {},
+            close() {},
+          };
+        },
+      },
+    ),
+    /DRAFT_SAVE_UNCONFIRMED/,
+  );
+  assert.match(worker.humanizeError(new Error('DRAFT_SAVE_UNCONFIRMED')), /无法确认/);
+  assert.match(worker.humanizeError(new Error('DRAFT_SAVE_UNCONFIRMED')), /不要重试/);
+});
+
 test('Worker 分块读取邮件，并在解析前拒绝超过 12 MiB 的内容', async () => {
   const maxSourceBytes = 12 * 1024 * 1024;
   let parseCalls = 0;
@@ -583,4 +656,6 @@ test('Worker 将认证、网络与频控错误转换成可行动文案', () => {
   assert.match(worker.humanizeError(new Error('Too many simultaneous connections')), /稍后/);
   assert.match(worker.humanizeError(new Error('MESSAGE_MOVE_UNCONFIRMED')), /重新搜索/);
   assert.match(worker.humanizeError(new Error('DRAFT_SAVE_FAILED')), /草稿/);
+  assert.match(worker.humanizeError(new Error('SEND_UNCONFIRMED')), /已发送/);
+  assert.match(worker.humanizeError(new Error('DRAFT_SAVE_UNCONFIRMED')), /草稿箱/);
 });
