@@ -34,6 +34,11 @@
     "qq-mail": {
       "audience": "all"
     },
+    "yahoo-mail": {
+      "audience": {
+        "emails": []
+      }
+    },
     "taptap-maker": {
       "audience": "all"
     },
