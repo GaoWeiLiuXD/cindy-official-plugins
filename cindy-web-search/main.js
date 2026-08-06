@@ -47,14 +47,18 @@ async function readSearchPrefs() {
 
 /** Cindy AI:主机固定搜索模型、工具与托管凭证，插件只递查询意图。 */
 async function searchCindy(query, limit, callId) {
-  return cindy.send({
-    type: 'cindy-request',
-    kind: 'search_web',
-    query: query,
-    limit: limit,
-    provider: 'cindy',
-    callId: callId,
-  });
+  try {
+    return await cindy.send({
+      type: 'cindy-request',
+      kind: 'search_web',
+      query: query,
+      limit: limit,
+      provider: 'cindy',
+      callId: callId,
+    });
+  } catch (e) {
+    return { ok: false, message: 'Cindy AI 搜索服务暂时不可用，请稍后再试' };
+  }
 }
 
 /** Brave:GET + query 参数，Key 由主机注入 X-Subscription-Token。 */

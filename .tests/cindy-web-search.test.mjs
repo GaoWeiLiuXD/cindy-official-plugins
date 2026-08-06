@@ -48,6 +48,7 @@ function createHarness(options = {}) {
     async send(message) {
       if (message.type === 'cindy-request') {
         cindyRequests.push(message);
+        if (options.cindyError) throw options.cindyError;
         return options.cindyResult ?? {
           ok: true,
           provider: 'cindy',
@@ -255,6 +256,19 @@ test('missing provider fails closed when preferences cannot be read', async () =
   assert.equal(harness.networkCalls.length, 0);
   assert.equal(result.ok, false);
   assert.match(result.message, /搜索偏好读取失败/);
+});
+
+test('Cindy transport failures return an actionable service error', async () => {
+  const harness = createHarness({
+    cindyError: new Error('Failed to fetch'),
+  });
+  const result = await harness.search({ provider: 'cindy' });
+
+  assert.equal(harness.cindyRequests.length, 1);
+  assert.equal(harness.networkCalls.length, 0);
+  assert.equal(result.ok, false);
+  assert.equal(result.message, 'Cindy AI 搜索服务暂时不可用，请稍后再试');
+  assert.doesNotMatch(result.message, /Failed to fetch/);
 });
 
 test('explicit provider wins over settings and provider failures never fall back', async () => {
