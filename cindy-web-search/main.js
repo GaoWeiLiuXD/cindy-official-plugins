@@ -46,7 +46,7 @@ async function readSearchPrefs() {
 }
 
 /** Cindy AI:主机固定搜索模型、工具与托管凭证，插件只递查询意图。 */
-async function searchCindy(query, limit, callId) {
+async function searchCindy(query, limit, callId, callerTool) {
   try {
     return await cindy.send({
       type: 'cindy-request',
@@ -55,6 +55,7 @@ async function searchCindy(query, limit, callId) {
       limit: limit,
       provider: 'cindy',
       callId: callId,
+      callerTool: callerTool,
     });
   } catch (e) {
     return { ok: false, message: 'Cindy AI 搜索服务暂时不可用，请稍后再试' };
@@ -110,7 +111,7 @@ async function searchTavily(query, limit) {
   };
 }
 
-async function searchWeb(args, callId) {
+async function searchWeb(args, callId, callerTool) {
   var query = args && typeof args.query === 'string' ? args.query.trim() : '';
   if (!query) return { ok: false, message: 'query 不能为空' };
   if (query.length > 2000) return { ok: false, message: 'query 过长(上限 2000 字符)' };
@@ -120,7 +121,7 @@ async function searchWeb(args, callId) {
   if (provider !== undefined && provider !== 'cindy' && !isByoProvider(provider)) {
     return { ok: false, message: 'provider 只支持 cindy / brave / tavily' };
   }
-  if (provider === 'cindy') return searchCindy(query, limit, callId);
+  if (provider === 'cindy') return searchCindy(query, limit, callId, callerTool);
   if (provider === 'brave') return searchBrave(query, limit);
   if (provider === 'tavily') return searchTavily(query, limit);
 
@@ -131,7 +132,7 @@ async function searchWeb(args, callId) {
     return { ok: false, message: '搜索偏好读取失败，请稍后重试或显式选择搜索源' };
   }
   return prefs.cindyAiEnabled
-    ? searchCindy(query, limit, callId)
+    ? searchCindy(query, limit, callId, callerTool)
     : prefs.byoDefaultProvider === 'tavily'
       ? searchTavily(query, limit)
       : searchBrave(query, limit);
@@ -144,7 +145,7 @@ cindy.onHostMessage(async function (msg) {
     return;
   }
   try {
-    var r = await searchWeb(msg.args || {}, msg.callId);
+    var r = await searchWeb(msg.args || {}, msg.callId, msg.tool);
     if (r.ok) {
       cindy.send({
         type: 'tool-result',

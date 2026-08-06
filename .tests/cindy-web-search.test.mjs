@@ -212,6 +212,7 @@ test('missing provider uses Cindy AI by default and does not touch BYO network',
   assert.equal(request.limit, 5);
   assert.equal(request.provider, 'cindy');
   assert.equal(request.callId, 'call-1');
+  assert.equal(request.callerTool, 'search_web');
   assert.equal(result.ok, true);
   assert.equal(result.result.provider, 'cindy');
 });
