@@ -1,6 +1,7 @@
 /**
  * Web Search 设置页脚本(CSP 禁内联,外挂加载)。
- * 数据面:主机 /secrets 只写通道(绝对路径,协议保留路径)——
+ * 普通偏好通过 /kv 保存偏离代码默认值的 override。
+ * 凭证数据面继续使用主机 /secrets 只写通道(绝对路径,协议保留路径)——
  *   GET /secrets           → [{ key, saved, tail? }](只有状态 + 尾 4 位指纹,永远没有值)
  *   PUT /secrets/<key>     → { value } 单向入库(主机 OS 级加密保管)
  *   DELETE /secrets/<key>  → 清除
@@ -12,11 +13,61 @@
   'use strict';
 
   var statusTimer = null;
+  var preferenceWriteQueue = Promise.resolve();
+
   function showStatus(text) {
     var el = document.getElementById('status');
     el.textContent = text;
     if (statusTimer) clearTimeout(statusTimer);
     statusTimer = setTimeout(function () { el.textContent = ''; }, 2500);
+  }
+
+  async function readKv() {
+    try {
+      var response = await fetch('/kv');
+      var value = await response.json();
+      return value && typeof value === 'object' ? value : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function isByoProvider(value) {
+    return value === 'brave' || value === 'tavily';
+  }
+
+  function applyPreferences(kv) {
+    document.getElementById('cindy-ai-enabled').checked =
+      typeof kv.cindyAiEnabled === 'boolean' ? kv.cindyAiEnabled : true;
+    document.getElementById('byo-default-provider').value =
+      isByoProvider(kv.byoDefaultProvider) ? kv.byoDefaultProvider : 'brave';
+  }
+
+  async function loadPreferences() {
+    applyPreferences(await readKv());
+  }
+
+  function persistPreferences() {
+    var enabled = document.getElementById('cindy-ai-enabled').checked;
+    var byoProvider = document.getElementById('byo-default-provider').value;
+    preferenceWriteQueue = preferenceWriteQueue
+      .then(async function savePreferences() {
+        var kv = await readKv();
+        if (enabled) delete kv.cindyAiEnabled;
+        else kv.cindyAiEnabled = false;
+        if (byoProvider === 'brave') delete kv.byoDefaultProvider;
+        else kv.byoDefaultProvider = byoProvider;
+        var response = await fetch('/kv', {
+          method: 'PUT',
+          body: JSON.stringify(kv),
+        });
+        if (!response.ok) throw new Error('kv write failed');
+        showStatus('搜索偏好已保存');
+      })
+      .catch(async function preferenceSaveFailed() {
+        showStatus('搜索偏好保存失败，请重试');
+        applyPreferences(await readKv());
+      });
   }
 
   /** 每行凭证的接线上下文(DOM 引用 + data-* 文案)。 */
@@ -120,5 +171,9 @@
     }
   }
 
+  document.getElementById('cindy-ai-enabled').addEventListener('change', persistPreferences);
+  document.getElementById('byo-default-provider').addEventListener('change', persistPreferences);
+
+  void loadPreferences();
   void load();
 })();
