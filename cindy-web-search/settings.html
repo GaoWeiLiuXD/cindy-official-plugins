@@ -43,12 +43,14 @@
   .switch input:focus-visible + .switch-track {
     outline: 2px solid var(--focus-ring, #4c8dff); outline-offset: 2px;
   }
+  .switch input:disabled + .switch-track { cursor: default; opacity: .55; }
   .provider-select {
     min-width: 116px; height: 32px; padding: 0 28px 0 10px;
     border: 1px solid var(--border-default, #e4e4e0); border-radius: 6px;
     background: var(--surface-elevated, #ffffff); color: var(--text-primary, #1a1a1a);
     font: inherit;
   }
+  .provider-select:disabled { cursor: default; opacity: .55; }
   .secret + .secret { margin-top: 16px; }
   /* title 与控制台链接右缩 2px 对齐胶囊输入框的文字视觉边(同 xd-mivo)。 */
   .label-row { display: flex; align-items: center; gap: 8px; padding-left: 2px; }
@@ -114,7 +116,7 @@
         <p class="hint">也可关闭并使用自己的 Brave / Tavily Key。</p>
       </div>
       <label class="switch">
-        <input id="cindy-ai-enabled" type="checkbox" checked aria-label="使用 Cindy AI 搜索">
+        <input id="cindy-ai-enabled" type="checkbox" checked disabled aria-label="使用 Cindy AI 搜索">
         <span class="switch-track"></span>
       </label>
     </div>
@@ -123,7 +125,7 @@
         <label class="preference-title" for="byo-default-provider">自备搜索渠道</label>
         <p class="hint">关闭 Cindy AI 搜索后使用。</p>
       </div>
-      <select id="byo-default-provider" class="provider-select">
+      <select id="byo-default-provider" class="provider-select" disabled>
         <option value="brave">Brave</option>
         <option value="tavily">Tavily</option>
       </select>

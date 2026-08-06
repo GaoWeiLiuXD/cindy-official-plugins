@@ -32,17 +32,15 @@ async function readSearchPrefs() {
     cindyAiEnabled: true,
     byoDefaultProvider: 'brave',
   };
-  try {
-    var response = await fetch('/kv');
-    var kv = await response.json();
-    if (kv && typeof kv === 'object') {
-      if (typeof kv.cindyAiEnabled === 'boolean') prefs.cindyAiEnabled = kv.cindyAiEnabled;
-      if (isByoProvider(kv.byoDefaultProvider)) {
-        prefs.byoDefaultProvider = kv.byoDefaultProvider;
-      }
-    }
-  } catch (e) {
-    // 普通偏好读取失败时使用代码默认值；不影响显式 Provider。
+  var response = await fetch('/kv');
+  if (!response.ok) throw new Error('搜索偏好读取失败');
+  var kv = await response.json();
+  if (!kv || typeof kv !== 'object' || Array.isArray(kv)) {
+    throw new Error('搜索偏好格式无效');
+  }
+  if (typeof kv.cindyAiEnabled === 'boolean') prefs.cindyAiEnabled = kv.cindyAiEnabled;
+  if (isByoProvider(kv.byoDefaultProvider)) {
+    prefs.byoDefaultProvider = kv.byoDefaultProvider;
   }
   return prefs;
 }
@@ -122,7 +120,12 @@ async function searchWeb(args, callId) {
   if (provider === 'brave') return searchBrave(query, limit);
   if (provider === 'tavily') return searchTavily(query, limit);
 
-  var prefs = await readSearchPrefs();
+  var prefs;
+  try {
+    prefs = await readSearchPrefs();
+  } catch (e) {
+    return { ok: false, message: '搜索偏好读取失败，请稍后重试或显式选择搜索源' };
+  }
   return prefs.cindyAiEnabled
     ? searchCindy(query, limit, callId)
     : prefs.byoDefaultProvider === 'tavily'

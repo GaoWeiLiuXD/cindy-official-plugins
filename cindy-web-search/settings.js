@@ -14,6 +14,8 @@
 
   var statusTimer = null;
   var preferenceWriteQueue = Promise.resolve();
+  var preferencesReady = false;
+  var lastSavedPreferences = null;
 
   function showStatus(text) {
     var el = document.getElementById('status');
@@ -23,50 +25,80 @@
   }
 
   async function readKv() {
-    try {
-      var response = await fetch('/kv');
-      var value = await response.json();
-      return value && typeof value === 'object' ? value : {};
-    } catch (e) {
-      return {};
+    var response = await fetch('/kv');
+    if (!response.ok) throw new Error('kv read failed');
+    var value = await response.json();
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error('kv response invalid');
     }
+    return value;
   }
 
   function isByoProvider(value) {
     return value === 'brave' || value === 'tavily';
   }
 
-  function applyPreferences(kv) {
-    document.getElementById('cindy-ai-enabled').checked =
-      typeof kv.cindyAiEnabled === 'boolean' ? kv.cindyAiEnabled : true;
-    document.getElementById('byo-default-provider').value =
-      isByoProvider(kv.byoDefaultProvider) ? kv.byoDefaultProvider : 'brave';
+  function normalizePreferences(kv) {
+    return {
+      cindyAiEnabled: typeof kv.cindyAiEnabled === 'boolean' ? kv.cindyAiEnabled : true,
+      byoDefaultProvider: isByoProvider(kv.byoDefaultProvider) ? kv.byoDefaultProvider : 'brave',
+    };
+  }
+
+  function setPreferenceControlsDisabled(disabled) {
+    document.getElementById('cindy-ai-enabled').disabled = disabled;
+    document.getElementById('byo-default-provider').disabled = disabled;
+  }
+
+  function applyPreferences(preferences) {
+    document.getElementById('cindy-ai-enabled').checked = preferences.cindyAiEnabled;
+    document.getElementById('byo-default-provider').value = preferences.byoDefaultProvider;
   }
 
   async function loadPreferences() {
-    applyPreferences(await readKv());
+    try {
+      var preferences = normalizePreferences(await readKv());
+      applyPreferences(preferences);
+      lastSavedPreferences = preferences;
+      preferencesReady = true;
+      setPreferenceControlsDisabled(false);
+    } catch (e) {
+      preferencesReady = false;
+      setPreferenceControlsDisabled(true);
+      showStatus('搜索偏好加载失败，请重新打开设置页');
+    }
   }
 
   function persistPreferences() {
-    var enabled = document.getElementById('cindy-ai-enabled').checked;
-    var byoProvider = document.getElementById('byo-default-provider').value;
+    if (!preferencesReady) return;
+    var nextPreferences = {
+      cindyAiEnabled: document.getElementById('cindy-ai-enabled').checked,
+      byoDefaultProvider: document.getElementById('byo-default-provider').value,
+    };
+    preferencesReady = false;
+    setPreferenceControlsDisabled(true);
     preferenceWriteQueue = preferenceWriteQueue
       .then(async function savePreferences() {
         var kv = await readKv();
-        if (enabled) delete kv.cindyAiEnabled;
+        if (nextPreferences.cindyAiEnabled) delete kv.cindyAiEnabled;
         else kv.cindyAiEnabled = false;
-        if (byoProvider === 'brave') delete kv.byoDefaultProvider;
-        else kv.byoDefaultProvider = byoProvider;
+        if (nextPreferences.byoDefaultProvider === 'brave') delete kv.byoDefaultProvider;
+        else kv.byoDefaultProvider = nextPreferences.byoDefaultProvider;
         var response = await fetch('/kv', {
           method: 'PUT',
           body: JSON.stringify(kv),
         });
         if (!response.ok) throw new Error('kv write failed');
+        lastSavedPreferences = nextPreferences;
         showStatus('搜索偏好已保存');
       })
-      .catch(async function preferenceSaveFailed() {
+      .catch(function preferenceSaveFailed() {
         showStatus('搜索偏好保存失败，请重试');
-        applyPreferences(await readKv());
+        if (lastSavedPreferences) applyPreferences(lastSavedPreferences);
+      })
+      .finally(function preferenceSaveFinished() {
+        preferencesReady = true;
+        setPreferenceControlsDisabled(false);
       });
   }
 
