@@ -11,7 +11,8 @@ const manifest = JSON.parse(
 
 test('manifest keeps privileged simulator runtime ownership in Cindy Host', () => {
   assert.equal(manifest.id, 'ios-simulator');
-  assert.equal(manifest.version, '1.0.0');
+  assert.equal(manifest.version, '1.0.1');
+  assert.equal(manifest.minCindyVersion, '0.1.39');
   assert.equal(manifest.launch, 'on-demand');
   assert.deepEqual(manifest.slots, ['skill', 'ios-simulator']);
   assert.equal(manifest.panel, undefined);
