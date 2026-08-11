@@ -24,9 +24,7 @@ const OFFICIAL_SLOTS = new Set([
   'skill', 'workspace', 'ios-simulator',
 ]);
 
-const pluginDirs = fs.readdirSync(root)
-  .filter((name) => fs.existsSync(path.join(root, name, 'ghost.json')))
-  .sort();
+const pluginDirs = pluginRootsAt('HEAD');
 const provisioning = readJson(path.join(root, 'provisioning.json'));
 
 function readUtf8(file, maxBytes = Number.POSITIVE_INFINITY) {
@@ -462,6 +460,9 @@ test('the pinned Cindy manifest contract rejects client-incompatible shapes', ()
 
 test('all official plugins satisfy the repository publish contract', () => {
   assert.ok(pluginDirs.length > 0, 'no official plugins found');
+  for (const pluginDir of pluginDirs) {
+    assert.equal(pluginDir.includes('/'), false, `${pluginDir}: official plugin directories must be at repository root`);
+  }
   const ids = new Map();
   const commands = new Map();
   for (const pluginDir of pluginDirs) {
