@@ -343,7 +343,13 @@ function validatePluginSource(pluginDir, manifest) {
     }
   }
   for (const rootFile of ROOT_PACKAGE_FILES) {
-    assert.ok(!seenFolded.has(rootFile.toLowerCase()), `${pluginDir}: ${rootFile} conflicts with the repository copy added during packaging`);
+    const foldedRootFile = rootFile.toLowerCase();
+    for (const [folded, relativePath] of seenFolded) {
+      assert.ok(
+        folded !== foldedRootFile && !folded.startsWith(`${foldedRootFile}/`),
+        `${pluginDir}: ${relativePath} conflicts with the repository ${rootFile} added during packaging`,
+      );
+    }
     totalBytes += fs.statSync(path.join(root, rootFile)).size;
   }
   for (const reserved of RESERVED_CLIENT_FILES) {
