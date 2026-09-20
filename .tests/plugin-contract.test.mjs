@@ -531,8 +531,16 @@ test('the pinned Cindy manifest contract rejects invalid manifest shapes', () =>
 test('repository admission does not depend on the current Host capability catalog', () => {
   const base = { schemaVersion: 3, minCindyVersion: '0.1.0', id: 'future-contract',
     name: 'Future', version: '1.0.0', entry: 'main.js', description: 'Fixture', whenToUse: 'Fixture' };
+  const extension = { mode: 'future', options: [1, null, { enabled: true }] };
   const declarations = {
+    futureCapability: extension,
     mainView: { html: 'view.html', future: { enabled: true } },
+    panel: { html: 'panel.html', future: extension },
+    card: { future: extension },
+    agent: { future: extension },
+    preview: { hosts: ['example.test'], future: extension },
+    skill: { items: [{ dir: 'skills/demo', name: 'demo', description: 'Demo', future: extension }], future: extension },
+    manual: { items: [{ dir: 'manual/demo', name: 'demo', description: 'Demo', future: extension }], future: extension },
     node: { entry: 'worker.cjs', protocol: 'json-rpc-stdio', future: true,
       secretBindings: [{ key: 'token', label: 'Token', methods: ['run'], oauthSecret: 'future_account', future: true }] },
     cindy: { image: ['future-action'], future: { enabled: true } },
@@ -544,11 +552,22 @@ test('repository admission does not depend on the current Host capability catalo
   const result = validateGhostManifest(manifest);
   assert.equal(result.ok, true);
   for (const [key, value] of Object.entries(declarations)) assert.deepEqual(result.manifest[key], value);
+  assert.deepEqual(validateGhostManifest(result.manifest), result, 'repeated normalization must preserve extensions');
   assert.doesNotThrow(() => validateOfficialManifest('future-contract', {
     ...base, schemaVersion: 2, slots: ['future-slot', 'main-view'], mainView: { html: 'view.html' },
   }));
   assert.equal(validateGhostManifest({ ...manifest, node: { ...manifest.node, entry: '../escape.cjs' } }).ok, false);
   assert.equal(validateGhostManifest({ ...manifest, cindy: { image: [42] } }).ok, false);
+  for (const invalid of [
+    { panel: { html: '../escape.html', future: extension } },
+    { card: { externalLinks: 'yes', future: extension } },
+    { agent: { background: 'yes', future: extension } },
+    { preview: { hosts: ['https://example.test/path'], future: extension } },
+    { skill: { items: [{ dir: '../escape', name: 'demo', description: 'Demo' }], future: extension } },
+    { manual: { items: [{ dir: '../escape', name: 'demo', description: 'Demo' }], future: extension } },
+  ]) {
+    assert.equal(validateGhostManifest({ ...base, ...invalid }).ok, false, JSON.stringify(invalid));
+  }
 });
 
 test('mainView HTML must exist among tracked package files', () => {
