@@ -184,7 +184,7 @@ function createSettingsHarness(options = {}) {
 
 test('manifest declares Cindy Web Search and keeps BYO providers explicit', () => {
   assert.equal(manifest.version, '1.3.3');
-  assert.equal(manifest.minCindyVersion, '0.1.75');
+  assert.equal(manifest.minCindyVersion, '0.1.64');
   assert.equal(manifest.schemaVersion, 3);
   assert.deepEqual(manifest.cindy, { search: ['web'] });
   assert.equal(Object.hasOwn(manifest, 'slots'), false);
