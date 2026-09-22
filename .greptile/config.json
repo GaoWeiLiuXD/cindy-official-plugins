@@ -71,7 +71,7 @@
     {
       "id": "network-allowlist",
       "severity": "high",
-      "rule": "插件自主联网（Panel/订阅/scheduler/常驻进程等脱离当前 Agent 调用的场景）的所有目标必须命中 ghost.json 的 network.hosts 白名单。当前 Agent 工具调用内的普通 HTTPS 可以经 cindy.fetch 携带 Host 下发且严格在途的 callId 复用 Agent 授权，review 不得因未声明该域名误报；此途径不得注入未在 manifest 声明并命中目标 host 的托管凭证。发现硬编码内网或调试地址（localhost/127.x/192.168.x/10.x）、或绕过 cindy.fetch 的直连（原生 fetch/XMLHttpRequest/WebSocket/EventSource）必须按 P1 指出。自主白名单新增条目时，必须能在 PR 描述或源码中找到必要性出处。例外：声明顶层 node 字段的插件，其 node/worker.cjs 网络按 node 自主能力边界审查（固定 IMAP/SMTP/API 端点）。"
+      "rule": "插件自主联网（Panel/订阅/scheduler/常驻进程等脱离当前 Agent 调用的场景）的所有目标必须命中 ghost.json 的 network.hosts 白名单。当前 Agent 工具调用内的普通 HTTPS 可以经 cindy.fetch 携带 Host 下发且严格在途的 callId 复用 Agent 授权，review 不得因未声明该域名误报；此途径不得注入未在 manifest 声明并命中目标 host 的托管凭证。发现硬编码内网或调试地址（localhost/127.x/192.168.x/10.x）、或绕过 cindy.fetch 的直连（原生 fetch/XMLHttpRequest/WebSocket/EventSource）必须按 P1 指出。宿主本地预览例外：ghost.json 的 preview.hosts 可声明宿主明确支持的 localhost、127.0.0.1、[::1]；通过宿主 preview 能力打开命中该声明的本地预览 URL，不得仅因使用这些回环地址或 HTTP 判 P1。审查须核对本地预览用途、声明与宿主 URL 校验链路；此例外不扩展到 network.hosts、其他内网地址或插件自行直连。自主白名单新增条目时，必须能在 PR 描述或源码中找到必要性出处。例外：声明顶层 node 字段的插件，其 node/worker.cjs 网络按 node 自主能力边界审查（固定 IMAP/SMTP/API 端点）。"
     },
     {
       "id": "capability-minimization",
