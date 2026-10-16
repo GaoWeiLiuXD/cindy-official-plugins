@@ -125,13 +125,20 @@ and the task APIs remain available.
 The plugin owns its settings UI and storage. Use the existing `tasks.models`,
 explicit creation `route`, and `tasks.setModel` interfaces for model selection;
 check `tasks.capabilities` before using incremental operations. Use the existing
-directory and authorization APIs for those settings. This field does not grant
-extra permissions: new ordinary tasks start in `ask` mode in a host-managed
+directory and authorization APIs for those settings. This field does not directly
+grant higher task permissions: new ordinary tasks start in `ask` mode in a host-managed
 directory, and write-access approval affects only that task. Existing tasks use
 their own grants, with account, ownership, Plan, and capability checks intact.
 Without an explicit route, task creation uses the initiating task/current new-task
 selection. Oneshot skips the host preference override but retains the manifest's
 `oneshotModel` and system auxiliary-model fallback chain.
+
+Opting out removes the host's per-plugin permission limit from existing tasks,
+so it appears separately in the existing installation permission review. An update
+from omitted/`true` to `false` requires the existing expanded-permission confirmation;
+automatic updates wait for that confirmation. Keeping `false` does not ask again,
+and restoring host management is not an expansion. Server-default installations
+retain their existing exemption. No separate trust setting is added.
 
 Older clients ignore this field and retain host-managed behavior. The updated
 manifest validator accepting it does not prove runtime support or a released
