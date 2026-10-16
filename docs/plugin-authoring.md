@@ -88,7 +88,7 @@ existing capabilities, not a requirement to add capabilities the plugin never ha
 
 Boolean capabilities must be literal `true` when present; omit unused ones rather
 than setting `false` or `null`. Keep independent fields such as `manual`, `setup`,
-`locales`, `settingsHtml`, `command`, and `keywords`; their absence from `slots`
+`locales`, `settingsHtml`, `taskPreferences`, `command`, and `keywords`; their absence from `slots`
 does not make them disposable. A format-only migration does not change tool
 behavior or execution paths. Historical empty slot names without declarations
 should not be filled with new permissions; inspect their actual usage. Do not
@@ -104,6 +104,39 @@ The validator preserves unknown v3 top-level fields. Preservation neither grants
 permission nor proves Host implementation. Business functionality built on
 existing network, file, or Node interfaces does not require client-side business
 registration. An invented field or method cannot create an unimplemented Host API.
+
+## Plugin-managed task preferences
+
+The top-level `taskPreferences` field is an optional boolean configuration policy,
+not a presence-only capability. Both `true` and `false` are valid in v2 and v3.
+Omitting it or setting it to `true` keeps Cindy's existing per-plugin **Model and
+tasks** settings. A plugin that maintains these settings itself declares:
+
+```json
+{ "taskPreferences": false }
+```
+
+On a supporting client, only this plugin opts out: Cindy hides its settings card
+and stops reading or writing its host-managed model, permission, and working-directory
+defaults. Previously saved defaults stay dormant, do not participate in execution,
+and become available again if the plugin restores the default policy. Other plugins
+and the task APIs remain available.
+
+The plugin owns its settings UI and storage. Use the existing `tasks.models`,
+explicit creation `route`, and `tasks.setModel` interfaces for model selection;
+check `tasks.capabilities` before using incremental operations. Use the existing
+directory and authorization APIs for those settings. This field does not grant
+extra permissions: new ordinary tasks start in `ask` mode in a host-managed
+directory, and write-access approval affects only that task. Existing tasks use
+their own grants, with account, ownership, Plan, and capability checks intact.
+Without an explicit route, task creation uses the initiating task/current new-task
+selection. Oneshot skips the host preference override but retains the manifest's
+`oneshotModel` and system auxiliary-model fallback chain.
+
+Older clients ignore this field and retain host-managed behavior. The updated
+manifest validator accepting it does not prove runtime support or a released
+minimum version. Establish stable/Beta release evidence before relying on the
+opt-out behavior or setting `minCindyVersion`; do not infer support from a merged PR.
 
 ## Version and installation facts
 

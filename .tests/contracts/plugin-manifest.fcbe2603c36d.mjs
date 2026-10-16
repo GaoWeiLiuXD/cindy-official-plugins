@@ -1,5 +1,5 @@
 // Generated from Cindy packages/plugin-protocol/src/manifest.ts (bundled with routineEvents.ts)
-// source sha256: 20ab276de16e2a56a1722865275fbd3cadb60dacb0e7b2ccb6433513c6959f74
+// source sha256: fcbe2603c36d8fcefc9587955baa350fc8fb1bc7a19c1addcfcbe3182948c9a9
 // Do not edit by hand. Licensed under Apache-2.0; see NOTICE.
 // packages/plugin-protocol/src/routineEvents.ts
 function parseGhostRoutineEvents(raw) {
@@ -285,6 +285,7 @@ var GHOST_MANIFEST_KNOWN_TOP_LEVEL_FIELDS = /* @__PURE__ */ new Set([
   "node",
   "settingsHtml",
   "settingsHeight",
+  "taskPreferences",
   "slots",
   "card",
   "tools",
@@ -652,6 +653,9 @@ function validateGhostManifest(value) {
   }
   if (raw.settingsHtml !== void 0 && !isSafeGhostRelativePath(raw.settingsHtml)) {
     return { ok: false, reason: "settingsHtml \u5FC5\u987B\u662F\u5B89\u88C5\u76EE\u5F55\u5185\u7684\u5B89\u5168\u76F8\u5BF9\u8DEF\u5F84" };
+  }
+  if (raw.taskPreferences !== void 0 && typeof raw.taskPreferences !== "boolean") {
+    return { ok: false, reason: "taskPreferences \u5FC5\u987B\u662F\u5E03\u5C14\u503C" };
   }
   if (raw.settingsHeight !== void 0) {
     if (raw.settingsHtml === void 0) {
@@ -1727,19 +1731,30 @@ function validateGhostManifest(value) {
     if (agentRaw.errand !== void 0 && typeof agentRaw.errand !== "boolean") {
       return { ok: false, reason: "agent.errand \u5FC5\u987B\u662F\u5E03\u5C14\u503C" };
     }
+    if (agentRaw.tasks !== void 0 && typeof agentRaw.tasks !== "boolean") {
+      return { ok: false, reason: "agent.tasks must be boolean" };
+    }
+    if (agentRaw.hiddenTasks !== void 0 && typeof agentRaw.hiddenTasks !== "boolean") {
+      return { ok: false, reason: "agent.hiddenTasks must be boolean" };
+    }
+    if (agentRaw.hiddenTasks === true && agentRaw.tasks !== true) {
+      return { ok: false, reason: "agent.hiddenTasks: true \u9700\u8981\u540C\u65F6\u58F0\u660E agent.tasks: true" };
+    }
     if (agentRaw.schedule !== void 0 && typeof agentRaw.schedule !== "boolean") {
       return { ok: false, reason: "agent.schedule \u5FC5\u987B\u662F\u5E03\u5C14\u503C" };
     }
-    if (agentRaw.background !== true && agentRaw.errand !== true && agentRaw.schedule !== true && Object.keys(unknownDeclarationFields(agentRaw, ["background", "errand", "schedule"])).length === 0) {
+    if (agentRaw.background !== true && agentRaw.errand !== true && agentRaw.schedule !== true && agentRaw.tasks !== true && Object.keys(unknownDeclarationFields(agentRaw, ["background", "errand", "schedule", "tasks", "hiddenTasks"])).length === 0) {
       return {
         ok: false,
-        reason: "agent \u80FD\u529B\u8BE6\u5355\u53EA\u6709 background: true / errand: true / schedule: true \u4E09\u9879\u52A0\u6863;\u4EC5\u9700\u7528\u6237\u70B9\u51FB\u89E6\u53D1\u65F6\u8BF7\u7701\u7565 agent \u5B57\u6BB5"
+        reason: "agent \u80FD\u529B\u8BE6\u5355\u53EA\u6709 background: true / errand: true / schedule: true / tasks: true \u56DB\u9879\u52A0\u6863;\u4EC5\u9700\u7528\u6237\u70B9\u51FB\u89E6\u53D1\u65F6\u8BF7\u7701\u7565 agent \u5B57\u6BB5"
       };
     }
     agent = {
-      ...unknownDeclarationFields(agentRaw, ["background", "errand", "schedule"]),
+      ...unknownDeclarationFields(agentRaw, ["background", "errand", "schedule", "tasks", "hiddenTasks"]),
       ...agentRaw.background === true ? { background: true } : {},
       ...agentRaw.errand === true ? { errand: true } : {},
+      ...agentRaw.tasks === true ? { tasks: true } : {},
+      ...agentRaw.tasks === true && agentRaw.hiddenTasks === true ? { hiddenTasks: true } : {},
       ...agentRaw.schedule === true ? { schedule: true } : {}
     };
   }
@@ -2392,7 +2407,9 @@ function validateGhostManifest(value) {
       ...agent !== void 0 || prepared.v3BaseAgent ? { agent: agent ?? {} } : {},
       ...node !== void 0 ? { node } : {},
       ...raw.settingsHtml !== void 0 ? { settingsHtml: raw.settingsHtml } : {},
+      ...raw.mobile !== void 0 ? { mobile: raw.mobile } : {},
       ...raw.settingsHeight !== void 0 ? { settingsHeight: raw.settingsHeight } : {},
+      ...raw.taskPreferences !== void 0 ? { taskPreferences: raw.taskPreferences } : {},
       ...prepared.schemaVersion === 2 ? { slots } : {},
       ...card !== void 0 || prepared.v3BaseCard || prepared.schemaVersion === 3 && slots.includes("card") ? { card: card ?? {} } : {},
       ...tools !== void 0 ? { tools } : {},

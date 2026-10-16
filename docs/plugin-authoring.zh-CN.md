@@ -69,7 +69,7 @@ subscribe）、Cindy 类目/动作与订阅 topics/hooks；旧 v2 slot 名称也
 | `ios-simulator` | `iosSimulator: true` | Host 内嵌模拟器入口；已有 Skill 等声明同时保留 |
 
 布尔能力出现时必须为 `true`，不用时省略，不能写 `false` 或 `null`。
-`manual`、`setup`、`locales`、`settingsHtml`、`command`、`keywords` 等独立字段继续保留；
+`manual`、`setup`、`locales`、`settingsHtml`、`taskPreferences`、`command`、`keywords` 等独立字段继续保留；
 不能因为它们不在 `slots` 中就删除。只做格式迁移时，不应改动工具行为或源码执行路径。
 旧清单中只有名字、没有详单的历史空声明不应被补成新增权限；结合实际代码判断。
 不认识的声明不能凭名称猜测映射或静默删除，应依据目标 Host 的真实契约确认。
@@ -81,6 +81,31 @@ subscribe）、Cindy 类目/动作与订阅 topics/hooks；旧 v2 slot 名称也
 未知 v3 顶层字段会由校验器保留；这既不等于自动授权，也不证明 Host 已实现该能力。
 新业务若能由现有网络、文件或 Node 接口完成，无需客户端增加具体业务能力注册。
 真正没有 Host 实现的接口，不能通过自造字段或方法名获得。
+
+## 插件自行管理任务配置
+
+顶层 `taskPreferences` 是可选的布尔配置策略，不是只能以 `true` 声明的能力字段。
+v2 和 v3 均接受 `true`、`false`；省略或设为 `true` 时继续使用 Cindy 原有的逐插件
+「模型与任务」设置。由插件自行维护这些配置时，声明：
+
+```json
+{ "taskPreferences": false }
+```
+
+在支持该字段的客户端上，仅此插件退出宿主管理：Cindy 隐藏其配置卡，不再读写它的
+宿主模型、权限和工作目录默认值。先前保存的默认值休眠，不参与执行；恢复默认策略
+后可重新使用。其他插件及任务 API 保持可用。
+
+插件自行提供设置界面并保存配置。模型使用已有 `tasks.models`、创建时显式 `route`
+和 `tasks.setModel`；使用增量接口前检查 `tasks.capabilities`。目录和授权使用原有
+API。该声明不增加权限：新普通任务初始为 `ask`、宿主管理目录，申请写权限只影响
+当前任务；已有任务按自身授权执行，账号、归属、Plan 和能力批准检查保持有效。
+未显式传 route 时，新任务使用发起任务／当前新任务选择。快问快答跳过宿主模型
+覆盖，仍沿用身份卡的 `oneshotModel` 与系统辅助模型回退链。
+
+旧客户端忽略此字段，继续使用宿主管理。清单校验通过不证明运行时支持或某个最低
+版本已经发布；依赖退出宿主管理的行为或填写 `minCindyVersion` 前，应取得正式稳定版
+或 Beta 的发布证据，不能从 PR 已合入推断支持版本。
 
 ## 版本与安装事实
 
