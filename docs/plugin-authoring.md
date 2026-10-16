@@ -88,7 +88,7 @@ existing capabilities, not a requirement to add capabilities the plugin never ha
 
 Boolean capabilities must be literal `true` when present; omit unused ones rather
 than setting `false` or `null`. Keep independent fields such as `manual`, `setup`,
-`locales`, `settingsHtml`, `taskPreferences`, `command`, and `keywords`; their absence from `slots`
+`locales`, `settingsHtml`, `showTaskPreferences`, `command`, and `keywords`; their absence from `slots`
 does not make them disposable. A format-only migration does not change tool
 behavior or execution paths. Historical empty slot names without declarations
 should not be filled with new permissions; inspect their actual usage. Do not
@@ -105,45 +105,27 @@ permission nor proves Host implementation. Business functionality built on
 existing network, file, or Node interfaces does not require client-side business
 registration. An invented field or method cannot create an unimplemented Host API.
 
-## Plugin-managed task preferences
+## Host default settings card
 
-The top-level `taskPreferences` field is an optional boolean configuration policy,
+The top-level `showTaskPreferences` field is an optional boolean display setting,
 not a presence-only capability. Both `true` and `false` are valid in v2 and v3.
-Omitting it or setting it to `true` keeps Cindy's existing per-plugin **Model and
-tasks** settings. A plugin that maintains these settings itself declares:
+Omitting it or setting it to `true` keeps the existing capability-based visibility
+of Cindy's **Model and tasks** card. A plugin providing its own settings UI can declare:
 
 ```json
-{ "taskPreferences": false }
+{ "showTaskPreferences": false }
 ```
 
-On a supporting client, only this plugin opts out: Cindy hides its settings card
-and stops reading or writing its host-managed model, permission, and working-directory
-defaults. Previously saved defaults stay dormant, do not participate in execution,
-and become available again if the plugin restores the default policy. Other plugins
-and the task APIs remain available.
+Supporting clients hide the Host's default card on Desktop and mobile. This field
+only controls visibility; task APIs, model precedence, saved defaults, permission
+checks, and installation confirmation keep their existing behavior.
+Plugins can still select models through the existing `tasks.models`, explicit
+creation `route`, and `tasks.setModel` interfaces; check `tasks.capabilities`
+before using incremental operations.
 
-The plugin owns its settings UI and storage. Use the existing `tasks.models`,
-explicit creation `route`, and `tasks.setModel` interfaces for model selection;
-check `tasks.capabilities` before using incremental operations. Use the existing
-directory and authorization APIs for those settings. This field does not directly
-grant higher task permissions: new ordinary tasks start in `ask` mode in a host-managed
-directory, and write-access approval affects only that task. Existing tasks use
-their own grants, with account, ownership, Plan, and capability checks intact.
-Without an explicit route, task creation uses the initiating task/current new-task
-selection. Oneshot skips the host preference override but retains the manifest's
-`oneshotModel` and system auxiliary-model fallback chain.
-
-Opting out removes the host's per-plugin permission limit from existing tasks,
-so it appears separately in the existing installation permission review. An update
-from omitted/`true` to `false` requires the existing expanded-permission confirmation;
-automatic updates wait for that confirmation. Keeping `false` does not ask again,
-and restoring host management is not an expansion. Server-default installations
-retain their existing exemption. No separate trust setting is added.
-
-Older clients ignore this field and retain host-managed behavior. The updated
-manifest validator accepting it does not prove runtime support or a released
-minimum version. Establish stable/Beta release evidence before relying on the
-opt-out behavior or setting `minCindyVersion`; do not infer support from a merged PR.
+Older clients that do not recognize the field still show the original card.
+Establish stable/Beta release evidence before relying on the hidden card or setting
+`minCindyVersion`; do not infer a supporting version from a merged PR.
 
 ## Version and installation facts
 

@@ -1,6 +1,7 @@
 // Generated from Cindy packages/plugin-protocol/src/manifest.ts (bundled with routineEvents.ts)
-// source sha256: fcbe2603c36d8fcefc9587955baa350fc8fb1bc7a19c1addcfcbe3182948c9a9
+// source sha256: 8f84016fdcd94b7de8f364267841df74c589ca4ec34215d6c0a988b4f6a24f87
 // Do not edit by hand. Licensed under Apache-2.0; see NOTICE.
+
 // packages/plugin-protocol/src/routineEvents.ts
 function parseGhostRoutineEvents(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
@@ -285,7 +286,7 @@ var GHOST_MANIFEST_KNOWN_TOP_LEVEL_FIELDS = /* @__PURE__ */ new Set([
   "node",
   "settingsHtml",
   "settingsHeight",
-  "taskPreferences",
+  "showTaskPreferences",
   "slots",
   "card",
   "tools",
@@ -654,8 +655,8 @@ function validateGhostManifest(value) {
   if (raw.settingsHtml !== void 0 && !isSafeGhostRelativePath(raw.settingsHtml)) {
     return { ok: false, reason: "settingsHtml \u5FC5\u987B\u662F\u5B89\u88C5\u76EE\u5F55\u5185\u7684\u5B89\u5168\u76F8\u5BF9\u8DEF\u5F84" };
   }
-  if (raw.taskPreferences !== void 0 && typeof raw.taskPreferences !== "boolean") {
-    return { ok: false, reason: "taskPreferences \u5FC5\u987B\u662F\u5E03\u5C14\u503C" };
+  if (raw.showTaskPreferences !== void 0 && typeof raw.showTaskPreferences !== "boolean") {
+    return { ok: false, reason: "showTaskPreferences \u5FC5\u987B\u662F\u5E03\u5C14\u503C" };
   }
   if (raw.settingsHeight !== void 0) {
     if (raw.settingsHtml === void 0) {
@@ -2409,7 +2410,7 @@ function validateGhostManifest(value) {
       ...raw.settingsHtml !== void 0 ? { settingsHtml: raw.settingsHtml } : {},
       ...raw.mobile !== void 0 ? { mobile: raw.mobile } : {},
       ...raw.settingsHeight !== void 0 ? { settingsHeight: raw.settingsHeight } : {},
-      ...raw.taskPreferences !== void 0 ? { taskPreferences: raw.taskPreferences } : {},
+      ...raw.showTaskPreferences !== void 0 ? { showTaskPreferences: raw.showTaskPreferences } : {},
       ...prepared.schemaVersion === 2 ? { slots } : {},
       ...card !== void 0 || prepared.v3BaseCard || prepared.schemaVersion === 3 && slots.includes("card") ? { card: card ?? {} } : {},
       ...tools !== void 0 ? { tools } : {},
