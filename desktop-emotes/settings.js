@@ -413,6 +413,24 @@ async function applyChanges() {
       const result = await rpc('save', { config: next, revision: configRevision });
       appliedRevision = revision; config = result.config; configRevision = result.revision;
       if (revision === editRevision) {
+        const selectedId = slots[selected]?.id;
+        slots = config.emotes.map(saved => {
+          // Preserve references held by input handlers and the target picker.
+          const item = slots.find(item => item.id === saved.id);
+          for (const key of Object.keys(item)) if (!(key in saved)) delete item[key];
+          return Object.assign(item, saved);
+        });
+        selected = Math.max(0, slots.findIndex(item => item.id === selectedId));
+        shortcut = config.wheelShortcut;
+        $('#shortcut-label').textContent = EmoteShortcuts.label(shortcut);
+        for (const [id, value] of [['#emote-name', slots[selected].label], ['#prompt', slots[selected].prompt]]) {
+          const field = $(id);
+          if (!field || field.value === value) continue;
+          const cursor = document.activeElement === field ? [field.selectionStart, field.selectionEnd] : null;
+          field.value = value;
+          if (cursor) field.setSelectionRange(...cursor.map(position => Math.min(position, value.length)));
+        }
+        renderWheel(); renderValidation();
         applyStatus(result);
         if (result.outcome.issues?.includes('HOTKEY_CONFLICT')) {
           feedback(L('快捷键已被占用，请换一个键，或解除占用后重试。', 'Shortcut is in use. Choose another key or retry after releasing it.'), true);

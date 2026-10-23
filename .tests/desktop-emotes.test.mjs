@@ -358,3 +358,37 @@ print("Native window identity cases passed")
   execFileSync('xcrun', ['swiftc', '-module-cache-path', join(dir, 'module-cache'), join(dir, 'main.swift'), '-o', join(dir, 'check')], { timeout: 90000 });
   assert.match(execFileSync(join(dir, 'check'), { encoding: 'utf8', timeout: 10000 }), /cases passed/);
 });
+
+test('settings adopt normalized saves without overwriting a newer incomplete draft', async () => {
+  const settings = source('settings.js');
+  const apply = settings.slice(settings.indexOf('async function applyChanges()'), settings.indexOf('function renderOutcome('));
+  for (const editDuringSave of [false, true]) {
+    const initial = defaults(); initial.emotes[0].prompt = 'Previously configured instruction';
+    const receipt = deferred(), entered = deferred();
+    const fields = new Map([['#retry', { hidden: true }], ['#shortcut-label', {}],
+      ['#emote-name', { value: initial.emotes[0].label }]]);
+    const context = vm.createContext({ initial, document: { activeElement: null },
+      $: selector => fields.get(selector), EmoteShortcuts: { label: () => 'Command+G' },
+      rpc: async (_, { config }) => { entered.resolve(config); return receipt.promise; },
+      valid: config => { try { validateConfig(config); return true; } catch { return false; } },
+      L: (_, en) => en, feedback: () => {}, report: error => { throw error; },
+      applyStatus: () => {}, renderWheel: () => {}, renderValidation: () => {},
+    });
+    vm.runInContext(`let config=initial, slots=initial.emotes, shortcut=initial.wheelShortcut, selected=0;
+      let configRevision='before', editRevision=1, appliedRevision=0, saving=false;
+      const original=slots[0];
+      const draftConfig=()=>({version:2,emotes:slots,wheelShortcut:shortcut});
+      const completeDraft=()=>valid(draftConfig());
+      ${apply}
+      globalThis.api={applyChanges,inspect:()=>({slots,config,sameObject:slots[0]===original}),
+        edit:()=>{slots[0].action='existing';slots[0].target={mode:'recent'};slots[0].prompt='';editRevision++;}};`, context);
+    const saving = context.api.applyChanges(); const sent = await entered.promise;
+    if (editDuringSave) context.api.edit();
+    receipt.resolve({ config: validateConfig(sent), revision: 'after', outcome: { phase: 'configured' } }); await saving;
+    const result = context.api.inspect();
+    assert.equal(result.slots[0].prompt, '');
+    assert.equal(result.slots[0].action, editDuringSave ? 'existing' : 'none');
+    assert.equal(result.sameObject, true);
+    assert.equal(result.config.emotes[0].action, 'none');
+  }
+});
