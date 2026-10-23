@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
@@ -315,4 +318,43 @@ test('recent destinations are limited to three and a closed wheel ignores a late
   await h.event({ kind: 'wheel-open', gestureId: 'current', configRevision: 'example' }); await settle();
   const catalog = h.calls.find(call => call.method === 'wheelTargets').params;
   assert.equal(catalog.gestureId, 'current'); assert.deepEqual(catalog.catalogs.task, targets.slice(0, 3));
+});
+
+test('native text matching rejects missing, replaced and ambiguous original windows', { skip: process.platform !== 'darwin' }, () => {
+  const swift = source('native/EmoteHelper.swift');
+  const match = swift.slice(swift.indexOf('func sameWindow('), swift.indexOf('func isSecure('));
+  const dir = mkdtempSync(join(tmpdir(), 'ping-window-'));
+  const code = `import AppKit
+import ApplicationServices
+var listedWindows: [[String: Any]] = []
+let element = AXUIElementCreateApplication(12345)
+var frame = CGRect(x: 10, y: 20, width: 500, height: 400)
+var axFrame = frame
+func axElement(_ element: AXUIElement, _ attribute: CFString) -> AXUIElement? { element }
+func axValue(_ element: AXUIElement, _ attribute: CFString) -> CFTypeRef? {
+    if attribute as String == kAXPositionAttribute { var p = axFrame.origin; return AXValueCreate(.cgPoint, &p) }
+    var size = axFrame.size; return AXValueCreate(.cgSize, &size)
+}
+func CGWindowListCopyWindowInfo(_ options: CGWindowListOption, _ id: CGWindowID) -> CFArray? { listedWindows as CFArray }
+func window(_ id: UInt32, _ pid: Int32 = 12345) -> [String: Any] {
+    [kCGWindowNumber as String: id, kCGWindowOwnerPID as String: pid, kCGWindowLayer as String: 0,
+     kCGWindowBounds as String: frame.dictionaryRepresentation]
+}
+let target: [String: Any] = ["windowId": UInt32(1), "pid": Int32(12345), "bounds": frame.dictionaryRepresentation]
+${match}
+func check(_ expected: Bool, _ name: String) {
+    if sameWindow(element, target) != expected { fputs("Window identity failed: \\(name)\\n", stderr); exit(1) }
+}
+listedWindows = [window(1)]; check(true, "original")
+listedWindows = []; check(false, "closed")
+listedWindows = [window(2)]; check(false, "same bounds replacement")
+listedWindows = [window(1), window(2)]; check(false, "ambiguous same-app windows")
+listedWindows = [window(1, 54321)]; check(false, "different process")
+listedWindows = [window(1), window(2, 54321)]; check(true, "unrelated process")
+axFrame.origin.x += 40; check(false, "different AX window")
+print("Native window identity cases passed")
+`;
+  writeFileSync(join(dir, 'main.swift'), code);
+  execFileSync('xcrun', ['swiftc', '-module-cache-path', join(dir, 'module-cache'), join(dir, 'main.swift'), '-o', join(dir, 'check')], { timeout: 90000 });
+  assert.match(execFileSync(join(dir, 'check'), { encoding: 'utf8', timeout: 10000 }), /cases passed/);
 });

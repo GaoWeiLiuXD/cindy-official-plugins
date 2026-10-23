@@ -176,7 +176,21 @@ func axString(_ element: AXUIElement, _ attribute: CFString, limit: Int = 12000)
     guard let value = axValue(element, attribute) as? String else { return "" }
     return String(value.prefix(limit))
 }
-func sameWindow(_ element: AXUIElement, _ bounds: CGRect) -> Bool {
+func sameWindow(_ element: AXUIElement, _ target: [String: Any]) -> Bool {
+    guard let pid = target["pid"] as? Int32, let id = target["windowId"] as? UInt32,
+          let dict = target["bounds"] as? [String: Any], let bounds = CGRect(dictionaryRepresentation: dict as CFDictionary) else { return false }
+    let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+    // Public AX attributes expose bounds, not a reliable CG window ID. Require a
+    // unique same-process match to the original ID; ambiguous windows yield no text.
+    let matches = windows.filter { candidate in
+        guard candidate[kCGWindowOwnerPID as String] as? Int32 == pid,
+              candidate[kCGWindowLayer as String] as? Int == 0,
+              let dict = candidate[kCGWindowBounds as String] as? [String: Any],
+              let rect = CGRect(dictionaryRepresentation: dict as CFDictionary) else { return false }
+        return abs(rect.minX - bounds.minX) < 3 && abs(rect.minY - bounds.minY) < 3 &&
+               abs(rect.width - bounds.width) < 3 && abs(rect.height - bounds.height) < 3
+    }
+    guard matches.count == 1, matches[0][kCGWindowNumber as String] as? UInt32 == id else { return false }
     guard let window = axElement(element, kAXWindowAttribute as CFString),
           let rawPosition = axValue(window, kAXPositionAttribute as CFString),
           let rawSize = axValue(window, kAXSizeAttribute as CFString),
@@ -195,15 +209,14 @@ func isSecure(_ element: AXUIElement) -> Bool {
 func textAt(_ event: [String: Any]) -> (String, [String]) {
     guard AXIsProcessTrusted() else { return ("", ["ACCESSIBILITY_REQUIRED"]) }
     guard let target = event["target"] as? [String: Any], let pid = target["pid"] as? Int32,
-          let dict = target["bounds"] as? [String: Any], let bounds = CGRect(dictionaryRepresentation: dict as CFDictionary),
           let point = event["point"] as? [String: Double], let x = point["x"], let y = point["y"] else { return ("", ["WINDOW_MISSING"]) }
     let app = AXUIElementCreateApplication(pid)
     AXUIElementSetMessagingTimeout(app, 0.15)
     var hit: AXUIElement?
     guard AXUIElementCopyElementAtPosition(app, Float(x), Float(y), &hit) == .success, let element = hit,
-          sameWindow(element, bounds), !isSecure(element) else { return ("", ["TEXT_UNAVAILABLE"]) }
+          sameWindow(element, target), !isSecure(element) else { return ("", ["TEXT_UNAVAILABLE"]) }
     var lines: [String] = []
-    if let focus = axElement(app, kAXFocusedUIElementAttribute as CFString), sameWindow(focus, bounds), !isSecure(focus) {
+    if let focus = axElement(app, kAXFocusedUIElementAttribute as CFString), sameWindow(focus, target), !isSecure(focus) {
         let selection = axString(focus, kAXSelectedTextAttribute as CFString)
         if !selection.isEmpty { lines.append("Selected text:\n" + selection) }
     }
@@ -220,6 +233,7 @@ func textAt(_ event: [String: Any]) -> (String, [String]) {
             if !value.isEmpty || !title.isEmpty { lines.append([title, value].filter { !$0.isEmpty }.joined(separator: ": ")) }
         }
     }
+    guard sameWindow(element, target) else { return ("", ["TEXT_UNAVAILABLE"]) }
     return (String(lines.joined(separator: "\n").prefix(20000)), [])
 }
 
