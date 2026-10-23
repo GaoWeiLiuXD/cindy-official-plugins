@@ -38,7 +38,7 @@ function clockedScheduler(capture = async () => ({ text: 'example' })) {
   } };
 }
 
-async function host({ saved = {}, send, cancel, list, capabilities, failWrite = () => false } = {}) {
+async function host({ saved = {}, send, cancel, create, list, capabilities, failWrite = () => false } = {}) {
   let stored = clone(saved), handler;
   const writes = [], calls = [], events = [];
   const snapshot = { capturedAt: 1000, text: 'fixture-window-text', jpeg: 'ZmFrZS1pbWFnZQ==',
@@ -76,7 +76,8 @@ async function host({ saved = {}, send, cancel, list, capabilities, failWrite = 
         })();
         return { ok: true, result: clone(result) };
       } },
-      tasks: { capabilities: async () => capabilities || info, models: async () => ({ models: [] }) },
+      tasks: { capabilities: async () => capabilities || info, models: async () => ({ models: [] }),
+        create: async params => { calls.push({ method: 'create', params: clone(params) }); return create(params); } },
       targets: {
         list: async params => list ? list(params) : { targets: [] },
         resolve: async ({ target }) => ({ ...target, label: 'Example', detail: '' }),
@@ -241,6 +242,66 @@ test('a definite delivery rejection is not retried and does not become an uncert
   await assert.rejects(h.api.dispatch({ id: 'rejected', emote, target: emote.target.ref }), /DELIVERY_REJECTED/);
   assert.equal(h.calls.filter(call => call.method === 'send').length, 1);
   assert.equal(h.api.inspect().recovered, false); assert.equal(h.stored().pending, null);
+});
+
+test('restart before a withdrawn send returns retains the unresolved input', async () => {
+  const entered = deferred(), receipt = deferred();
+  const h = await host({ send: () => { entered.resolve(); return receipt.promise; } });
+  const emote = sendEmote(); h.api.invalidate('in-flight');
+  const dispatch = h.api.dispatch({ id: 'in-flight', emote, target: emote.target.ref }); await entered.promise;
+  h.api.invalidate('display-only'); await settle();
+  const disk = h.stored();
+  receipt.resolve({ taskId: 'fixture-task', accepted: true, delivery: 'queue' }); await dispatch;
+  assert.equal(disk.pending?.id, 'in-flight');
+  const restarted = await host({ saved: disk }); restarted.api.invalidate('next');
+  await assert.rejects(restarted.api.dispatch({ id: 'next', emote, target: emote.target.ref }), /CHECK_PREVIOUS_TASK/);
+  assert.equal(restarted.calls.some(call => call.method === 'send'), false);
+});
+
+test('a new delivery waits for withdrawal of the previous accepted input', async () => {
+  const withdrawal = deferred();
+  const h = await host({ cancel: () => withdrawal.promise });
+  const emote = sendEmote(); h.api.invalidate('first');
+  await h.api.dispatch({ id: 'first', emote, target: emote.target.ref });
+  h.api.invalidate('next');
+  const next = h.api.dispatch({ id: 'next', emote, target: emote.target.ref }); await settle();
+  const beforeReceipt = h.calls.filter(call => call.method === 'send').length;
+  const disk = h.stored();
+  withdrawal.resolve({ cancelled: true, runningWorkMayHaveStarted: true }); await next;
+  assert.equal(beforeReceipt, 1);
+  assert.equal(disk.pending?.id, 'first');
+  assert.equal(h.calls.filter(call => call.method === 'send').length, 2);
+});
+
+test('an unknown withdrawal blocks a new delivery and survives restart', async () => {
+  const withdrawal = deferred();
+  const h = await host({ cancel: () => withdrawal.promise });
+  const emote = sendEmote(); h.api.invalidate('first');
+  await h.api.dispatch({ id: 'first', emote, target: emote.target.ref });
+  h.api.invalidate('next');
+  const next = h.api.dispatch({ id: 'next', emote, target: emote.target.ref });
+  const rejected = assert.rejects(next, /DELIVERY_UNCERTAIN|CHECK_PREVIOUS_TASK/);
+  await settle(); withdrawal.reject(new Error('DELIVERY_UNCERTAIN')); await rejected;
+  assert.equal(h.calls.filter(call => call.method === 'send').length, 1);
+  assert.equal(h.stored().pending.id, 'first');
+  assert.equal(h.api.inspect().recovered, true);
+  const restarted = await host({ saved: h.stored() });
+  assert.equal((await restarted.api.queueSetting('load')).needsReview, true);
+});
+
+test('a legacy task created after supersession remains recorded for review', async () => {
+  const entered = deferred(), creation = deferred();
+  const h = await host({ create: () => { entered.resolve(); return creation.promise; } });
+  const emote = { ...sendEmote(), action: 'new', target: undefined }; h.api.invalidate('creating');
+  const dispatch = h.api.dispatch({ id: 'creating', emote });
+  const rejected = assert.rejects(dispatch, /CHECK_PREVIOUS_TASK/);
+  await entered.promise; h.api.invalidate('display-only');
+  creation.resolve({ taskId: 'created-task', status: 'active', title: 'Example', revision: 1 }); await rejected;
+  assert.equal(h.stored().pending.taskId, 'created-task');
+  assert.equal(h.api.inspect().recovered, true);
+  assert.equal(h.calls.some(call => call.method === 'send'), false);
+  const restarted = await host({ saved: h.stored() });
+  assert.equal((await restarted.api.queueSetting('load')).pending.taskId, 'created-task');
 });
 
 test('recent destinations are limited to three and a closed wheel ignores a late catalog', async () => {

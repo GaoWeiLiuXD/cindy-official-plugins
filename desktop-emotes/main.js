@@ -97,15 +97,25 @@ async function isCurrent(id) {
 async function cancelPending() {
   if (cancelling) return cancelling;
   const record = state.pending;
-  if (record?.targetDelivery) {
-    await cindy.targets.cancel({ requestKey: record.id });
-    // Withdrawal cannot prove that an uncertain input never started running.
-    // Keep the recovery marker until the user explicitly checks the outcome.
-    if (state.pending === record && !recovered) { state.pending = null; await persist(); }
-    return;
-  }
-  if (!record?.runId) return;
+  if (!record?.targetDelivery && !record?.runId) return;
   cancelling = (async () => {
+    if (record.targetDelivery) {
+      // Keep the original request on disk while its send or withdrawal is pending.
+      await persist();
+      try {
+        await cindy.targets.cancel({ requestKey: record.id });
+        if (latestTargetRequest === record) latestTargetRequest = null;
+        if (state.pending === record && !recovered && ['accepted', 'withdrawing'].includes(record.phase)) {
+          state.pending = null; await persist();
+        }
+      } catch (error) {
+        recovered = true;
+        state.pending = record;
+        await persist();
+        throw error;
+      }
+      return;
+    }
     let run = await cindy.tasks.cancel({ runId: record.runId, requestKey: `${record.id}-cancel` });
     for (let i = 0; i < 8 && !terminal(run); i++) {
       await node('wait');
@@ -119,9 +129,9 @@ async function cancelPending() {
 function invalidate(id = null) {
   const previous = latest;
   latest = id;
-  if (previous && previous !== id && latestTargetRequest === previous && cindy.targets?.cancel) {
-    latestTargetRequest = null;
-    void cindy.targets.cancel({ requestKey: previous }).catch(error => { if (recovered) publish('error', { code: errorCode(error) }); });
+  if (!state.pending && previous && previous !== id && latestTargetRequest?.id === previous) {
+    state.pending = latestTargetRequest;
+    state.pending.phase = 'withdrawing';
   }
   if (state.pending?.runId || state.pending?.targetDelivery) void cancelPending().catch(error => publish('error', { code: errorCode(error) }));
 }
@@ -165,6 +175,7 @@ async function dispatch(prepared) {
   await persist();
   let task;
   let submitted = false;
+  let created = false;
   try {
     await validateModels([emote]);
     if (!(await isCurrent(id))) return;
@@ -178,13 +189,13 @@ async function dispatch(prepared) {
       record.phase = 'sending'; await persist();
       if (!(await isCurrent(id))) return;
       submitted = true;
-      latestTargetRequest = id;
+      latestTargetRequest = record;
       const result = await cindy.targets.send({ requestKey: id, target: { kind: prepared.target.kind, id: prepared.target.id },
         text, ...attachments, title: `表情 · ${emote.label}`, ...(emote.action === 'new' && emote.route ? { route: emote.route } : {}),
         delivery: emote.action === 'new' ? 'queue' : emote.delivery ?? 'queue' });
       record.taskId = result.taskId;
       record.phase = 'accepted'; await persist();
-      if (!(await isCurrent(id))) { await cindy.targets.cancel({ requestKey: id }); return; }
+      if (!(await isCurrent(id))) { await cancelPending(); return; }
       publish('sent', { taskId: result.taskId, title: prepared.target.label, delivery: result.delivery });
       state.pending = null; await persist();
       return;
@@ -195,6 +206,7 @@ async function dispatch(prepared) {
       if (!(await isCurrent(id))) return;
       task = await cindy.tasks.create({ requestKey: `${id}-create`, title: `表情 · ${emote.label}`,
         ...(emote.route ? { route: emote.route } : {}) });
+      created = true;
     } else {
       task = await cindy.tasks.get({ taskId: emote.taskId });
     }
@@ -228,9 +240,9 @@ async function dispatch(prepared) {
     // No blind resend after timeout: acceptance may already have created side effects.
     if (record.targetDelivery && ['DELIVERY_REJECTED', 'INVALID_ATTACHMENTS'].includes(errorCode(error))) {
       submitted = false;
-      if (latestTargetRequest === id) latestTargetRequest = null;
+      if (latestTargetRequest === record) latestTargetRequest = null;
     }
-    if ((submitted && !record.runId) || record.phase === 'creating') {
+    if (created || (submitted && !record.runId) || record.phase === 'creating') {
       recovered = true;
       // A concurrent display-only trigger may have withdrawn this input while
       // send was still awaiting its receipt. Persist the unresolved outcome.
@@ -239,6 +251,12 @@ async function dispatch(prepared) {
     }
     throw error;
   } finally {
+    if (created && !submitted && !recovered) {
+      // Supersession prevents the message, but cannot undo a task already created.
+      recovered = true;
+      await persist();
+      throw coded('CHECK_PREVIOUS_TASK');
+    }
     if (state.pending === record && !submitted && !recovered) {
       state.pending = null;
       await persist();
