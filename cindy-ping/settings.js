@@ -302,7 +302,7 @@ let config, configRevision, T = strings.en, taskList = [], previews = {}, shortc
 let modelList = [], modelsLoaded = false, modelsLoading = false, modelsError = '', tasksLoaded = false, tasksLoading;
 let targetSelectionRevision = 0, destinationPicker = null;
 let editRevision = 0, appliedRevision = 0, saving = false, recording = false, recordingTimer;
-const channel = new BroadcastChannel('desktop-emotes-v1');
+const channel = new BroadcastChannel('cindy-ping-v1');
 const pending = new Map();
 const L = (zh, en) => T === strings['zh-CN'] ? zh : en;
 function localize() {

@@ -9,10 +9,10 @@ import { join } from 'node:path';
 import vm from 'node:vm';
 
 const require = createRequire(import.meta.url);
-const plugin = new URL('../desktop-emotes/', import.meta.url);
+const plugin = new URL('../cindy-ping/', import.meta.url);
 const source = name => readFileSync(new URL(name, plugin), 'utf8');
-const library = require('../desktop-emotes/emote-library.js');
-const { validateConfig, migrateConfig } = require('../desktop-emotes/node/config.cjs');
+const library = require('../cindy-ping/emote-library.js');
+const { validateConfig, migrateConfig } = require('../cindy-ping/node/config.cjs');
 const defaults = () => migrateConfig(library.defaults('en'));
 const clone = value => structuredClone(value);
 const revision = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');

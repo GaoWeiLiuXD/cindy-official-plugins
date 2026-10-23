@@ -53,7 +53,7 @@ Native helper and shortcuts exit when the worker's input closes, or when Cindy s
 
 Reference: [Cindy](https://github.com/makecindy/cindy), [ScreenCaptureKit window filter](https://developer.apple.com/documentation/screencapturekit/sccontentfilter/init(desktopindependentwindow:)). [lolPing](https://github.com/darrenprx/lolPing) inspired the interaction; no code or League of Legends assets are copied.
 
-Run `node --test .tests/desktop-emotes.test.mjs` from the repository root for isolated scheduler, configuration and delivery regressions. These checks do not launch Cindy or send real messages. Native compilation and mocked checks do not replace real-device verification.
+Run `node --test .tests/cindy-ping.test.mjs` from the repository root for isolated scheduler, configuration and delivery regressions. These checks do not launch Cindy or send real messages. Native compilation and mocked checks do not replace real-device verification.
 
 The icon and eleven cat emotes are original illustrations generated for this plugin, not bundled emoji fonts or copied game assets. The emotes use lossless WebP at their original 1254 × 1254 resolution; all decoded RGBA pixels match the earlier PNG assets. Existing built-in PNG references are mapped to the corresponding WebP without changing instructions or destinations. Custom image paths are unchanged. No image decoder is bundled; Cindy and macOS decode the assets.
 

@@ -53,7 +53,7 @@ Worker 输入关闭、插件停用或 Cindy 退出时，原生程序与快捷键
 
 参考：[Cindy](https://github.com/makecindy/cindy)、[ScreenCaptureKit 窗口过滤](https://developer.apple.com/documentation/screencapturekit/sccontentfilter/init(desktopindependentwindow:))。[lolPing](https://github.com/darrenprx/lolPing) 仅提供交互灵感，没有复制代码或英雄联盟素材。
 
-在仓库根目录运行 `node --test .tests/desktop-emotes.test.mjs`，覆盖调度、配置和投递的隔离回归检查，不启动 Cindy、不发送真实消息。原生编译与模拟检查不能代替实机验收。
+在仓库根目录运行 `node --test .tests/cindy-ping.test.mjs`，覆盖调度、配置和投递的隔离回归检查，不启动 Cindy、不发送真实消息。原生编译与模拟检查不能代替实机验收。
 
 图标与十一张黑猫表情是为本插件生成的原创插画，不内嵌 emoji 字体或复制游戏素材。表情使用原始 1254 × 1254 分辨率的无损 WebP，解码后全部 RGBA 像素与原 PNG 一致。原有内置 PNG 引用自动对应到同图 WebP，不改变指令或目标；自定义图片路径不变。图片由 Cindy 和 macOS 解码，不内嵌额外解码库。
 

@@ -12,7 +12,7 @@ const bundledImages = new Set(library.presets().map(item => item.imagePath));
 
 const write = message => process.stdout.write(JSON.stringify(message) + '\n');
 const notify = (kind, data) => write({ jsonrpc: '2.0', method: 'emote/event', params: { kind, ...data } });
-const nativePath = path.resolve(__dirname, '../native/DesktopEmotes.app/Contents/MacOS/DesktopEmotes');
+const nativePath = path.resolve(__dirname, '../native/Cindy Ping.app/Contents/MacOS/Cindy Ping');
 let config = { emotes: [] };
 let runtimeEnabled = false;
 let child = null;

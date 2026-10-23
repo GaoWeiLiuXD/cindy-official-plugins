@@ -1,6 +1,6 @@
 {
-  "name": "desktop-emotes",
-  "version": "0.3.7",
+  "name": "cindy-ping",
+  "version": "0.3.8",
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",

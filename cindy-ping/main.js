@@ -1,5 +1,5 @@
 'use strict';
-const channel = new BroadcastChannel('desktop-emotes-v1');
+const channel = new BroadcastChannel('cindy-ping-v1');
 let state = { config: null, pending: null };
 let locale = 'en';
 let latest = null;
