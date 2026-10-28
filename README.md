@@ -215,7 +215,7 @@ cindy-github/
 cindy-art/
 ├── ghost.json
 ├── main.js
-└── panel.*         # (optional) Custom panel UI
+└── settings.html   # Art-owned image/video model settings
 ```
 
 `provisioning.json` at the repository root declares, per plugin, which audience

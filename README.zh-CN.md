@@ -175,7 +175,7 @@ cindy-github/
 cindy-art/
 ├── ghost.json
 ├── main.js
-└── panel.*         # (可选) 自定义面板 UI
+└── settings.html   # 插件自有的图片/视频模型设置
 ```
 
 根目录的 `provisioning.json` 按插件声明哪些受众会把它作为内置插件装上。每个插件目录

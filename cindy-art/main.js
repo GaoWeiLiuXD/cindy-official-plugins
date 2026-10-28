@@ -2,8 +2,8 @@
  * Art 电子脑：定义图片/视频创作的上层语义，不直接发媒体请求。
  *
  * 工具只整理普通业务参数；当前 Agent 读取结果后调用 Cindy Core media。
- * 模型默认使用 Host 在插件详情页为当前能力保存的配置，只有用户在本次
- * 对话明确点名模型时才使用工具参数中的 model。
+ * 模型默认使用 Art 插件设置页保存的图片/视频模型；只有用户在本次对话
+ * 明确点名模型时才使用工具参数中的 model。
  */
 
 /* global cindy, console */
@@ -66,7 +66,108 @@ async function readMediaCatalog(type) {
   if (!result || result.ok !== true || result.type !== type || !Array.isArray(result.models)) {
     throw new Error('Cindy 媒体模型目录返回不合法，请升级或重启 Cindy 后重试');
   }
-  return result.models;
+  return {
+    models: result.models,
+    defaultModelId:
+      typeof result.defaultModelId === 'string' && result.defaultModelId.trim()
+        ? result.defaultModelId.trim()
+        : null,
+    defaultProviderId:
+      typeof result.defaultProviderId === 'string' && result.defaultProviderId.trim()
+        ? result.defaultProviderId.trim()
+        : null,
+  };
+}
+
+async function readPreferences() {
+  try {
+    const response = await fetch('/kv');
+    if (!response.ok) throw new Error('kv read failed');
+    const value = await response.json();
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error('kv state invalid');
+    }
+    return value;
+  } catch (_error) {
+    throw new Error('无法读取 Art 详情页中的模型配置，请重新打开插件设置页后重试');
+  }
+}
+
+function normalizeModelOverride(value) {
+  if (typeof value === 'string' && value.trim()) return { modelId: value.trim() };
+  if (value && typeof value === 'object' && typeof value.modelId === 'string' && value.modelId.trim()) {
+    return {
+      modelId: value.modelId.trim(),
+      ...(typeof value.providerId === 'string' && value.providerId.trim()
+        ? { providerId: value.providerId.trim() }
+        : {}),
+    };
+  }
+  return null;
+}
+
+function preferenceCapability(invocationCapability) {
+  return invocationCapability === 'video.image_to_video' ? 'video.edit' : invocationCapability;
+}
+
+function readModelOverride(preferences, invocationCapability) {
+  const overrides = preferences.modelOverrides;
+  if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
+    const capability = preferenceCapability(invocationCapability);
+    if (Object.prototype.hasOwnProperty.call(overrides, capability)) {
+      const normalized = normalizeModelOverride(overrides[capability]);
+      if (normalized) return normalized;
+    }
+  }
+  const requirement = MEDIA_REQUIREMENTS[invocationCapability];
+  const legacyId = optionalString(preferences, requirement.type + 'ModelId');
+  if (!legacyId) return null;
+  const legacyProvider = optionalString(preferences, requirement.type + 'ModelProviderId');
+  return {
+    modelId: legacyId,
+    ...(legacyProvider ? { providerId: legacyProvider } : {}),
+  };
+}
+
+function resolveConfiguredModel(models, defaultModelId, defaultProviderId, configuredId) {
+  if (configuredId) {
+    return models.find(function (model) {
+      return model.providerId === 'xd' && model.id === configuredId;
+    }) || models.find(function (model) { return model.id === configuredId; }) || null;
+  }
+  return models.find(function (model) {
+    return model.id === defaultModelId &&
+      (!defaultProviderId || model.providerId === defaultProviderId);
+  }) || models[0] || null;
+}
+
+async function readArtModel(invocationCapability, preferences) {
+  const requirement = MEDIA_REQUIREMENTS[invocationCapability];
+  const override = readModelOverride(preferences, invocationCapability);
+  if (override && override.providerId) {
+    return {
+      modelId: override.modelId.trim(),
+      providerId: override.providerId.trim(),
+    };
+  }
+  const catalog = await readMediaCatalog(requirement.type);
+  const model = resolveConfiguredModel(
+    catalog.models.filter(function (candidate) {
+      return supportsCapability(candidate, invocationCapability);
+    }),
+    catalog.defaultModelId,
+    catalog.defaultProviderId,
+    override && override.modelId,
+  );
+  if (!model) {
+    if (override) {
+      throw new Error('已配置模型「' + override.modelId + '」当前不可用，请到 Art 设置页重新选择模型');
+    }
+    throw new Error(
+      '当前没有可用的' + (requirement.type === 'image' ? '图片' : '视频') + '模型',
+    );
+  }
+  return { modelId: model.id, providerId: model.providerId };
 }
 
 function supportsCapability(model, capability) {
@@ -87,58 +188,16 @@ function supportsCapability(model, capability) {
   );
 }
 
-function hostCapability(invocationCapability) {
-  return invocationCapability === 'video.image_to_video'
-    ? 'video.edit'
-    : invocationCapability;
-}
-
-async function readConfiguredModel(invocationCapability) {
-  const capability = hostCapability(invocationCapability);
-  let result;
-  try {
-    result = await cindy.send({
-      type: 'host-request',
-      kind: 'cindy-preference',
-      capability: capability,
-    });
-  } catch (_error) {
-    throw new Error('无法读取 Art 详情页中的模型配置，请重启 Cindy 后重试');
-  }
-  if (
-    !result ||
-    result.ok !== true ||
-    result.capability !== capability ||
-    typeof result.modelId !== 'string' ||
-    !result.modelId.trim() ||
-    typeof result.providerId !== 'string' ||
-    !result.providerId.trim()
-  ) {
-    throw new Error(
-      result && typeof result.message === 'string'
-        ? result.message
-        : '无法读取 Art 详情页中的模型配置',
-    );
-  }
-  return {
-    modelId: result.modelId.trim(),
-    providerId: result.providerId.trim(),
-  };
-}
-
 async function selectedModel(args, invocationCapability) {
   const requirement = MEDIA_REQUIREMENTS[invocationCapability];
   if (!requirement) throw new Error('Art 不认识媒体能力：' + invocationCapability);
 
   const explicitModelId = optionalString(args, 'model');
   if (!explicitModelId) {
-    // Host preference is authoritative. Subscription-backed models may be
-    // intentionally absent from the public catalog, but Core can still route
-    // them when given the exact (modelId, providerId) pair from Host.
-    return readConfiguredModel(invocationCapability);
+    return readArtModel(invocationCapability, await readPreferences());
   }
 
-  const models = await readMediaCatalog(requirement.type);
+  const models = (await readMediaCatalog(requirement.type)).models;
   const modelId = explicitModelId;
   const model = models.find(function (candidate) {
     return candidate && candidate.id === modelId;
@@ -216,7 +275,7 @@ async function returnArtRequest(msg, capability, options) {
 
   await finishCall(msg.callId, {
     note:
-      'Art 已整理创作参数。除非用户在本次对话明确点名模型，request.modelId/request.providerId 就是 Art 详情页「Cindy 能力」为当前操作配置的精确模型来源；调用 Cindy Core media（完整工具名 mcp__cindy__media）prepare 时必须分别原样作为 model_id/provider_id，不要另行选型。referenceMedia.managedMediaUrls 是 Core 可读取的受管地址；attachedMediaCount 对应用户随当前消息交出的媒体，调用 Core 时继续使用对话中的原始媒体地址。Core 成功返回的 cindy-media:// 或历史 xdt-*:// 地址是可直接展示、复用和通过 attachments 交接的受管地址，不需要本地路径；图片结果请在最终回复中使用返回地址只嵌入展示一次。仅当用户明确询问文件存储位置或本地路径时，调用 mcp__cindy__media 的 resolve_local_path，并把 cindy-media://、xdt-image:// 或 xdt-video:// 地址原样放进 url。不要寻找或猜测路径，也不要扫描本地磁盘。',
+      'Art 已整理创作参数。除非用户在本次对话明确点名模型，request.modelId/request.providerId 就是 Art 设置页中为当前操作配置的精确模型来源；调用 Cindy Core media（完整工具名 mcp__cindy__media）prepare 时必须分别原样作为 model_id/provider_id，不要另行选型。referenceMedia.managedMediaUrls 是 Core 可读取的受管地址；attachedMediaCount 对应用户随当前消息交出的媒体，调用 Core 时继续使用对话中的原始媒体地址。Core 成功返回的 cindy-media:// 或历史 xdt-*:// 地址是可直接展示、复用和通过 attachments 交接的受管地址，不需要本地路径；图片结果请在最终回复中使用返回地址只嵌入展示一次。仅当用户明确询问文件存储位置或本地路径时，调用 mcp__cindy__media 的 resolve_local_path，并把 cindy-media://、xdt-image:// 或 xdt-video:// 地址原样放进 url。不要寻找或猜测路径，也不要扫描本地磁盘。',
     parameterGuidance: capability.indexOf('image.') === 0
       ? '调用 Core prepare 后按 input_schema 与 instructions 组装请求。保留 size、resolution、quality 和 aspectRatioIntent，不要把一个来源的枚举硬套给另一来源。明确 quality 优先于 qualityIntent；未指定时省略，让模型自行决定。qualityIntent=best 使用 Guide 支持的最高质量；没有质量字段时结合其分辨率能力，但不得覆盖用户明确分辨率。GPT Image 的 size 是生成尺寸；先核对边长步长、总像素、比例和边长上限。成品尺寸不符合生成约束时，选择合法生成尺寸，再按用户要求单独缩放成品并核对最终像素。不要把像素尺寸和 1K/2K/4K 分辨率档混作同一个参数。旧客户端 Guide 不支持某个明确要求时说明限制，不假称参数已生效。生成成功但保存失败时复用 Core 返回的 invocation_id 恢复已有结果，不要重新 prepare 付费生成。'
       : undefined,

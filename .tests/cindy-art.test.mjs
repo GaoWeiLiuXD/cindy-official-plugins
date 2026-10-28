@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
@@ -10,6 +11,27 @@ const localizedManifests = ['en', 'ja', 'ko', 'zh-CN'].map((locale) => [
   JSON.parse(readFileSync(new URL(`locales/${locale}.json`, root), 'utf8')),
 ]);
 const source = readFileSync(new URL('main.js', root), 'utf8');
+const settingsSource = readFileSync(new URL('settings.html', root), 'utf8');
+const settingsScriptSource = readFileSync(new URL('settings.js', root), 'utf8');
+
+test('Art settings use a same-origin script allowed by the plugin sandbox CSP', () => {
+  const scripts = [...settingsSource.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)];
+  assert.ok(scripts.length > 0);
+  for (const [, attributes, body] of scripts) {
+    const scriptPath = attributes.match(/\bsrc=["']([^"']+)["']/)?.[1];
+    assert.ok(scriptPath, 'Cindy blocks inline scripts, so settings need a bundled script entry');
+    assert.equal(body.trim(), '');
+    assert.doesNotMatch(scriptPath, /^(?:https?:|data:|\/\/)/);
+    assert.ok(readFileSync(new URL(scriptPath, root), 'utf8').trim());
+  }
+});
+
+const REQUIREMENTS = {
+  'image.generate': { type: 'image', input: ['text'], output: ['image'] },
+  'image.edit': { type: 'image', input: ['text', 'image'], output: ['image'] },
+  'video.generate': { type: 'video', input: ['text'], output: ['video'] },
+  'video.image_to_video': { type: 'video', input: ['text', 'image'], output: ['video'] },
+};
 
 function normalizePreference(preference) {
   return typeof preference === 'string'
@@ -19,17 +41,10 @@ function normalizePreference(preference) {
 
 function mediaCatalogsForPreferences(configuredModels) {
   const catalogs = { image: [], video: [] };
-  const requirements = {
-    'image.generate': { type: 'image', input: ['text'], output: ['image'] },
-    'image.edit': { type: 'image', input: ['text', 'image'], output: ['image'] },
-    'video.generate': { type: 'video', input: ['text'], output: ['video'] },
-    'video.image_to_video': { type: 'video', input: ['text', 'image'], output: ['video'] },
-  };
   for (const [capability, rawPreference] of Object.entries(configuredModels)) {
-    const requirement = requirements[capability];
+    const requirement = REQUIREMENTS[capability];
     if (!requirement) continue;
-    const preference = normalizePreference(rawPreference);
-    const { modelId, providerId } = preference;
+    const { modelId, providerId } = normalizePreference(rawPreference);
     let model = catalogs[requirement.type].find(
       (candidate) => candidate.id === modelId && candidate.providerId === providerId,
     );
@@ -49,14 +64,14 @@ function mediaCatalogsForPreferences(configuredModels) {
 }
 
 function createHarness(
-  hostPreferences = {},
+  preferences = {},
   mediaCatalogs = { image: [], video: [] },
   mediaCatalogFailure = null,
+  options = {},
 ) {
   let handler;
   const catalogs = structuredClone(mediaCatalogs);
   const results = [];
-  const hostRequests = [];
   const fetches = [];
   const warnings = [];
 
@@ -68,15 +83,6 @@ function createHarness(
       return Promise.resolve();
     },
     async send(message) {
-      if (message.type === 'host-request' && message.kind === 'cindy-preference') {
-        hostRequests.push(structuredClone(message));
-        const rawPreference = hostPreferences[message.capability];
-        if (rawPreference instanceof Error) throw rawPreference;
-        const preference = normalizePreference(rawPreference);
-        return preference
-          ? { ok: true, capability: message.capability, ...preference }
-          : { ok: false, errorCode: 'NOT_AVAILABLE', message: '当前没有可用的媒体模型' };
-      }
       if (message.type === 'tool-result') {
         results.push(message);
         return { ok: true };
@@ -87,6 +93,13 @@ function createHarness(
 
   async function fetch(path) {
     fetches.push(path);
+    if (path === '/kv') {
+      if (options.readKv) return options.readKv();
+      return {
+        ok: true,
+        json: async () => structuredClone(preferences),
+      };
+    }
     if (path === '/media-models?type=image' || path === '/media-models?type=video') {
       if (mediaCatalogFailure === 'network') throw new Error('Failed to fetch');
       if (typeof mediaCatalogFailure === 'string' && mediaCatalogFailure.startsWith('http-')) {
@@ -102,7 +115,8 @@ function createHarness(
             ok: true,
             type,
             models: structuredClone(models),
-            defaultModelId: models[0]?.id ?? null,
+            defaultModelId: options.defaults?.[type]?.modelId ?? models[0]?.id ?? null,
+            defaultProviderId: options.defaults?.[type]?.providerId ?? models[0]?.providerId ?? null,
           };
         },
       };
@@ -128,7 +142,6 @@ function createHarness(
 
   return {
     fetches,
-    hostRequests,
     warnings,
     async call(tool, args) {
       await handler({ type: 'tool-call', tool, callId: `call-${tool}`, args });
@@ -138,13 +151,200 @@ function createHarness(
   };
 }
 
-test('manifest exposes only the four media preparation tools', () => {
-  assert.equal(manifest.version, '1.14.0');
+function imageCatalogForTests() {
+  return mediaCatalogsForPreferences({
+    'image.generate': 'image-model',
+    'image.edit': 'image-model',
+  });
+}
+
+async function createSettingsHarness(preferences, mediaCatalogs, options = {}) {
+  function control(dataset = {}) {
+    const listeners = new Map();
+    return {
+      dataset,
+      style: {},
+      textContent: '',
+      classList: { toggle() {}, remove() {} },
+      addEventListener(event, listener) { listeners.set(event, listener); },
+      click() { return listeners.get('click')({ stopPropagation() {} }); },
+    };
+  }
+  const rootElement = { children: [], appendChild(row) { this.children.push(row); } };
+  Object.defineProperty(rootElement, 'textContent', { set() { this.children = []; } });
+  const status = control();
+  const writes = [];
+  const elements = new Map([
+    ['capabilities', rootElement], ['status', status], ['card-icon', control()],
+    ['card-title', control()], ['card-desc', control()],
+  ]);
+  function attribute(attributes, name) {
+    return attributes.match(new RegExp('\\b' + name + '="([^"]*)"'))?.[1];
+  }
+  const document = {
+    documentElement: { lang: 'zh-CN' },
+    getElementById(id) { return elements.get(id); },
+    addEventListener() {},
+    querySelectorAll() { return []; },
+    createElement() {
+      const row = control();
+      let html;
+      let picker;
+      Object.defineProperty(row, 'innerHTML', {
+        get() { return html; },
+        set(value) {
+          html = value;
+          row.choices = [...html.matchAll(/<button class="model-option"([^>]*)>/g)].map(([, attributes]) => ({
+            ...control({
+              modelId: attribute(attributes, 'data-model-id'),
+              providerId: attribute(attributes, 'data-provider-id'),
+              default: attribute(attributes, 'data-default'),
+            }),
+            selected: attribute(attributes, 'aria-selected'),
+          }));
+          const trigger = control();
+          const popover = {
+            querySelectorAll() { return row.choices; },
+          };
+          picker = html.includes('class="model-picker"') ? {
+            querySelector(selector) { return selector === '.model-trigger' ? trigger : popover; },
+          } : null;
+        },
+      });
+      row.querySelector = () => picker;
+      return row;
+    },
+  };
+  const context = vm.createContext({
+    document,
+    URL,
+    JSON,
+    fetch: async (path, init = {}) => {
+      if (path === '/kv') {
+        if (init.method === 'PUT') {
+          const next = JSON.parse(init.body);
+          writes.push(next);
+          for (const key of Object.keys(preferences)) delete preferences[key];
+          Object.assign(preferences, next);
+          return { ok: true, status: 204 };
+        }
+        return options.readKv ? options.readKv() : { ok: true, json: async () => structuredClone(preferences) };
+      }
+      assert.ok(['/media-models?type=image', '/media-models?type=video'].includes(path));
+      const type = path.endsWith('image') ? 'image' : 'video';
+      const models = mediaCatalogs[type];
+      return { ok: true, json: async () => ({
+        ok: true, type, models: structuredClone(models),
+        defaultModelId: options.defaults?.[type]?.modelId ?? models[0]?.id ?? null,
+        defaultProviderId: options.defaults?.[type]?.providerId ?? models[0]?.providerId ?? null,
+      }) };
+    },
+  });
+  vm.runInContext(readFileSync(new URL('settings-icons.js', root), 'utf8'), context);
+  vm.runInContext(settingsScriptSource, context);
+  await new Promise((resolve) => setImmediate(resolve));
+  const row = (capability) => rootElement.children.find((entry) => entry.dataset.capability === capability);
+  return {
+    row,
+    status,
+    writes,
+    async choose(capability, modelId, providerId, isDefault = false) {
+      const choice = row(capability)?.choices.find((entry) =>
+        entry.dataset.modelId === modelId && entry.dataset.providerId === providerId &&
+        entry.dataset.default === String(isDefault));
+      assert.ok(choice, `missing ${capability} choice: ${providerId}/${modelId}`);
+      choice.click();
+      await new Promise((resolve) => setImmediate(resolve));
+    },
+  };
+}
+
+test('settings keep same-name providers distinct through save, reopen and tool reads', async () => {
+  const preferences = {};
+  const catalogs = { image: [
+    { id: 'shared-model', name: 'Shared Model', providerId: 'other-provider', modalities: { input: ['text'], output: ['image'] } },
+    { id: 'shared-model', name: 'Shared Model', providerId: 'xd', modalities: { input: ['text'], output: ['image'] } },
+  ], video: [] };
+  const options = { defaults: { image: { modelId: 'shared-model', providerId: 'xd' } } };
+  const settings = await createSettingsHarness(preferences, catalogs, options);
+  assert.deepEqual(settings.row('image.generate').choices.map((choice) => choice.dataset.providerId), ['xd', 'other-provider']);
+  const runtime = createHarness(preferences, catalogs, null, options);
+  await settings.choose('image.generate', 'shared-model', 'other-provider');
+  assert.deepEqual(preferences.modelOverrides['image.generate'], { modelId: 'shared-model', providerId: 'other-provider' });
+  let result = await runtime.call('gen_image', { prompt: 'check saved provider' });
+  assert.equal(result.result.request.providerId, 'other-provider');
+  const reopened = await createSettingsHarness(preferences, catalogs, options);
+  assert.equal(reopened.row('image.generate').choices.find((choice) => choice.dataset.providerId === 'other-provider').selected, 'true');
+  await reopened.choose('image.generate', 'shared-model', 'xd', true);
+  assert.equal(preferences.modelOverrides['image.generate'], undefined);
+  result = await runtime.call('gen_image', { prompt: 'check restored default' });
+  assert.equal(result.result.request.providerId, 'xd');
+});
+
+test('settings preserve an unavailable provider pin instead of displaying a different source', async () => {
+  const preferences = { modelOverrides: { 'image.generate': { modelId: 'shared-model', providerId: 'saved-provider' } } };
+  const catalogs = { image: [{ id: 'shared-model', name: 'Other source label', providerId: 'xd', modalities: { input: ['text'], output: ['image'] } }], video: [] };
+  const settings = await createSettingsHarness(preferences, catalogs);
+  assert.match(settings.row('image.generate').innerHTML, /class="model-name">shared-model<\/span>/);
+  assert.equal(settings.row('image.generate').choices.find((choice) => choice.dataset.providerId === 'saved-provider').selected, 'true');
+  assert.equal(settings.writes.length, 0);
+});
+
+test('settings configuration read failures show an error without rendering default selections', async () => {
+  for (const readKv of [
+    async () => { throw new Error('unavailable'); },
+    async () => ({ ok: false }),
+    async () => ({ ok: true, json: async () => { throw new SyntaxError('invalid'); } }),
+    async () => ({ ok: true, json: async () => [] }),
+  ]) {
+    const settings = await createSettingsHarness({}, imageCatalogForTests(), { readKv });
+    assert.match(settings.status.textContent, /模型配置加载失败/);
+    assert.equal(settings.row('image.generate'), undefined);
+    assert.equal(settings.writes.length, 0);
+  }
+});
+
+test('all four settings are saved, reloaded and read by their corresponding tools', async () => {
+  const expected = {
+    'image.generate': { modelId: 'picked-image-generate', providerId: 'image-provider' },
+    'image.edit': { modelId: 'picked-image-edit', providerId: 'edit-provider' },
+    'video.generate': { modelId: 'picked-video-generate', providerId: 'video-provider' },
+    'video.edit': { modelId: 'picked-video-edit', providerId: 'motion-provider' },
+  };
+  const catalogs = mediaCatalogsForPreferences({ ...expected, 'video.image_to_video': expected['video.edit'] });
+  catalogs.image.unshift({ id: 'default-image', name: 'Default image', providerId: 'xd', modalities: { input: ['text', 'image'], output: ['image'] } });
+  catalogs.video.unshift({ id: 'default-video', name: 'Default video', providerId: 'xd', modalities: { input: ['text', 'image'], output: ['video'] } });
+  const preferences = { unrelated: 'preserved' };
+  const settings = await createSettingsHarness(preferences, catalogs);
+  const runtime = createHarness(preferences, catalogs);
+  for (const [capability, selection] of Object.entries(expected)) {
+    await settings.choose(capability, selection.modelId, selection.providerId);
+  }
+  assert.deepEqual(preferences.modelOverrides, expected);
+  assert.equal(preferences.unrelated, 'preserved');
+  assert.equal(settings.writes.length, 4);
+  const reopened = await createSettingsHarness(preferences, catalogs);
+  for (const [tool, capability] of [
+    ['gen_image', 'image.generate'], ['edit_image', 'image.edit'],
+    ['gen_video', 'video.generate'], ['edit_video', 'video.edit'],
+  ]) {
+    const selection = expected[capability];
+    assert.ok(reopened.row(capability).choices.some((choice) => choice.dataset.modelId === selection.modelId && choice.dataset.providerId === selection.providerId && choice.selected === 'true'));
+    const result = await runtime.call(tool, { prompt: 'check settings round trip', images: [`cindy-media://blobs/${'a'.repeat(64)}.png`] });
+    assert.equal(result.ok, true, tool);
+    assert.equal(result.result.request.modelId, selection.modelId);
+    assert.equal(result.result.request.providerId, selection.providerId);
+  }
+});
+
+test('manifest exposes only the four media preparation tools and the Art settings page', () => {
+  assert.equal(manifest.version, '1.15.4');
   assert.equal(manifest.minCindyVersion, '0.1.68');
-  assert.match(manifest.whenToUse, /未明确指定其它媒体生成渠道时,优先使用 Art/);
   assert.equal(manifest.schemaVersion, 3);
+  assert.equal(manifest.settingsHtml, 'settings.html');
   assert.equal(manifest.card, undefined);
   assert.equal(manifest.slots, undefined);
+  assert.match(manifest.whenToUse, /未明确指定其它媒体生成渠道时,优先使用 Art/);
   assert.deepEqual(
     manifest.tools.map(({ name }) => name),
     ['gen_image', 'edit_image', 'gen_video', 'edit_video'],
@@ -174,21 +374,81 @@ test('manifest exposes only the four media preparation tools', () => {
   assert.doesNotMatch(JSON.stringify(manifest), /import_artwork|gallery|画廊/);
 });
 
-test('each operation uses the exact model configured by Host for that capability', async () => {
+test('Art settings page reproduces the four Cindy capability rows', () => {
+  assert.match(settingsScriptSource, /\/media-models\?type=image/);
+  assert.match(settingsScriptSource, /\/media-models\?type=video/);
+  assert.match(settingsScriptSource, /modelOverrides/);
+  assert.match(settingsScriptSource, /image\.generate/);
+  assert.match(settingsScriptSource, /image\.edit/);
+  assert.match(settingsScriptSource, /video\.generate/);
+  assert.match(settingsScriptSource, /video\.edit/);
+  assert.match(settingsScriptSource, /supportsCapability/);
+  assert.match(settingsScriptSource, /fetch\('\/kv', \{ method: 'PUT'/);
+});
+
+test('Art settings describe plugin-owned choices without the removed system-default Proxy wording', () => {
+  const descriptions = [...settingsScriptSource.matchAll(/^\s+desc: '([^']+)'/gm)].map((match) => match[1]);
+  assert.equal(descriptions.length, 4);
+  for (const description of descriptions) {
+    assert.ok(description.includes('Art'), 'settings must describe Art-owned model preferences');
+    assert.ok(!/Proxy|proxy|プロキシ|프록시|跟随系统|follow the system|システム|시스템/.test(description),
+      'the removed client system-default behavior must not be presented as an Art setting');
+  }
+  assert.equal(settingsSource.match(/<p class="card-desc" id="card-desc">([^<]+)<\/p>/)[1], descriptions[0]);
+});
+
+test('Art settings reuse the pre-6073 provider and Lucide SVGs without substitute icons', () => {
+  assert.match(settingsSource, /<script src="settings-icons\.js"><\/script>/);
+  const context = { URL };
+  vm.runInNewContext(readFileSync(new URL('settings-icons.js', root), 'utf8'), context);
+  const { providerMark, icon } = context.artSettingsIcons;
+  const paths = (svg) => [...svg.matchAll(/\bd="([^"]+)"/g)].map((match) => match[1]);
+  const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+  const xd = providerMark({ providerId: 'xd', providerName: 'Cindy AI' });
+  assert.equal(digest(paths(xd)), '1e4b09088de6f3da49e7f1c38ed29234bcc17f84443395f6b5079fc338048689');
+  assert.match(xd, /viewBox="136 137 282 158"/);
+  assert.match(xd, /width="14\.2" height="8\.4"/);
+  assert.match(providerMark({ providerId: 'openai' }), /width="12\.3" height="12\.3"/);
+  assert.match(providerMark({ providerId: 'custom', providerName: 'Custom' }), /provider-monogram[^>]*>C<\/span>/);
+  assert.equal(providerMark({ providerId: 'unknown' }), '');
+  assert.doesNotMatch(settingsScriptSource, /var providerMarks\s*=/);
+  assert.doesNotMatch(settingsSource, /\.provider-mark\.(?:qwen|volc|grok|openai)/);
+  for (const [name, expected] of Object.entries({"sparkles":[["path",{"d":"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z","key":"4pj2yx"}],["path",{"d":"M20 3v4","key":"1olli1"}],["path",{"d":"M22 5h-4","key":"1gvqau"}],["path",{"d":"M4 17v2","key":"vumght"}],["path",{"d":"M5 18H3","key":"zchphs"}]],"chevron-down":[["path",{"d":"m6 9 6 6 6-6","key":"qrunsl"}]],"check":[["path",{"d":"M20 6 9 17l-5-5","key":"1gmf2c"}]]})) {
+    assert.deepEqual(paths(icon(name)), expected.map(([, attributes]) => attributes.d));
+    assert.match(icon(name), /stroke-width="2"/);
+  }
+});
+
+test('Art settings constrain the original picker to its sandbox viewport', () => {
+  const match = settingsScriptSource.match(/  function positionPopover\(trigger, popover\) \{[\s\S]*?\n  \}/);
+  assert.ok(match, 'the picker must avoid clipping at the settings webview boundary');
+  const position = vm.runInNewContext('(' + match[0] + ')', { window: { innerHeight: 280 } });
+  for (const [top, bottom, expectedSide, expectedHeight] of [[70, 102, 'bottom', '162px'], [220, 252, 'top', '204px']]) {
+    const list = { scrollHeight: 600, style: {} };
+    const popover = { style: {}, dataset: {}, querySelector: () => list };
+    position({ getBoundingClientRect: () => ({ top, bottom }) }, popover);
+    assert.equal(popover.dataset.side, expectedSide);
+    assert.equal(list.style.maxHeight, expectedHeight);
+  }
+});
+
+test('each capability uses the model saved in Art settings', async () => {
   const hash = 'b'.repeat(64);
-  const hostPreferences = {
-    'image.generate': 'google/gemini-3-pro-image',
-    'image.edit': 'openai/gpt-image-2',
-    'video.generate': 'bytedance-seed/seedance-2.5',
-    'video.edit': 'minimax/minimax-h3',
+  const preferences = {
+    modelOverrides: {
+      'image.generate': { modelId: 'image-gen-model', providerId: 'xd' },
+      'image.edit': { modelId: 'image-edit-model', providerId: 'xd' },
+      'video.generate': { modelId: 'video-gen-model', providerId: 'xd' },
+      'video.edit': { modelId: 'video-edit-model', providerId: 'xd' },
+    },
   };
   const catalogs = mediaCatalogsForPreferences({
-    'image.generate': hostPreferences['image.generate'],
-    'image.edit': hostPreferences['image.edit'],
-    'video.generate': hostPreferences['video.generate'],
-    'video.image_to_video': hostPreferences['video.edit'],
+    'image.generate': 'image-gen-model',
+    'image.edit': 'image-edit-model',
+    'video.generate': 'video-gen-model',
+    'video.image_to_video': 'video-edit-model',
   });
-  const harness = createHarness(hostPreferences, catalogs);
+  const harness = createHarness(preferences, catalogs);
 
   const image = await harness.call('gen_image', { prompt: 'a cat', tier: 'best' });
   const edit = await harness.call('edit_image', {
@@ -202,38 +462,78 @@ test('each operation uses the exact model configured by Host for that capability
   });
 
   assert.equal(image.ok, true);
-  assert.match(image.result.note, /cindy-media:\/\//);
-  assert.match(image.result.note, /只嵌入展示一次/);
-  assert.match(image.result.note, /resolve_local_path/);
-  assert.match(image.result.note, /xdt-image:\/\//);
-  assert.match(image.result.note, /xdt-video:\/\//);
-  assert.match(image.result.note, /不要扫描本地磁盘/);
-  assert.equal(image.result.request.modelId, hostPreferences['image.generate']);
+  assert.equal(image.result.request.modelId, 'image-gen-model');
   assert.equal(image.result.request.providerId, 'xd');
-  assert.equal(edit.result.request.modelId, hostPreferences['image.edit']);
+  assert.equal(edit.result.request.modelId, 'image-edit-model');
   assert.equal(edit.result.request.providerId, 'xd');
-  assert.deepEqual(structuredClone(edit.result.request.referenceMedia.managedMediaUrls), [
-    `cindy-media://blobs/${hash}.png`,
-  ]);
-  assert.equal(video.result.request.modelId, hostPreferences['video.generate']);
+  assert.equal(video.result.request.modelId, 'video-gen-model');
   assert.equal(video.result.request.providerId, 'xd');
-  assert.equal(imageToVideo.result.request.capability, 'video.image_to_video');
-  assert.equal(imageToVideo.result.request.modelId, hostPreferences['video.edit']);
+  assert.equal(imageToVideo.result.request.modelId, 'video-edit-model');
   assert.equal(imageToVideo.result.request.providerId, 'xd');
-  assert.deepEqual(
-    harness.hostRequests.map(({ capability }) => capability),
-    ['image.generate', 'image.edit', 'video.generate', 'video.edit'],
-  );
-  assert.equal(harness.fetches.some((path) => path === '/kv'), false);
+  assert.equal(harness.fetches.filter((path) => path === '/kv').length, 4);
+  assert.equal(harness.fetches.filter((path) => path.startsWith('/media-models')).length, 0);
 });
 
-test('a model explicitly named by the user overrides Host configuration', async () => {
-  const hostPreferences = { 'image.generate': 'image-default' };
+test('legacy image/video settings still apply to both operations of that type', async () => {
+  const hash = 'e'.repeat(64);
+  const harness = createHarness(
+    { imageModelId: 'legacy-image', videoModelId: 'legacy-video' },
+    mediaCatalogsForPreferences({
+      'image.generate': 'legacy-image',
+      'image.edit': 'legacy-image',
+      'video.generate': 'legacy-video',
+      'video.image_to_video': 'legacy-video',
+    }),
+  );
+
+  const image = await harness.call('gen_image', { prompt: 'a cat' });
+  const edit = await harness.call('edit_image', {
+    prompt: 'add snow',
+    images: [`cindy-media://blobs/${hash}.png`],
+  });
+  const video = await harness.call('gen_video', { prompt: 'a running cat' });
+  const imageToVideo = await harness.call('edit_video', {
+    prompt: 'make it move',
+    images: [`cindy-media://blobs/${hash}.png`],
+  });
+
+  assert.equal(image.result.request.modelId, 'legacy-image');
+  assert.equal(edit.result.request.modelId, 'legacy-image');
+  assert.equal(video.result.request.modelId, 'legacy-video');
+  assert.equal(imageToVideo.result.request.modelId, 'legacy-video');
+});
+
+test('per-capability Art settings win over legacy image/video settings', async () => {
+  const harness = createHarness(
+    {
+      imageModelId: 'legacy-image',
+      modelOverrides: {
+        'image.generate': { modelId: 'capability-image', providerId: 'xd' },
+      },
+    },
+    mediaCatalogsForPreferences({
+      'image.generate': 'capability-image',
+      'image.edit': 'legacy-image',
+    }),
+  );
+
+  const image = await harness.call('gen_image', { prompt: 'a cat' });
+  const edit = await harness.call('edit_image', {
+    prompt: 'add snow',
+    images: [`cindy-media://blobs/${'f'.repeat(64)}.png`],
+  });
+
+  assert.equal(image.result.request.modelId, 'capability-image');
+  assert.equal(edit.result.request.modelId, 'legacy-image');
+});
+
+test('a model explicitly named by the user overrides Art settings', async () => {
+  const preferences = { imageModelId: 'image-default', imageModelProviderId: 'xd' };
   const catalogs = mediaCatalogsForPreferences({
     'image.generate': 'image-default',
     'image.edit': 'image-explicit',
   });
-  const harness = createHarness(hostPreferences, catalogs);
+  const harness = createHarness(preferences, catalogs);
 
   const result = await harness.call('gen_image', {
     prompt: 'a cat',
@@ -243,10 +543,9 @@ test('a model explicitly named by the user overrides Host configuration', async 
   assert.equal(result.ok, true);
   assert.equal(result.result.request.modelId, 'image-explicit');
   assert.equal(result.result.request.providerId, 'xd');
-  assert.deepEqual(harness.hostRequests, []);
 });
 
-test('Host provider selection disambiguates duplicate model ids', async () => {
+test('Art settings provider selection disambiguates duplicate model ids', async () => {
   const modelId = 'openai/gpt-image-2';
   const model = {
     id: modelId,
@@ -254,7 +553,7 @@ test('Host provider selection disambiguates duplicate model ids', async () => {
     modalities: { input: ['text'], output: ['image'] },
   };
   const harness = createHarness(
-    { 'image.generate': { modelId, providerId: 'openai' } },
+    { modelOverrides: { 'image.generate': { modelId, providerId: 'openai' } } },
     {
       image: [
         { ...model, providerId: 'xd' },
@@ -271,22 +570,113 @@ test('Host provider selection disambiguates duplicate model ids', async () => {
   assert.equal(result.result.request.providerId, 'openai');
 });
 
-test('Art forwards a configured subscription model even when it is absent from the public catalog', async () => {
-  const hash = 'c'.repeat(64);
-  const harness = createHarness(
-    { 'image.edit': { modelId: 'grok-image-subscription', providerId: 'grok-oauth' } },
-    { image: [], video: [] },
-  );
+test('without a saved model Art follows the catalog default', async () => {
+  const catalogs = mediaCatalogsForPreferences({ 'image.generate': 'catalog-default' });
+  const harness = createHarness({}, catalogs);
 
-  const result = await harness.call('edit_image', {
-    prompt: 'add snow',
-    images: [`cindy-media://blobs/${hash}.png`],
-  });
+  const result = await harness.call('gen_image', { prompt: 'a cat' });
 
   assert.equal(result.ok, true);
-  assert.equal(result.result.request.modelId, 'grok-image-subscription');
-  assert.equal(result.result.request.providerId, 'grok-oauth');
-  assert.deepEqual(harness.fetches, []);
+  assert.equal(result.result.request.modelId, 'catalog-default');
+  assert.equal(result.result.request.providerId, 'xd');
+});
+
+test('a saved model tuple is not replaced when absent from the public catalog', async () => {
+  const catalogs = mediaCatalogsForPreferences({ 'image.generate': 'catalog-default' });
+  const harness = createHarness(
+    { imageModelId: 'removed-model', imageModelProviderId: 'xd' },
+    catalogs,
+  );
+
+  const result = await harness.call('gen_image', { prompt: 'a cat' });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.result.request.modelId, 'removed-model');
+  assert.equal(result.result.request.providerId, 'xd');
+});
+
+test('all four tools preserve saved model/provider tuples when the public catalog is unavailable', async () => {
+  const media = `cindy-media://blobs/${'a'.repeat(64)}.png`;
+  const tools = [
+    ['gen_image', 'image.generate'],
+    ['edit_image', 'image.edit'],
+    ['gen_video', 'video.generate'],
+    ['edit_video', 'video.edit'],
+  ];
+  const preferences = { modelOverrides: Object.fromEntries(tools.map(([, capability]) => [
+    capability, { modelId: `${capability}-subscription`, providerId: 'subscription-provider' },
+  ])) };
+  const harness = createHarness(preferences, { image: [], video: [] }, 'network');
+  for (const [tool, capability] of tools) {
+    const result = await harness.call(tool, { prompt: 'check configured model', images: [media] });
+    assert.equal(result.ok, true, tool);
+    assert.equal(result.result.request.modelId, preferences.modelOverrides[capability].modelId);
+    assert.equal(result.result.request.providerId, 'subscription-provider');
+  }
+  assert.deepEqual(harness.fetches, ['/kv', '/kv', '/kv', '/kv']);
+});
+
+test('a saved provider is not silently replaced by another provider offering the same model id', async () => {
+  const modelId = 'shared-image';
+  const catalogs = mediaCatalogsForPreferences({ 'image.generate': { modelId, providerId: 'other-provider' } });
+  const harness = createHarness({ modelOverrides: {
+    'image.generate': { modelId, providerId: 'saved-provider' },
+  } }, catalogs);
+  const result = await harness.call('gen_image', { prompt: 'check provider' });
+  assert.equal(result.ok, true);
+  assert.equal(result.result.request.modelId, modelId);
+  assert.equal(result.result.request.providerId, 'saved-provider');
+});
+
+test('configuration read failures stop the call rather than silently selecting a default model', async () => {
+  for (const readKv of [
+    async () => { throw new Error('network unavailable'); },
+    async () => ({ ok: false, status: 500 }),
+    async () => ({ ok: true, json: async () => { throw new SyntaxError('invalid JSON'); } }),
+    async () => ({ ok: true, json: async () => [] }),
+  ]) {
+    const harness = createHarness({}, imageCatalogForTests(), null, { readKv });
+    const result = await harness.call('gen_image', { prompt: 'check config' });
+    assert.equal(result.ok, false);
+    assert.match(result.message, /Art.*模型配置.*重试/);
+    assert.equal(result.result, undefined);
+    assert.deepEqual(harness.fetches, ['/kv']);
+  }
+});
+
+test('unconfigured tools use a capability-compatible default with its exact provider', async () => {
+  const catalogs = {
+    image: [
+      { id: 'image-shared', providerId: 'other-provider', modalities: { input: ['text'], output: ['image'] } },
+      { id: 'image-shared', providerId: 'xd', modalities: { input: ['text'], output: ['image'] } },
+      { id: 'image-edit', providerId: 'edit-provider', modalities: { input: ['text', 'image'], output: ['image'] } },
+    ],
+    video: [
+      { id: 'video-default', providerId: 'xd', modalities: { input: ['text'], output: ['video'] } },
+      { id: 'video-edit', providerId: 'video-provider', modalities: { input: ['text', 'image'], output: ['video'] } },
+    ],
+  };
+  const harness = createHarness({}, catalogs, null, {
+    defaults: { image: { modelId: 'image-shared', providerId: 'xd' } },
+  });
+  for (const [tool, modelId, providerId] of [
+    ['gen_image', 'image-shared', 'xd'],
+    ['edit_image', 'image-edit', 'edit-provider'],
+    ['gen_video', 'video-default', 'xd'],
+    ['edit_video', 'video-edit', 'video-provider'],
+  ]) {
+    const result = await harness.call(tool, { prompt: 'check compatible default', images: [`cindy-media://blobs/${'a'.repeat(64)}.png`] });
+    assert.equal(result.ok, true, tool);
+    assert.equal(result.result.request.modelId, modelId);
+    assert.equal(result.result.request.providerId, providerId);
+  }
+});
+
+test('legacy model-only selections do not silently switch to an unrelated default', async () => {
+  const harness = createHarness({ modelOverrides: { 'image.generate': 'missing-image' } }, imageCatalogForTests());
+  const result = await harness.call('gen_image', { prompt: 'check model-only selection' });
+  assert.equal(result.ok, false);
+  assert.match(result.message, /missing-image.*Art.*重新选择/);
 });
 
 test('Art still validates explicitly named models against the media catalog', async () => {
@@ -314,45 +704,6 @@ test('Art still validates explicitly named models against the media catalog', as
 
   assert.equal(result.ok, false);
   assert.match(result.message, /未声明支持改图所需的输入输出模态/);
-});
-
-test('configured subscription models do not depend on a media catalog response', async () => {
-  const harness = createHarness(
-    { 'video.generate': { modelId: 'grok-video-subscription', providerId: 'grok-oauth' } },
-    { image: [], video: [] },
-    'network',
-  );
-
-  const result = await harness.call('gen_video', { prompt: 'a moving cat' });
-
-  assert.equal(result.ok, true);
-  assert.equal(result.result.request.modelId, 'grok-video-subscription');
-  assert.equal(result.result.request.providerId, 'grok-oauth');
-  assert.deepEqual(harness.fetches, []);
-});
-
-test('Art reports Host preference failures instead of silently choosing the catalog default', async () => {
-  const catalogs = mediaCatalogsForPreferences({ 'image.generate': 'image-default' });
-  const harness = createHarness({}, catalogs);
-
-  const result = await harness.call('gen_image', { prompt: 'a cat' });
-
-  assert.equal(result.ok, false);
-  assert.match(result.message, /当前没有可用的媒体模型/);
-});
-
-test('Art translates rejected Host preference requests into an actionable error', async () => {
-  const catalogs = mediaCatalogsForPreferences({ 'image.generate': 'image-default' });
-  const harness = createHarness(
-    { 'image.generate': new Error('Failed to send') },
-    catalogs,
-  );
-
-  const result = await harness.call('gen_image', { prompt: 'a cat' });
-
-  assert.equal(result.ok, false);
-  assert.match(result.message, /无法读取 Art 详情页中的模型配置.*重启 Cindy/);
-  assert.doesNotMatch(result.message, /Failed to send/);
 });
 
 test('Art translates media catalog transport and JSON failures into actionable errors', async () => {
@@ -393,8 +744,10 @@ test('Art logs media catalog HTTP failures and returns one user-facing state', a
 
 for (const tool of ['gen_image', 'edit_image']) {
   test(tool + ' rejects malformed explicit aspect ratios but preserves omission and trimmed values', async () => {
-    const capability = tool === 'gen_image' ? 'image.generate' : 'image.edit';
-    const harness = createHarness({ [capability]: 'openai/gpt-image-2.5-sunburst' });
+    const harness = createHarness(
+      { imageModelId: 'image-model', imageModelProviderId: 'xd' },
+      imageCatalogForTests(),
+    );
     const args = { prompt: 'wallpaper', images: ['cindy-media://blobs/' + 'a'.repeat(64) + '.png'] };
     for (const aspectRatio of ['', '   ', '\t\n', null, 169, {}, []]) {
       const result = await harness.call(tool, { ...args, aspectRatio });
@@ -411,10 +764,19 @@ for (const tool of ['gen_image', 'edit_image']) {
   });
 
   test(tool + ' preserves exact size, quality, resolution and phone aspect ratio', async () => {
-    const capability = tool === 'gen_image' ? 'image.generate' : 'image.edit';
-    const harness = createHarness({ [capability]: 'openai/gpt-image-2.5-sunburst' });
-    const result = await harness.call(tool, { prompt: 'wallpaper', images: ['cindy-media://blobs/' + 'a'.repeat(64) + '.png'],
-      size: '1320x2868', aspectRatio: '110:239', resolution: '4K', quality: 'max', tier: 'best' });
+    const harness = createHarness(
+      { imageModelId: 'image-model', imageModelProviderId: 'xd' },
+      imageCatalogForTests(),
+    );
+    const result = await harness.call(tool, {
+      prompt: 'wallpaper',
+      images: ['cindy-media://blobs/' + 'a'.repeat(64) + '.png'],
+      size: '1320x2868',
+      aspectRatio: '110:239',
+      resolution: '4K',
+      quality: 'max',
+      tier: 'best',
+    });
     assert.equal(result.ok, true);
     assert.equal(result.result.request.size, '1320x2868');
     assert.equal(result.result.request.aspectRatioIntent, '110:239');
@@ -429,8 +791,13 @@ for (const tool of ['gen_image', 'edit_image']) {
 }
 
 test('omitted native parameters remain unspecified; malformed explicit values fail', async () => {
-  const harness = createHarness({ 'image.generate': 'openai/gpt-image-2' });
+  const harness = createHarness(
+    { imageModelId: 'image-model', imageModelProviderId: 'xd' },
+    imageCatalogForTests(),
+  );
   const result = await harness.call('gen_image', { prompt: 'cat' });
-  for (const key of ['size', 'resolution', 'quality', 'aspectRatioIntent']) assert.equal(result.result.request[key], undefined);
+  for (const key of ['size', 'resolution', 'quality', 'aspectRatioIntent']) {
+    assert.equal(result.result.request[key], undefined);
+  }
   assert.equal((await harness.call('gen_image', { prompt: 'cat', size: 2048 })).ok, false);
 });
