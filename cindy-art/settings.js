@@ -64,15 +64,29 @@
     }
   };
 
-  function localeKey() {
-    var lang = String(document.documentElement.lang || 'zh').toLowerCase();
-    if (lang.indexOf('zh') === 0) return 'zh';
-    if (lang.indexOf('ja') === 0) return 'ja';
-    if (lang.indexOf('ko') === 0) return 'ko';
-    return 'en';
+  async function loadLocale() {
+    var locale = 'en';
+    var controller = new AbortController();
+    var timeout = setTimeout(function () { controller.abort(); }, 2000);
+    try {
+      var response = await fetch('/app-context', { signal: controller.signal });
+      if (!response.ok) throw new Error('app-context read failed');
+      var result = await response.json();
+      var requested = result && result.ok === true && result.context && result.context.locale;
+      if (['zh-CN', 'en', 'ja', 'ko'].indexOf(requested) !== -1) locale = requested;
+    } catch (error) {
+      locale = 'en';
+    } finally {
+      clearTimeout(timeout);
+    }
+    copy = COPY[locale === 'zh-CN' ? 'zh' : locale];
+    document.documentElement.lang = locale;
+    document.getElementById('capability-card').setAttribute('aria-label', t('title'));
+    document.getElementById('card-title').textContent = t('title');
+    document.getElementById('card-desc').textContent = t('desc');
   }
 
-  var copy = COPY[localeKey()] || COPY.en;
+  var copy = COPY.en;
   function t(key, vars) {
     var value = copy[key] || COPY.en[key] || key;
     return vars ? value.replace(/\{(\w+)\}/g, function (_, name) { return String(vars[name] || ''); }) : value;
@@ -94,19 +108,23 @@
   var overrides = {};
   var lastSavedOverrides = {};
   var writeQueue = Promise.resolve();
+  var editRevision = 0;
 
   function setStatus(message, isError) {
     status.textContent = message || '';
     status.classList.toggle('is-error', Boolean(isError));
   }
 
-  function readJson(path, fallback) {
+  function readCatalog(path) {
     return fetch(path)
       .then(function (response) {
         if (!response.ok) throw new Error('request failed');
         return response.json();
       })
-      .catch(function () { return fallback; });
+      .then(function (value) {
+        if (!value || value.ok !== true || !Array.isArray(value.models)) throw new Error('catalog invalid');
+        return value;
+      });
   }
 
   async function readKvForWrite() {
@@ -170,14 +188,33 @@
     }) || models[0] || null;
   }
 
+  function escapeHtml(value) {
+    return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+
+  function providerLabel(model) {
+    return model.providerName && model.providerId
+      ? model.providerName + ' / ' + model.providerId
+      : model.providerName || model.providerId || '';
+  }
+
+  function modelLabel(model, models) {
+    var label = model.name || model.id;
+    var duplicate = models.some(function (other) {
+      return (other.name || other.id) === label && other.providerId !== model.providerId;
+    });
+    return duplicate ? label + ' (' + providerLabel(model) + ')' : label;
+  }
+
   function optionRow(option, selected, capability) {
     return '<button class="model-option" type="button" role="option" aria-selected="' + selected + '"' +
       ' data-capability="' + capability.key + '"' +
-      ' data-model-id="' + option.modelId.replace(/"/g, '&quot;') + '"' +
-      ' data-provider-id="' + String(option.providerId || '').replace(/"/g, '&quot;') + '"' +
+      ' data-model-id="' + escapeHtml(option.modelId) + '"' +
+      ' data-provider-id="' + escapeHtml(option.providerId) + '"' +
+      ' title="' + escapeHtml(providerLabel(option)) + '"' +
       ' data-default="' + String(option.isDefault) + '">' +
       (option.stale ? '' : providerMark(option)) +
-      '<span class="option-label">' + option.label.replace(/</g, '&lt;') + '</span>' +
+      '<span class="option-label">' + escapeHtml(option.label) + '</span>' +
       (selected ? artSettingsIcons.icon('check', 'check') : '') +
       '</button>';
   }
@@ -195,12 +232,13 @@
           : null) || null
       : null;
     var stale = configured && !selected ? configured : null;
+    var pinnedDefault = selected && fallback && selected.id === fallback.id && selected.providerId === fallback.providerId;
     var triggerLabel = selected
-      ? selected.name
+      ? modelLabel(selected, models)
       : stale
         ? stale.modelId
         : fallback
-          ? t('defaultOption', { model: fallback.name })
+          ? t('defaultOption', { model: modelLabel(fallback, models) })
           : t('noModels');
     var row = document.createElement('div');
     row.className = 'cap-row';
@@ -210,9 +248,9 @@
       (models.length === 0 && !stale
         ? '<span class="no-models">' + t('noModels') + '</span>'
         : '<div class="model-picker" data-capability="' + capability.key + '">' +
-          '<button class="model-trigger" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="' + t(capability.label) + '">' +
+          '<button class="model-trigger" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="' + t(capability.label) + '" title="' + escapeHtml(providerLabel(selected || stale || fallback)) + '">' +
           (stale ? '' : providerMark(selected || fallback)) +
-          '<span class="model-name">' + triggerLabel.replace(/</g, '&lt;') + '</span>' +
+          '<span class="model-name">' + escapeHtml(triggerLabel) + '</span>' +
           artSettingsIcons.icon('chevron-down', 'chevron') +
           '</button>' +
           '<div class="model-popover"><div class="model-list" role="listbox" aria-label="' + t(capability.label) + '">' +
@@ -221,11 +259,11 @@
             providerId: fallback.providerId,
             providerName: fallback.providerName,
             routing: fallback.routing,
-            label: t('defaultOption', { model: fallback.name }),
+            label: t('defaultOption', { model: modelLabel(fallback, models) }),
             isDefault: true
           }, !configured, capability) : '') +
           models.filter(function (model) {
-            return !fallback || model.id !== fallback.id || model.providerId !== fallback.providerId;
+            return pinnedDefault || !fallback || model.id !== fallback.id || model.providerId !== fallback.providerId;
           }).map(function (model) {
             var active = selected && selected.id === model.id && selected.providerId === model.providerId;
             return optionRow({
@@ -233,7 +271,7 @@
               providerId: model.providerId,
               providerName: model.providerName,
               routing: model.routing,
-              label: model.name || model.id,
+              label: modelLabel(model, models),
               isDefault: false
             }, active, capability);
           }).join('') +
@@ -292,13 +330,14 @@
   }
 
   function persistPreferences() {
+    var revision = ++editRevision;
+    var next = {};
+    CAPABILITIES.forEach(function (capability) {
+      var value = overrides[capability.key];
+      if (value) next[capability.key] = value;
+    });
     writeQueue = writeQueue.then(async function () {
       setStatus(t('saving'), false);
-      var next = {};
-      CAPABILITIES.forEach(function (capability) {
-        var value = overrides[capability.key];
-        if (value) next[capability.key] = value;
-      });
       var kv = await readKvForWrite();
       kv.modelOverrides = next;
       delete kv.imageModelId;
@@ -313,9 +352,11 @@
       delete state.videoModelId;
       delete state.videoModelProviderId;
       lastSavedOverrides = JSON.parse(JSON.stringify(next));
+      if (revision !== editRevision) return;
       render();
       setStatus('', false);
     }).catch(function () {
+      if (revision !== editRevision) return;
       overrides = JSON.parse(JSON.stringify(lastSavedOverrides));
       render();
       setStatus(t('saveFailed'), true);
@@ -326,12 +367,12 @@
     setStatus(t('loading'), false);
     Promise.all([
       readKvForWrite(),
-      readJson('/media-models?type=image', { ok: false, models: [] }),
-      readJson('/media-models?type=video', { ok: false, models: [] })
+      readCatalog('/media-models?type=image'),
+      readCatalog('/media-models?type=video')
     ]).then(function (values) {
       state = values[0] && typeof values[0] === 'object' && !Array.isArray(values[0]) ? values[0] : {};
-      catalogs.image = values[1] && values[1].ok === true ? values[1] : { models: [], defaultModelId: null };
-      catalogs.video = values[2] && values[2].ok === true ? values[2] : { models: [], defaultModelId: null };
+      catalogs.image = values[1];
+      catalogs.video = values[2];
       overrides = {};
       CAPABILITIES.forEach(function (capability) {
         var configured = configuredOverride(capability);
@@ -347,8 +388,6 @@
   }
 
   document.getElementById('card-icon').innerHTML = artSettingsIcons.icon('sparkles');
-  document.getElementById('card-title').textContent = t('title');
-  document.getElementById('card-desc').textContent = t('desc');
   document.addEventListener('click', function () {
     document.querySelectorAll('.model-popover.open').forEach(function (item) { item.classList.remove('open'); });
     document.querySelectorAll('.model-trigger[aria-expanded="true"]').forEach(function (item) { item.setAttribute('aria-expanded', 'false'); });
@@ -362,5 +401,5 @@
       });
     }
   });
-  load();
+  loadLocale().then(load);
 })();

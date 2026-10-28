@@ -165,6 +165,8 @@ async function createSettingsHarness(preferences, mediaCatalogs, options = {}) {
       dataset,
       style: {},
       textContent: '',
+      attributes: {},
+      setAttribute(name, value) { this.attributes[name] = value; },
       classList: { toggle() {}, remove() {} },
       addEventListener(event, listener) { listeners.set(event, listener); },
       click() { return listeners.get('click')({ stopPropagation() {} }); },
@@ -174,9 +176,10 @@ async function createSettingsHarness(preferences, mediaCatalogs, options = {}) {
   Object.defineProperty(rootElement, 'textContent', { set() { this.children = []; } });
   const status = control();
   const writes = [];
+  const fetches = [];
   const elements = new Map([
     ['capabilities', rootElement], ['status', status], ['card-icon', control()],
-    ['card-title', control()], ['card-desc', control()],
+    ['card-title', control()], ['card-desc', control()], ['capability-card', control()],
   ]);
   function attribute(attributes, name) {
     return attributes.match(new RegExp('\\b' + name + '="([^"]*)"'))?.[1];
@@ -219,19 +222,31 @@ async function createSettingsHarness(preferences, mediaCatalogs, options = {}) {
     document,
     URL,
     JSON,
+    AbortController,
+    setTimeout,
+    clearTimeout,
     fetch: async (path, init = {}) => {
+      fetches.push(path);
+      if (path === '/app-context') {
+        return options.readAppContext ? options.readAppContext() : {
+          ok: true, json: async () => ({ ok: true, context: { locale: options.locale ?? 'zh-CN' } }),
+        };
+      }
       if (path === '/kv') {
         if (init.method === 'PUT') {
           const next = JSON.parse(init.body);
           writes.push(next);
+          const response = options.writeKv ? await options.writeKv(next, writes.length) : { ok: true, status: 204 };
+          if (!response.ok) return response;
           for (const key of Object.keys(preferences)) delete preferences[key];
           Object.assign(preferences, next);
-          return { ok: true, status: 204 };
+          return response;
         }
         return options.readKv ? options.readKv() : { ok: true, json: async () => structuredClone(preferences) };
       }
       assert.ok(['/media-models?type=image', '/media-models?type=video'].includes(path));
       const type = path.endsWith('image') ? 'image' : 'video';
+      if (options.readCatalog) return options.readCatalog(type);
       const models = mediaCatalogs[type];
       return { ok: true, json: async () => ({
         ok: true, type, models: structuredClone(models),
@@ -248,6 +263,9 @@ async function createSettingsHarness(preferences, mediaCatalogs, options = {}) {
     row,
     status,
     writes,
+    fetches,
+    document,
+    element(id) { return elements.get(id); },
     async choose(capability, modelId, providerId, isDefault = false) {
       const choice = row(capability)?.choices.find((entry) =>
         entry.dataset.modelId === modelId && entry.dataset.providerId === providerId &&
@@ -258,6 +276,135 @@ async function createSettingsHarness(preferences, mediaCatalogs, options = {}) {
     },
   };
 }
+
+test('settings review: all four host locales are used instead of HTML language', async () => {
+  for (const [locale, title] of [
+    ['en', 'Cindy abilities'], ['zh-CN', 'Cindy 能力'], ['ja', 'Cindy 機能'], ['ko', 'Cindy 기능'],
+    ['de', 'Cindy abilities'], ['zh-TW', 'Cindy abilities'],
+  ]) {
+    const settings = await createSettingsHarness({}, imageCatalogForTests(), { locale });
+    assert.equal(settings.element('card-title').textContent, title, locale);
+    assert.equal(settings.document.documentElement.lang, ['en', 'zh-CN', 'ja', 'ko'].includes(locale) ? locale : 'en');
+    assert.equal(settings.element('capability-card').attributes['aria-label'], title);
+    assert.ok(settings.fetches.includes('/app-context'));
+    assert.ok(settings.row('image.generate'));
+  }
+});
+
+test('settings review: unavailable host context falls back to English without blocking settings', async () => {
+  for (const readAppContext of [
+    async () => { throw new Error('unavailable'); },
+    async () => ({ ok: false }),
+    async () => ({ ok: true, json: async () => { throw new SyntaxError('invalid'); } }),
+    async () => ({ ok: true, json: async () => ({ ok: false }) }),
+  ]) {
+    const settings = await createSettingsHarness({}, imageCatalogForTests(), { readAppContext });
+    assert.equal(settings.element('card-title').textContent, 'Cindy abilities');
+    assert.equal(settings.document.documentElement.lang, 'en');
+    assert.ok(settings.row('image.generate'));
+  }
+});
+
+test('settings review: a failed save cannot erase a newer queued selection', async () => {
+  let finishFirstWrite;
+  const preferences = { unrelated: 'preserved' };
+  const catalogs = imageCatalogForTests();
+  catalogs.image.push({ id: 'second-image', name: 'Second image', providerId: 'custom', modalities: { input: ['text', 'image'], output: ['image'] } });
+  const settings = await createSettingsHarness(preferences, catalogs, {
+    writeKv: async (next, attempt) => attempt === 1
+      ? new Promise((resolve) => { finishFirstWrite = resolve; })
+      : { ok: true, status: 204 },
+  });
+  await settings.choose('image.generate', 'second-image', 'custom');
+  assert.equal(settings.writes.length, 1);
+  await settings.choose('image.edit', 'second-image', 'custom');
+  assert.equal(settings.writes.length, 1);
+  finishFirstWrite({ ok: false, status: 500 });
+  await new Promise((resolve) => setImmediate(resolve));
+  const expected = {
+    'image.generate': { modelId: 'second-image', providerId: 'custom' },
+    'image.edit': { modelId: 'second-image', providerId: 'custom' },
+  };
+  assert.deepEqual(preferences.modelOverrides, expected);
+  assert.deepEqual(settings.writes[0].modelOverrides, { 'image.generate': expected['image.generate'] });
+  assert.deepEqual(settings.writes[1].modelOverrides, expected);
+  assert.equal(preferences.unrelated, 'preserved');
+  assert.equal(settings.status.textContent, '');
+  assert.equal(settings.row('image.edit').choices.find((choice) => choice.dataset.modelId === 'second-image').selected, 'true');
+});
+
+test('settings review: the latest failed save keeps the last successful selection and its error', async () => {
+  const preferences = { unrelated: 'preserved' };
+  const catalogs = imageCatalogForTests();
+  catalogs.image.push({ id: 'second-image', name: 'Second image', providerId: 'custom', modalities: { input: ['text', 'image'], output: ['image'] } });
+  const settings = await createSettingsHarness(preferences, catalogs, {
+    writeKv: async (next, attempt) => ({ ok: attempt === 1, status: attempt === 1 ? 204 : 500 }),
+  });
+  await settings.choose('image.generate', 'second-image', 'custom');
+  await settings.choose('image.edit', 'second-image', 'custom');
+  assert.deepEqual(preferences.modelOverrides, { 'image.generate': { modelId: 'second-image', providerId: 'custom' } });
+  assert.match(settings.status.textContent, /模型配置保存失败.*重试/);
+  assert.equal(settings.row('image.edit').choices.find((choice) => choice.dataset.default === 'true').selected, 'true');
+});
+
+test('settings review: duplicate model labels identify providers in the menu and current selection', async () => {
+  for (const providerName of [undefined, 'Same brand']) {
+    const catalogs = { image: ['custom-a', 'custom-b'].map((providerId) => ({
+      id: 'shared-model', name: 'Shared Model', providerId, providerName,
+      modalities: { input: ['text'], output: ['image'] },
+    })), video: [] };
+    const preferences = { modelOverrides: { 'image.generate': { modelId: 'shared-model', providerId: 'custom-b' } } };
+    const settings = await createSettingsHarness(preferences, catalogs);
+    const html = settings.row('image.generate').innerHTML;
+    assert.match(html, /class="model-name">Shared Model[^<]*custom-b[^<]*<\/span>/);
+    assert.match(html, /class="option-label">[^<]*custom-a[^<]*<\/span>/);
+    assert.match(html, /class="option-label">[^<]*custom-b[^<]*<\/span>/);
+    assert.match(html, /title="[^"]*custom-b[^"]*"/);
+  }
+});
+
+test('settings review: catalog failures are distinct from successful empty directories', async () => {
+  for (const failure of [
+    async () => { throw new Error('unavailable'); },
+    async () => ({ ok: false, status: 500 }),
+    async () => ({ ok: true, json: async () => { throw new SyntaxError('invalid'); } }),
+    async () => ({ ok: true, json: async () => ({ ok: false, models: [] }) }),
+    async () => ({ ok: true, json: async () => ({ ok: true, models: {} }) }),
+  ]) {
+    for (const failedType of ['image', 'video', 'both']) {
+      const settings = await createSettingsHarness({}, imageCatalogForTests(), {
+        readCatalog: async (type) => type === failedType || failedType === 'both'
+          ? failure()
+          : { ok: true, json: async () => ({ ok: true, models: imageCatalogForTests()[type] }) },
+      });
+      assert.match(settings.status.textContent, /模型配置加载失败.*重新打开/);
+      assert.doesNotMatch(settings.status.textContent, /暂无可用模型/);
+      assert.equal(settings.writes.length, 0);
+    }
+  }
+  const empty = await createSettingsHarness({}, { image: [], video: [] });
+  assert.equal(empty.status.textContent, '暂无可用模型');
+});
+
+test('settings review: a saved default tuple stays pinned and has exactly one selected option', async () => {
+  const preferences = { modelOverrides: { 'image.generate': { modelId: 'image-model', providerId: 'xd' } } };
+  const catalogs = imageCatalogForTests();
+  const settings = await createSettingsHarness(preferences, catalogs);
+  const selected = settings.row('image.generate').choices.filter((choice) => choice.selected === 'true');
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0].dataset.default, 'false');
+  assert.equal(selected[0].dataset.modelId, 'image-model');
+  assert.equal(selected[0].dataset.providerId, 'xd');
+  assert.equal(settings.writes.length, 0);
+  catalogs.image.push({ id: 'another-default', providerId: 'custom', modalities: { input: ['text'], output: ['image'] } });
+  const changedDefault = await createSettingsHarness(preferences, catalogs, {
+    defaults: { image: { modelId: 'another-default', providerId: 'custom' } },
+  });
+  assert.equal(changedDefault.row('image.generate').choices.filter((choice) => choice.selected === 'true').length, 1);
+  await settings.choose('image.generate', 'image-model', 'xd', true);
+  assert.equal(preferences.modelOverrides['image.generate'], undefined);
+  assert.equal(settings.row('image.generate').choices.find((choice) => choice.dataset.default === 'true').selected, 'true');
+});
 
 test('settings keep same-name providers distinct through save, reopen and tool reads', async () => {
   const preferences = {};
@@ -338,7 +485,7 @@ test('all four settings are saved, reloaded and read by their corresponding tool
 });
 
 test('manifest exposes only the four media preparation tools and the Art settings page', () => {
-  assert.equal(manifest.version, '1.15.4');
+  assert.equal(manifest.version, '1.15.5');
   assert.equal(manifest.minCindyVersion, '0.1.68');
   assert.equal(manifest.schemaVersion, 3);
   assert.equal(manifest.settingsHtml, 'settings.html');
@@ -394,7 +541,7 @@ test('Art settings describe plugin-owned choices without the removed system-defa
     assert.ok(!/Proxy|proxy|プロキシ|프록시|跟随系统|follow the system|システム|시스템/.test(description),
       'the removed client system-default behavior must not be presented as an Art setting');
   }
-  assert.equal(settingsSource.match(/<p class="card-desc" id="card-desc">([^<]+)<\/p>/)[1], descriptions[0]);
+  assert.equal(settingsSource.match(/<p class="card-desc" id="card-desc">([^<]+)<\/p>/)[1], descriptions[1]);
 });
 
 test('Art settings reuse the pre-6073 provider and Lucide SVGs without substitute icons', () => {
